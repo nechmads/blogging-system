@@ -1,0 +1,38 @@
+# Dependencies
+node_modules/
+
+# Build outputs
+dist/
+.output/
+
+# Cloudflare
+.wrangler/
+.dev.vars
+.mf/
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+firebase-debug.log
+
+# Turbo / cache
+.turbo/
+.cache/
+
+# TypeScript
+*.tsbuildinfo
