@@ -1,6 +1,6 @@
 import { Hono } from 'hono'
 import type { PublisherEnv } from '../env'
-import { CmsApi } from '../lib/cms-api'
+import { CmsApi } from '@hotmetal/shared'
 import { writeAuditLog } from '../lib/audit'
 import { BlogAdapter } from '../adapters/blog-adapter'
 import { LinkedInAdapter } from '../adapters/linkedin-adapter'

@@ -1,0 +1,300 @@
+import { AIChatAgent } from 'agents/ai-chat-agent'
+import { anthropic } from '@ai-sdk/anthropic'
+import { generateText, streamText, appendResponseMessages, type StreamTextOnFinishCallback, type ToolSet } from 'ai'
+import type { Connection, WSMessage } from 'partyserver'
+import type { WriterAgentEnv } from '../env'
+import { type WriterAgentState, type WritingPhase, INITIAL_STATE } from './state'
+import { initAgentSqlite } from './sqlite-schema'
+import { buildSystemPrompt } from '../prompts/system-prompt'
+import { createToolSet } from '../tools'
+
+export interface DraftRow {
+  id: string
+  version: number
+  title: string | null
+  content: string
+  citations: string | null
+  word_count: number
+  is_final: number
+  feedback: string | null
+  created_at: number
+}
+
+export interface DraftSummary {
+  id: string
+  version: number
+  title: string | null
+  word_count: number
+  is_final: number
+  created_at: number
+}
+
+export class WriterAgent extends AIChatAgent<WriterAgentEnv, WriterAgentState> {
+  initialState: WriterAgentState = INITIAL_STATE
+
+  async onStart() {
+    initAgentSqlite(this.sql.bind(this))
+
+    // Hydrate state from D1 session metadata if this is a fresh start
+    if (!this.state.sessionId) {
+      const sessionId = this.name
+      const row = await this.env.WRITER_DB
+        .prepare('SELECT id, user_id, title, status, current_draft_version, cms_post_id FROM sessions WHERE id = ?')
+        .bind(sessionId)
+        .first<{ id: string; user_id: string; title: string | null; current_draft_version: number; cms_post_id: string | null }>()
+
+      if (row) {
+        this.setState({
+          ...this.state,
+          sessionId: row.id,
+          userId: row.user_id,
+          title: row.title,
+          currentDraftVersion: row.current_draft_version ?? 0,
+          cmsPostId: row.cms_post_id,
+        })
+      }
+    }
+  }
+
+  /**
+   * Convenience handler: wraps plain text messages into the cf_agent_use_chat_request
+   * protocol envelope so that raw WebSocket clients (wscat, Postman) can send simple
+   * strings instead of the full Agents SDK JSON protocol.
+   */
+  async onMessage(connection: Connection, message: WSMessage) {
+    if (typeof message === 'string') {
+      let parsed: Record<string, unknown> | null = null
+      try {
+        parsed = JSON.parse(message) as Record<string, unknown>
+      } catch {
+        // not JSON — plain text
+      }
+
+      // Already a proper agent protocol message — pass through
+      if (parsed && typeof parsed.type === 'string' && parsed.type.startsWith('cf_agent_')) {
+        return super.onMessage(connection, message)
+      }
+
+      // Plain text or unrecognised JSON — wrap as a chat message
+      const content = parsed?.content ? String(parsed.content) : message
+      const userMessage = {
+        id: crypto.randomUUID(),
+        role: 'user' as const,
+        content,
+      }
+      const allMessages = [...this.messages, userMessage]
+
+      const wrapped = JSON.stringify({
+        type: 'cf_agent_use_chat_request',
+        id: crypto.randomUUID(),
+        init: {
+          method: 'POST',
+          body: JSON.stringify({ messages: allMessages }),
+        },
+      })
+
+      return super.onMessage(connection, wrapped)
+    }
+
+    return super.onMessage(connection, message)
+  }
+
+  private prepareLlmCall() {
+    const newPhase = this.state.writingPhase === 'idle' ? 'interviewing' : this.state.writingPhase
+    this.setState({
+      ...this.state,
+      isGenerating: true,
+      lastError: null,
+      writingPhase: newPhase,
+    })
+
+    const systemPrompt = buildSystemPrompt({
+      phase: this.state.writingPhase,
+      sessionTitle: this.state.title,
+      currentDraftVersion: this.state.currentDraftVersion,
+    })
+
+    const tools = createToolSet(this)
+
+    return { systemPrompt, tools }
+  }
+
+  async onChatMessage(onFinish: StreamTextOnFinishCallback<ToolSet>) {
+    const { systemPrompt, tools } = this.prepareLlmCall()
+
+    const result = streamText({
+      model: anthropic('claude-sonnet-4-5-20250929', {
+        cacheControl: true,
+      }),
+      system: systemPrompt,
+      messages: this.messages,
+      tools,
+      maxSteps: 5,
+      onFinish: async (event) => {
+        this.setState({
+          ...this.state,
+          isGenerating: false,
+        })
+        // Cast needed: streamText's generic toolset differs from the ToolSet base type
+        await (onFinish as StreamTextOnFinishCallback<typeof tools>)(event)
+      },
+      onError: (error) => {
+        console.error('Stream error:', error)
+        this.setState({
+          ...this.state,
+          isGenerating: false,
+          lastError: error instanceof Error ? error.message : 'Unknown error',
+        })
+      },
+    })
+
+    return result.toDataStreamResponse()
+  }
+
+  async onRequest(request: Request): Promise<Response> {
+    const url = new URL(request.url)
+
+    if (url.pathname.endsWith('/drafts') && request.method === 'GET') {
+      return this.handleListDrafts()
+    }
+
+    const draftVersionMatch = url.pathname.match(/\/drafts\/(\d+)$/)
+    if (draftVersionMatch && request.method === 'GET') {
+      return this.handleGetDraft(parseInt(draftVersionMatch[1], 10))
+    }
+
+    if (url.pathname.endsWith('/chat') && request.method === 'POST') {
+      let body: { message?: string }
+      try {
+        body = await request.json() as { message?: string }
+      } catch {
+        return Response.json({ error: 'Invalid JSON in request body' }, { status: 400 })
+      }
+      if (!body.message?.trim()) {
+        return Response.json({ error: 'message is required' }, { status: 400 })
+      }
+      return this.handleChat(body.message.trim())
+    }
+
+    return new Response('Not found', { status: 404 })
+  }
+
+  async handleChat(userMessage: string): Promise<Response> {
+    const { systemPrompt, tools } = this.prepareLlmCall()
+
+    const userMsg = { id: crypto.randomUUID(), role: 'user' as const, content: userMessage }
+    const currentMessages = [...this.messages, userMsg]
+    await this.persistMessages(currentMessages)
+
+    try {
+      const result = await generateText({
+        model: anthropic('claude-sonnet-4-5-20250929', {
+          cacheControl: true,
+        }),
+        system: systemPrompt,
+        messages: currentMessages,
+        tools,
+        maxSteps: 5,
+      })
+
+      const finalMessages = appendResponseMessages({
+        messages: currentMessages,
+        responseMessages: result.response.messages,
+      })
+      await this.persistMessages(finalMessages)
+
+      this.setState({ ...this.state, isGenerating: false })
+
+      return Response.json({
+        text: result.text,
+        finishReason: result.finishReason,
+        usage: result.usage,
+      })
+    } catch (error) {
+      console.error('Chat error:', error)
+      this.setState({
+        ...this.state,
+        isGenerating: false,
+        lastError: error instanceof Error ? error.message : 'Unknown error',
+      })
+      return Response.json(
+        { error: 'Failed to generate response' },
+        { status: 500 },
+      )
+    }
+  }
+
+  // --- Draft management methods (called by tools) ---
+
+  getEnv(): WriterAgentEnv {
+    return this.env
+  }
+
+  saveDraft(title: string | null, content: string, citations: string | null, feedback: string | null): DraftRow {
+    const version = this.state.currentDraftVersion + 1
+    const id = crypto.randomUUID()
+    const wordCount = content.split(/\s+/).filter(Boolean).length
+
+    this.sql`INSERT INTO drafts (id, version, title, content, citations, word_count, feedback)
+      VALUES (${id}, ${version}, ${title}, ${content}, ${citations}, ${wordCount}, ${feedback})`
+
+    this.setState({
+      ...this.state,
+      currentDraftVersion: version,
+      title: title ?? this.state.title,
+      writingPhase: 'revising',
+    })
+
+    return { id, version, title, content, citations, word_count: wordCount, is_final: 0, feedback, created_at: Math.floor(Date.now() / 1000) }
+  }
+
+  getCurrentDraft(): DraftRow | null {
+    const rows = this.sql<DraftRow>`SELECT * FROM drafts ORDER BY version DESC LIMIT 1`
+    return rows.length > 0 ? rows[0] : null
+  }
+
+  listDrafts(): DraftSummary[] {
+    return this.sql<DraftSummary>`SELECT id, version, title, word_count, is_final, created_at FROM drafts ORDER BY version ASC`
+  }
+
+  finalizeDraft(cmsPostId: string): void {
+    const current = this.getCurrentDraft()
+    if (!current) return
+
+    // Mark current as final
+    this.sql`UPDATE drafts SET is_final = 1 WHERE version = ${current.version}`
+
+    // Clean up intermediate drafts (keep v1 + final)
+    if (current.version > 1) {
+      this.sql`DELETE FROM drafts WHERE version > 1 AND version < ${current.version}`
+    }
+
+    this.setState({
+      ...this.state,
+      writingPhase: 'published',
+      cmsPostId,
+    })
+  }
+
+  setWritingPhase(phase: WritingPhase): void {
+    this.setState({
+      ...this.state,
+      writingPhase: phase,
+    })
+  }
+
+  // --- HTTP handlers for draft queries ---
+
+  private handleListDrafts(): Response {
+    const drafts = this.listDrafts()
+    return Response.json({ data: drafts })
+  }
+
+  private handleGetDraft(version: number): Response {
+    const rows = this.sql<DraftRow>`SELECT * FROM drafts WHERE version = ${version}`
+    if (rows.length === 0) {
+      return Response.json({ error: 'Draft not found' }, { status: 404 })
+    }
+    return Response.json(rows[0])
+  }
+}

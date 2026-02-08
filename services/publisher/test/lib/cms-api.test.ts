@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { CmsApi, CmsApiError } from '../../src/lib/cms-api'
+import { CmsApi, CmsApiError } from '@hotmetal/shared'
 
 describe('CmsApi', () => {
   let api: CmsApi

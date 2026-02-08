@@ -19,6 +19,23 @@
   - Audit logging for all publish actions
   - 25 unit tests (adapters, formatter, CMS API client)
 
+- [x] **Writer Agent — Phase 1: Agentic Drafting & Conversational Editing** — Built the writer agent service (`services/writer-agent`) using Cloudflare Agents SDK + Vercel AI SDK + Hono. Includes:
+  - Promoted CMS API client (`CmsApi`, `CmsApiError`) to `@hotmetal/shared` package
+  - WriterAgent Durable Object (extends `AIChatAgent`) with per-session SQLite for drafts/research
+  - D1-backed session management (CRUD for cross-session metadata)
+  - Composable system prompt architecture with style profiles and phase-specific instructions
+  - 6 agent tools: `save_draft`, `get_current_draft`, `list_drafts`, `publish_to_cms`, `search_web` (stub), `lookup_source` (stub)
+  - REST API: session CRUD, draft retrieval (proxied to agent DO), health check
+  - WebSocket endpoint at `/agents/writer-agent/:sessionId` for real-time conversation
+  - Writing phase state machine: idle → interviewing → drafting → revising → published
+  - API key auth middleware with timing-safe comparison
+  - Draft versioning with finalization and intermediate cleanup
+
+- [x] **Writer Agent — Non-Streaming Chat Endpoint** — Added `POST /api/v1/sessions/:id/chat` for synchronous (non-streaming) AI conversation. Uses `generateText` instead of `streamText`, same tools/prompt/state transitions. Includes session existence validation, JSON parse error handling, and extracted shared `prepareLlmCall()` helper to reduce duplication between streaming and non-streaming paths. Updated docs and Postman collection.
+
 ## Upcoming
 
+- [ ] Writer Agent — Phase 2: Research integration (connect `search_web` and `lookup_source` tools to real APIs)
+- [ ] Writer Agent — Phase 2: Voice input (transcription in `input-processor.ts`)
+- [ ] Writer Agent — Phase 2: D1 session sync (synchronize DO state back to D1 for listing accuracy)
 - [ ] Multi-blog support (Phase 4) — Add `blogId` field to posts and renditions
