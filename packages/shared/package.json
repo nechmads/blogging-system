@@ -9,6 +9,9 @@
     "build": "tsc --noEmit",
     "typecheck": "tsc --noEmit"
   },
+  "dependencies": {
+    "@hotmetal/content-core": "workspace:*"
+  },
   "devDependencies": {
     "typescript": "^5.5.2"
   }

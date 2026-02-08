@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { BlogAdapter } from '../../src/adapters/blog-adapter'
 import type { Post } from '@hotmetal/content-core'
-import type { CmsApi } from '../../src/lib/cms-api'
+import type { CmsApi } from '@hotmetal/shared'
 
 function createMockPost(overrides: Partial<Post> = {}): Post {
   return {

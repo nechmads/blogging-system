@@ -1,0 +1,595 @@
+{
+	"info": {
+		"name": "Hot Metal — Writer Agent",
+		"description": "# Hot Metal Writer Agent Service\n\nThe Writer Agent is an AI-powered writing assistant built on Cloudflare Workers with the Agents SDK. It provides a conversational interface for drafting, revising, and publishing blog posts.\n\n## Architecture\n\n- **REST API (Hono)** — Session and draft management\n- **WebSocket (Agents SDK)** — Real-time AI conversation via Durable Objects\n\nEach writing session is backed by its own Durable Object instance with embedded SQLite for drafts and conversation history. Cross-session metadata (listing, search) lives in D1.\n\n## Authentication\n\nAll `/api/v1/*` endpoints require an `X-API-Key` header.\n\nThe health endpoint and WebSocket connections are unauthenticated.\n\n## Endpoints Overview\n\n### Sessions\n| Method | Path | Auth | Description |\n|--------|------|------|-------------|\n| POST | `/api/v1/sessions` | API Key | Create a new writing session |\n| GET | `/api/v1/sessions` | API Key | List sessions (filterable) |\n| GET | `/api/v1/sessions/:id` | API Key | Get session details |\n| PATCH | `/api/v1/sessions/:id` | API Key | Update session title or status |\n\n### Drafts\n| Method | Path | Auth | Description |\n|--------|------|------|-------------|\n| GET | `/api/v1/sessions/:id/drafts` | API Key | List all draft versions |\n| GET | `/api/v1/sessions/:id/drafts/:version` | API Key | Get a specific draft |\n\n### Chat\n| Method | Path | Auth | Description |\n|--------|------|------|-------------|\n| POST | `/api/v1/sessions/:id/chat` | API Key | Send message, get full AI response (non-streaming) |\n\n### WebSocket\n| URL | Description |\n|-----|-------------|\n| `ws://host/agents/writer-agent/:sessionId` | Connect to a writing session |\n\n### Health\n| Method | Path | Auth | Description |\n|--------|------|------|-------------|\n| GET | `/health` | None | Service health check |\n\n## Environment Variables\n\nThis collection uses variables from the Postman environment:\n- `WRITER_BASE_URL` — Base URL of the writer agent (e.g. `http://localhost:8789`)\n- `WRITER_API_KEY` — API key for authentication\n\nSelect the **Hot Metal — Local Development** environment before sending requests.",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"variable": [
+		{
+			"key": "sessionId",
+			"value": "",
+			"type": "string",
+			"description": "Session ID for chaining requests — auto-set when creating a session"
+		}
+	],
+	"item": [
+		{
+			"name": "Health",
+			"description": "Service health check. No authentication required.",
+			"item": [
+				{
+					"name": "Health Check",
+					"description": "Returns the service status. Use this to verify the writer agent worker is running.\n\n### Response\n\n```json\n{\n  \"status\": \"ok\",\n  \"service\": \"hotmetal-writer-agent\"\n}\n```\n\nNo authentication required.",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{WRITER_BASE_URL}}/health",
+							"host": ["{{WRITER_BASE_URL}}"],
+							"path": ["health"]
+						}
+					},
+					"response": [
+						{
+							"name": "200 — Healthy",
+							"status": "OK",
+							"code": 200,
+							"header": [
+								{ "key": "Content-Type", "value": "application/json" }
+							],
+							"body": "{\n  \"status\": \"ok\",\n  \"service\": \"hotmetal-writer-agent\"\n}"
+						}
+					]
+				}
+			]
+		},
+		{
+			"name": "Sessions",
+			"description": "Manage writing sessions. Each session represents a single blog post writing effort.\n\nA session maps 1:1 to a Durable Object instance. Session metadata is stored in D1 for listing, while the actual conversation, drafts, and research notes live inside the Durable Object's embedded SQLite.\n\n### Session Object\n\n| Field | Type | Description |\n|-------|------|-------------|\n| `id` | string | UUID, also used as the Durable Object name |\n| `userId` | string | ID of the user who created the session |\n| `title` | string \\| null | Working title (set during conversation or via PATCH) |\n| `status` | string | Session status: `active`, `completed`, or `archived` |\n| `currentDraftVersion` | number | Latest draft version number (0 = no drafts yet) |\n| `cmsPostId` | string \\| null | CMS post ID once published |\n| `createdAt` | number | Unix timestamp (seconds) |\n| `updatedAt` | number | Unix timestamp (seconds) |\n\nAll endpoints require `X-API-Key` authentication.",
+			"item": [
+				{
+					"name": "Create Session",
+					"description": "Create a new writing session for a user.\n\nThe session ID is a randomly generated UUID. It serves as both the D1 row key and the Durable Object name.\n\n### Request Body\n\n| Field | Type | Required | Description |\n|---------|--------|----------|------------------------------------------|\n| `userId`| string | **Yes** | Identifier for the user creating the session. Can be any string (username, email, UUID). |\n\n### Response — Session (201 Created)\n\n```json\n{\n  \"id\": \"a1b2c3d4-e5f6-7890-abcd-ef1234567890\",\n  \"userId\": \"shahar\",\n  \"title\": null,\n  \"status\": \"active\",\n  \"currentDraftVersion\": 0,\n  \"cmsPostId\": null,\n  \"createdAt\": 1707350400,\n  \"updatedAt\": 1707350400\n}\n```\n\n### Next Step\n\nConnect to the WebSocket at `ws://host/agents/writer-agent/{id}` to start the AI conversation.\n\n### Possible Errors\n\n- `400` — Missing or non-string `userId`\n- `401` — Missing or invalid API key",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"if (pm.response.code === 201) {",
+									"    var jsonData = pm.response.json();",
+									"    pm.collectionVariables.set('sessionId', jsonData.id);",
+									"    console.log('Session ID saved:', jsonData.id);",
+									"}"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{ "key": "X-API-Key", "value": "{{WRITER_API_KEY}}" },
+							{ "key": "Content-Type", "value": "application/json" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"userId\": \"shahar\"\n}"
+						},
+						"url": {
+							"raw": "{{WRITER_BASE_URL}}/api/v1/sessions",
+							"host": ["{{WRITER_BASE_URL}}"],
+							"path": ["api", "v1", "sessions"]
+						}
+					},
+					"response": [
+						{
+							"name": "201 — Session created",
+							"status": "Created",
+							"code": 201,
+							"header": [
+								{ "key": "Content-Type", "value": "application/json" }
+							],
+							"body": "{\n  \"id\": \"a1b2c3d4-e5f6-7890-abcd-ef1234567890\",\n  \"userId\": \"shahar\",\n  \"title\": null,\n  \"status\": \"active\",\n  \"currentDraftVersion\": 0,\n  \"cmsPostId\": null,\n  \"createdAt\": 1707350400,\n  \"updatedAt\": 1707350400\n}"
+						},
+						{
+							"name": "400 — Missing userId",
+							"status": "Bad Request",
+							"code": 400,
+							"header": [
+								{ "key": "Content-Type", "value": "application/json" }
+							],
+							"body": "{\n  \"error\": \"userId is required\"\n}"
+						},
+						{
+							"name": "401 — Unauthorized",
+							"status": "Unauthorized",
+							"code": 401,
+							"header": [
+								{ "key": "Content-Type", "value": "application/json" }
+							],
+							"body": "{\n  \"error\": \"Unauthorized\"\n}"
+						}
+					]
+				},
+				{
+					"name": "List Sessions",
+					"description": "List all writing sessions, optionally filtered by user ID and/or status.\n\n### Query Parameters\n\n| Parameter | Type | Required | Description |\n|-----------|--------|----------|------------------------------------------|\n| `userId` | string | No | Filter sessions by user ID. Exact match. |\n| `status` | string | No | Filter sessions by status. Must be one of: `active`, `completed`, `archived`. |\n\nBoth filters can be combined. Results are ordered by `updatedAt` descending (most recently updated first).\n\n### Response — Session List\n\n```json\n{\n  \"data\": [\n    {\n      \"id\": \"a1b2c3d4-e5f6-7890-abcd-ef1234567890\",\n      \"userId\": \"shahar\",\n      \"title\": \"Why Edge Functions Matter\",\n      \"status\": \"active\",\n      \"currentDraftVersion\": 3,\n      \"cmsPostId\": null,\n      \"createdAt\": 1707350400,\n      \"updatedAt\": 1707436800\n    }\n  ]\n}\n```\n\n### Possible Errors\n\n- `400` — Invalid `status` value\n- `401` — Missing or invalid API key",
+					"request": {
+						"method": "GET",
+						"header": [
+							{ "key": "X-API-Key", "value": "{{WRITER_API_KEY}}" }
+						],
+						"url": {
+							"raw": "{{WRITER_BASE_URL}}/api/v1/sessions?userId=shahar&status=active",
+							"host": ["{{WRITER_BASE_URL}}"],
+							"path": ["api", "v1", "sessions"],
+							"query": [
+								{
+									"key": "userId",
+									"value": "shahar",
+									"description": "Filter by user ID. Exact match. Omit to list all users."
+								},
+								{
+									"key": "status",
+									"value": "active",
+									"description": "Filter by status. Must be: active, completed, or archived. Omit to list all statuses.",
+									"disabled": false
+								}
+							]
+						}
+					},
+					"response": [
+						{
+							"name": "200 — Sessions listed",
+							"status": "OK",
+							"code": 200,
+							"header": [
+								{ "key": "Content-Type", "value": "application/json" }
+							],
+							"body": "{\n  \"data\": [\n    {\n      \"id\": \"a1b2c3d4-e5f6-7890-abcd-ef1234567890\",\n      \"userId\": \"shahar\",\n      \"title\": \"Why Edge Functions Matter\",\n      \"status\": \"active\",\n      \"currentDraftVersion\": 3,\n      \"cmsPostId\": null,\n      \"createdAt\": 1707350400,\n      \"updatedAt\": 1707436800\n    },\n    {\n      \"id\": \"b2c3d4e5-f6a7-8901-bcde-f12345678901\",\n      \"userId\": \"shahar\",\n      \"title\": null,\n      \"status\": \"active\",\n      \"currentDraftVersion\": 0,\n      \"cmsPostId\": null,\n      \"createdAt\": 1707264000,\n      \"updatedAt\": 1707264000\n    }\n  ]\n}"
+						},
+						{
+							"name": "200 — Empty list",
+							"status": "OK",
+							"code": 200,
+							"header": [
+								{ "key": "Content-Type", "value": "application/json" }
+							],
+							"body": "{\n  \"data\": []\n}"
+						},
+						{
+							"name": "400 — Invalid status",
+							"status": "Bad Request",
+							"code": 400,
+							"header": [
+								{ "key": "Content-Type", "value": "application/json" }
+							],
+							"body": "{\n  \"error\": \"Invalid status. Must be one of: active, completed, archived\"\n}"
+						}
+					]
+				},
+				{
+					"name": "List Sessions — All (no filters)",
+					"description": "List all sessions across all users and statuses. This is the same endpoint as \"List Sessions\" but without any query parameters.\n\nUseful for getting a full overview of all writing sessions.",
+					"request": {
+						"method": "GET",
+						"header": [
+							{ "key": "X-API-Key", "value": "{{WRITER_API_KEY}}" }
+						],
+						"url": {
+							"raw": "{{WRITER_BASE_URL}}/api/v1/sessions",
+							"host": ["{{WRITER_BASE_URL}}"],
+							"path": ["api", "v1", "sessions"]
+						}
+					},
+					"response": [
+						{
+							"name": "200 — All sessions",
+							"status": "OK",
+							"code": 200,
+							"header": [
+								{ "key": "Content-Type", "value": "application/json" }
+							],
+							"body": "{\n  \"data\": [\n    {\n      \"id\": \"a1b2c3d4-e5f6-7890-abcd-ef1234567890\",\n      \"userId\": \"shahar\",\n      \"title\": \"Why Edge Functions Matter\",\n      \"status\": \"completed\",\n      \"currentDraftVersion\": 5,\n      \"cmsPostId\": \"cms-post-abc123\",\n      \"createdAt\": 1707350400,\n      \"updatedAt\": 1707523200\n    },\n    {\n      \"id\": \"c3d4e5f6-a7b8-9012-cdef-123456789012\",\n      \"userId\": \"shahar\",\n      \"title\": null,\n      \"status\": \"active\",\n      \"currentDraftVersion\": 0,\n      \"cmsPostId\": null,\n      \"createdAt\": 1707436800,\n      \"updatedAt\": 1707436800\n    }\n  ]\n}"
+						}
+					]
+				},
+				{
+					"name": "Get Session by ID",
+					"description": "Get full details of a single writing session.\n\n### Path Parameters\n\n| Parameter | Type | Required | Description |\n|-----------|--------|----------|-------------------------------|\n| `id` | string | **Yes** | UUID of the session to fetch |\n\n### Response — Session\n\nReturns the full session object. See the Sessions folder description for the complete field reference.\n\n### Possible Errors\n\n- `401` — Missing or invalid API key\n- `404` — Session not found",
+					"request": {
+						"method": "GET",
+						"header": [
+							{ "key": "X-API-Key", "value": "{{WRITER_API_KEY}}" }
+						],
+						"url": {
+							"raw": "{{WRITER_BASE_URL}}/api/v1/sessions/{{sessionId}}",
+							"host": ["{{WRITER_BASE_URL}}"],
+							"path": ["api", "v1", "sessions", "{{sessionId}}"]
+						}
+					},
+					"response": [
+						{
+							"name": "200 — Session found",
+							"status": "OK",
+							"code": 200,
+							"header": [
+								{ "key": "Content-Type", "value": "application/json" }
+							],
+							"body": "{\n  \"id\": \"a1b2c3d4-e5f6-7890-abcd-ef1234567890\",\n  \"userId\": \"shahar\",\n  \"title\": \"Why Edge Functions Matter\",\n  \"status\": \"active\",\n  \"currentDraftVersion\": 2,\n  \"cmsPostId\": null,\n  \"createdAt\": 1707350400,\n  \"updatedAt\": 1707436800\n}"
+						},
+						{
+							"name": "404 — Session not found",
+							"status": "Not Found",
+							"code": 404,
+							"header": [
+								{ "key": "Content-Type", "value": "application/json" }
+							],
+							"body": "{\n  \"error\": \"Session not found\"\n}"
+						}
+					]
+				},
+				{
+					"name": "Update Session — Set Title",
+					"description": "Update a session's metadata. Use this to set the working title or change the session status.\n\n### Path Parameters\n\n| Parameter | Type | Required | Description |\n|-----------|--------|----------|-------------------------------|\n| `id` | string | **Yes** | UUID of the session to update |\n\n### Request Body\n\nAll fields are optional. Only include the fields you want to change.\n\n| Field | Type | Required | Description |\n|---------|--------|----------|-------------------------------------------|\n| `title` | string | No | Working title for the session. Free-form text. Used for display in session listings. |\n| `status`| string | No | Session status. Must be one of: `active`, `completed`, `archived`. |\n\n### Status Transitions\n\n- `active` → `completed` — Mark a session as done (post published or abandoned)\n- `active` → `archived` — Archive a session you may return to later\n- `completed` → `archived` — Archive a finished session\n- `archived` → `active` — Reopen an archived session\n\n### Response — Updated Session\n\nReturns the full session object with updated fields and a new `updatedAt` timestamp.\n\n### Possible Errors\n\n- `400` — Invalid `status` value\n- `401` — Missing or invalid API key\n- `404` — Session not found",
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{ "key": "X-API-Key", "value": "{{WRITER_API_KEY}}" },
+							{ "key": "Content-Type", "value": "application/json" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"title\": \"Why Edge Functions Matter\"\n}"
+						},
+						"url": {
+							"raw": "{{WRITER_BASE_URL}}/api/v1/sessions/{{sessionId}}",
+							"host": ["{{WRITER_BASE_URL}}"],
+							"path": ["api", "v1", "sessions", "{{sessionId}}"]
+						}
+					},
+					"response": [
+						{
+							"name": "200 — Title updated",
+							"status": "OK",
+							"code": 200,
+							"header": [
+								{ "key": "Content-Type", "value": "application/json" }
+							],
+							"body": "{\n  \"id\": \"a1b2c3d4-e5f6-7890-abcd-ef1234567890\",\n  \"userId\": \"shahar\",\n  \"title\": \"Why Edge Functions Matter\",\n  \"status\": \"active\",\n  \"currentDraftVersion\": 0,\n  \"cmsPostId\": null,\n  \"createdAt\": 1707350400,\n  \"updatedAt\": 1707436800\n}"
+						},
+						{
+							"name": "404 — Session not found",
+							"status": "Not Found",
+							"code": 404,
+							"header": [
+								{ "key": "Content-Type", "value": "application/json" }
+							],
+							"body": "{\n  \"error\": \"Session not found\"\n}"
+						}
+					]
+				},
+				{
+					"name": "Update Session — Mark Completed",
+					"description": "Mark a writing session as completed. Typically done after the post has been published via the agent conversation.\n\nThis is a convenience example — it uses the same PATCH endpoint as \"Update Session — Set Title\".",
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{ "key": "X-API-Key", "value": "{{WRITER_API_KEY}}" },
+							{ "key": "Content-Type", "value": "application/json" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"status\": \"completed\"\n}"
+						},
+						"url": {
+							"raw": "{{WRITER_BASE_URL}}/api/v1/sessions/{{sessionId}}",
+							"host": ["{{WRITER_BASE_URL}}"],
+							"path": ["api", "v1", "sessions", "{{sessionId}}"]
+						}
+					},
+					"response": [
+						{
+							"name": "200 — Status updated",
+							"status": "OK",
+							"code": 200,
+							"header": [
+								{ "key": "Content-Type", "value": "application/json" }
+							],
+							"body": "{\n  \"id\": \"a1b2c3d4-e5f6-7890-abcd-ef1234567890\",\n  \"userId\": \"shahar\",\n  \"title\": \"Why Edge Functions Matter\",\n  \"status\": \"completed\",\n  \"currentDraftVersion\": 5,\n  \"cmsPostId\": \"cms-post-abc123\",\n  \"createdAt\": 1707350400,\n  \"updatedAt\": 1707523200\n}"
+						},
+						{
+							"name": "400 — Invalid status",
+							"status": "Bad Request",
+							"code": 400,
+							"header": [
+								{ "key": "Content-Type", "value": "application/json" }
+							],
+							"body": "{\n  \"error\": \"Invalid status. Must be one of: active, completed, archived\"\n}"
+						}
+					]
+				},
+				{
+					"name": "Update Session — Archive",
+					"description": "Archive a writing session. Archived sessions are hidden from the default active view but can be restored later by setting status back to `active`.",
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{ "key": "X-API-Key", "value": "{{WRITER_API_KEY}}" },
+							{ "key": "Content-Type", "value": "application/json" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"status\": \"archived\"\n}"
+						},
+						"url": {
+							"raw": "{{WRITER_BASE_URL}}/api/v1/sessions/{{sessionId}}",
+							"host": ["{{WRITER_BASE_URL}}"],
+							"path": ["api", "v1", "sessions", "{{sessionId}}"]
+						}
+					},
+					"response": [
+						{
+							"name": "200 — Archived",
+							"status": "OK",
+							"code": 200,
+							"header": [
+								{ "key": "Content-Type", "value": "application/json" }
+							],
+							"body": "{\n  \"id\": \"a1b2c3d4-e5f6-7890-abcd-ef1234567890\",\n  \"userId\": \"shahar\",\n  \"title\": \"Why Edge Functions Matter\",\n  \"status\": \"archived\",\n  \"currentDraftVersion\": 2,\n  \"cmsPostId\": null,\n  \"createdAt\": 1707350400,\n  \"updatedAt\": 1707609600\n}"
+						}
+					]
+				},
+				{
+					"name": "Update Session — Title + Status Together",
+					"description": "Update both the title and status in a single request. All fields are applied atomically.",
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{ "key": "X-API-Key", "value": "{{WRITER_API_KEY}}" },
+							{ "key": "Content-Type", "value": "application/json" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"title\": \"Final: Why Edge Functions Matter\",\n  \"status\": \"completed\"\n}"
+						},
+						"url": {
+							"raw": "{{WRITER_BASE_URL}}/api/v1/sessions/{{sessionId}}",
+							"host": ["{{WRITER_BASE_URL}}"],
+							"path": ["api", "v1", "sessions", "{{sessionId}}"]
+						}
+					},
+					"response": [
+						{
+							"name": "200 — Both fields updated",
+							"status": "OK",
+							"code": 200,
+							"header": [
+								{ "key": "Content-Type", "value": "application/json" }
+							],
+							"body": "{\n  \"id\": \"a1b2c3d4-e5f6-7890-abcd-ef1234567890\",\n  \"userId\": \"shahar\",\n  \"title\": \"Final: Why Edge Functions Matter\",\n  \"status\": \"completed\",\n  \"currentDraftVersion\": 5,\n  \"cmsPostId\": \"cms-post-abc123\",\n  \"createdAt\": 1707350400,\n  \"updatedAt\": 1707609600\n}"
+						}
+					]
+				}
+			]
+		},
+		{
+			"name": "Drafts",
+			"description": "Retrieve draft versions for a writing session.\n\nDrafts are stored in the agent's embedded SQLite (inside the Durable Object). These REST endpoints proxy requests to the agent DO to retrieve draft data.\n\nDrafts are created by the AI agent during conversation (via the `save_draft` tool). Each call to `save_draft` creates a new version. When published, intermediate drafts (between v1 and the final) are cleaned up.\n\n### Draft Summary Object (from list)\n\n| Field | Type | Description |\n|-------|------|-------------|\n| `id` | string | UUID of the draft |\n| `version` | number | Version number (1, 2, 3, ...) |\n| `title` | string \\| null | Draft title at this version |\n| `word_count` | number | Word count of the content |\n| `is_final` | number | 1 if this is the published version, 0 otherwise |\n| `created_at` | number | Unix timestamp (seconds) |\n\n### Full Draft Object (from get by version)\n\n| Field | Type | Description |\n|-------|------|-------------|\n| `id` | string | UUID of the draft |\n| `version` | number | Version number |\n| `title` | string \\| null | Draft title |\n| `content` | string | Full Markdown content |\n| `citations` | string \\| null | JSON array of citation objects |\n| `word_count` | number | Word count |\n| `is_final` | number | 1 if published, 0 otherwise |\n| `feedback` | string \\| null | User feedback that prompted this revision |\n| `created_at` | number | Unix timestamp (seconds) |\n\n### Citation Object (inside `citations` JSON)\n\n| Field | Type | Description |\n|-------|------|-------------|\n| `url` | string | Source URL |\n| `title` | string | Source title |\n| `publisher` | string \\| undefined | Publisher name |\n| `excerpt` | string \\| undefined | Relevant excerpt |\n\nAll endpoints require `X-API-Key` authentication.",
+			"item": [
+				{
+					"name": "List Drafts for Session",
+					"description": "List all draft versions for a writing session. Returns summary information (no content body) ordered by version ascending.\n\n### Path Parameters\n\n| Parameter | Type | Required | Description |\n|-------------|--------|----------|--------------------------------------|\n| `sessionId` | string | **Yes** | UUID of the session |\n\n### Response — Draft Summary List\n\n```json\n{\n  \"data\": [\n    {\n      \"id\": \"d1e2f3a4-b5c6-7890-1234-567890abcdef\",\n      \"version\": 1,\n      \"title\": \"Why Edge Functions Matter\",\n      \"word_count\": 450,\n      \"is_final\": 0,\n      \"created_at\": 1707350400\n    },\n    {\n      \"id\": \"e2f3a4b5-c6d7-8901-2345-67890abcdef1\",\n      \"version\": 2,\n      \"title\": \"Why Edge Functions Matter\",\n      \"word_count\": 620,\n      \"is_final\": 1,\n      \"created_at\": 1707354000\n    }\n  ]\n}\n```\n\nIf no drafts exist yet (conversation hasn't produced any), returns `{ \"data\": [] }`.\n\n### Possible Errors\n\n- `401` — Missing or invalid API key",
+					"request": {
+						"method": "GET",
+						"header": [
+							{ "key": "X-API-Key", "value": "{{WRITER_API_KEY}}" }
+						],
+						"url": {
+							"raw": "{{WRITER_BASE_URL}}/api/v1/sessions/{{sessionId}}/drafts",
+							"host": ["{{WRITER_BASE_URL}}"],
+							"path": ["api", "v1", "sessions", "{{sessionId}}", "drafts"]
+						}
+					},
+					"response": [
+						{
+							"name": "200 — Drafts listed",
+							"status": "OK",
+							"code": 200,
+							"header": [
+								{ "key": "Content-Type", "value": "application/json" }
+							],
+							"body": "{\n  \"data\": [\n    {\n      \"id\": \"d1e2f3a4-b5c6-7890-1234-567890abcdef\",\n      \"version\": 1,\n      \"title\": \"Why Edge Functions Matter\",\n      \"word_count\": 450,\n      \"is_final\": 0,\n      \"created_at\": 1707350400\n    },\n    {\n      \"id\": \"e2f3a4b5-c6d7-8901-2345-67890abcdef1\",\n      \"version\": 2,\n      \"title\": \"Why Edge Functions Matter\",\n      \"word_count\": 620,\n      \"is_final\": 0,\n      \"created_at\": 1707354000\n    },\n    {\n      \"id\": \"f3a4b5c6-d7e8-9012-3456-7890abcdef12\",\n      \"version\": 3,\n      \"title\": \"Why Edge Functions Matter: A Developer's Perspective\",\n      \"word_count\": 780,\n      \"is_final\": 1,\n      \"created_at\": 1707357600\n    }\n  ]\n}"
+						},
+						{
+							"name": "200 — No drafts yet",
+							"status": "OK",
+							"code": 200,
+							"header": [
+								{ "key": "Content-Type", "value": "application/json" }
+							],
+							"body": "{\n  \"data\": []\n}"
+						}
+					]
+				},
+				{
+					"name": "Get Draft by Version",
+					"description": "Get the full content of a specific draft version, including the Markdown body, citations, and feedback.\n\n### Path Parameters\n\n| Parameter | Type | Required | Description |\n|-------------|--------|----------|--------------------------------------|\n| `sessionId` | string | **Yes** | UUID of the session |\n| `version` | number | **Yes** | Draft version number (1-based) |\n\n### Response — Full Draft\n\n```json\n{\n  \"id\": \"d1e2f3a4-b5c6-7890-1234-567890abcdef\",\n  \"version\": 1,\n  \"title\": \"Why Edge Functions Matter\",\n  \"content\": \"# Why Edge Functions Matter\\n\\nI've been thinking about why edge functions...\",\n  \"citations\": \"[{\\\"url\\\":\\\"https://example.com\\\",\\\"title\\\":\\\"Edge Computing Overview\\\"}]\",\n  \"word_count\": 450,\n  \"is_final\": 0,\n  \"feedback\": null,\n  \"created_at\": 1707350400\n}\n```\n\nThe `citations` field is a JSON-encoded string (or `null`). Parse it to get an array of citation objects.\n\nThe `feedback` field contains the user feedback that prompted this revision (if any). It is `null` for the initial draft.\n\n### Possible Errors\n\n- `401` — Missing or invalid API key\n- `404` — Draft version not found",
+					"request": {
+						"method": "GET",
+						"header": [
+							{ "key": "X-API-Key", "value": "{{WRITER_API_KEY}}" }
+						],
+						"url": {
+							"raw": "{{WRITER_BASE_URL}}/api/v1/sessions/{{sessionId}}/drafts/1",
+							"host": ["{{WRITER_BASE_URL}}"],
+							"path": ["api", "v1", "sessions", "{{sessionId}}", "drafts", "1"]
+						}
+					},
+					"response": [
+						{
+							"name": "200 — Draft found",
+							"status": "OK",
+							"code": 200,
+							"header": [
+								{ "key": "Content-Type", "value": "application/json" }
+							],
+							"body": "{\n  \"id\": \"d1e2f3a4-b5c6-7890-1234-567890abcdef\",\n  \"version\": 1,\n  \"title\": \"Why Edge Functions Matter\",\n  \"content\": \"# Why Edge Functions Matter\\n\\nI've been thinking about why edge functions are such a game-changer. The ability to run code within milliseconds of your users fundamentally changes how we architect applications.\\n\\n## The Old Way\\n\\nTraditionally, we had to choose between static sites (fast but inflexible) and dynamic servers (flexible but slow for users far from the data center).\\n\\n## The Edge Way\\n\\nEdge functions eliminate this trade-off. Your code runs in data centers around the world, close to your users. No more choosing between performance and flexibility.\\n\\n## What This Means in Practice\\n\\n- **Personalization without latency** — Customize content at the edge\\n- **Real-time data** — Fetch from the nearest database replica\\n- **Global consistency** — Same performance in Tokyo as in New York\",\n  \"citations\": null,\n  \"word_count\": 450,\n  \"is_final\": 0,\n  \"feedback\": null,\n  \"created_at\": 1707350400\n}"
+						},
+						{
+							"name": "200 — Revised draft with feedback",
+							"status": "OK",
+							"code": 200,
+							"header": [
+								{ "key": "Content-Type", "value": "application/json" }
+							],
+							"body": "{\n  \"id\": \"e2f3a4b5-c6d7-8901-2345-67890abcdef1\",\n  \"version\": 2,\n  \"title\": \"Why Edge Functions Matter\",\n  \"content\": \"# Why Edge Functions Matter\\n\\n[revised content with stronger intro...]\",\n  \"citations\": \"[{\\\"url\\\":\\\"https://workers.cloudflare.com\\\",\\\"title\\\":\\\"Cloudflare Workers\\\",\\\"publisher\\\":\\\"Cloudflare\\\"},{\\\"url\\\":\\\"https://deno.com/deploy\\\",\\\"title\\\":\\\"Deno Deploy\\\",\\\"publisher\\\":\\\"Deno\\\"}]\",\n  \"word_count\": 620,\n  \"is_final\": 0,\n  \"feedback\": \"Make the intro more punchy and add some real-world examples with citations\",\n  \"created_at\": 1707354000\n}"
+						},
+						{
+							"name": "404 — Draft not found",
+							"status": "Not Found",
+							"code": 404,
+							"header": [
+								{ "key": "Content-Type", "value": "application/json" }
+							],
+							"body": "{\n  \"error\": \"Draft not found\"\n}"
+						}
+					]
+				},
+				{
+					"name": "Get Latest Draft (highest version)",
+					"description": "Get the latest draft version. This is a convenience example showing how to fetch the most recent version.\n\n**Tip:** First call \"List Drafts\" to see all versions and find the highest version number, then fetch it here. Or use the WebSocket agent conversation where the `get_current_draft` tool does this automatically.",
+					"request": {
+						"method": "GET",
+						"header": [
+							{ "key": "X-API-Key", "value": "{{WRITER_API_KEY}}" }
+						],
+						"url": {
+							"raw": "{{WRITER_BASE_URL}}/api/v1/sessions/{{sessionId}}/drafts/3",
+							"host": ["{{WRITER_BASE_URL}}"],
+							"path": ["api", "v1", "sessions", "{{sessionId}}", "drafts", "3"]
+						}
+					},
+					"response": [
+						{
+							"name": "200 — Final published draft",
+							"status": "OK",
+							"code": 200,
+							"header": [
+								{ "key": "Content-Type", "value": "application/json" }
+							],
+							"body": "{\n  \"id\": \"f3a4b5c6-d7e8-9012-3456-7890abcdef12\",\n  \"version\": 3,\n  \"title\": \"Why Edge Functions Matter: A Developer's Perspective\",\n  \"content\": \"# Why Edge Functions Matter: A Developer's Perspective\\n\\n[final polished content...]\",\n  \"citations\": \"[{\\\"url\\\":\\\"https://workers.cloudflare.com\\\",\\\"title\\\":\\\"Cloudflare Workers\\\",\\\"publisher\\\":\\\"Cloudflare\\\"}]\",\n  \"word_count\": 780,\n  \"is_final\": 1,\n  \"feedback\": \"This looks great, just tighten the conclusion\",\n  \"created_at\": 1707357600\n}"
+						}
+					]
+				}
+			]
+		},
+		{
+			"name": "Chat",
+			"description": "Non-streaming chat endpoint. Send a message and get the full AI response as JSON — no WebSocket client needed.\n\nUses `generateText` instead of `streamText` under the hood. Same tools, same system prompt, same state transitions as the WebSocket conversation.\n\nUseful for:\n- Testing with curl/Postman\n- Programmatic integration from other services\n- Non-streaming channels (SMS, WhatsApp, email)\n\nAll endpoints require `X-API-Key` authentication.",
+			"item": [
+				{
+					"name": "Send Chat Message",
+					"description": "Send a message to the writing agent and receive the full AI response synchronously.\n\n### Path Parameters\n\n| Parameter | Type | Required | Description |\n|-------------|--------|----------|--------------------------------------|\n| `sessionId` | string | **Yes** | UUID of the session |\n\n### Request Body\n\n| Field | Type | Required | Description |\n|-----------|--------|----------|------------------------------------------|\n| `message` | string | **Yes** | The user message to send to the agent |\n\n### Response — Chat Response (200)\n\n```json\n{\n  \"text\": \"Great topic! Let me ask you a few questions...\",\n  \"finishReason\": \"stop\",\n  \"usage\": {\n    \"promptTokens\": 234,\n    \"completionTokens\": 156\n  }\n}\n```\n\n| Field | Type | Description |\n|-------|------|-------------|\n| `text` | string | The full AI response text |\n| `finishReason` | string | Why the generation stopped (`stop`, `tool-calls`, etc.) |\n| `usage` | object | Token usage for the request |\n\nConversation context is maintained across calls — send follow-up messages to continue the conversation.\n\n### Possible Errors\n\n- `400` — Missing or empty `message`\n- `401` — Missing or invalid API key\n- `500` — AI generation failure",
+					"request": {
+						"method": "POST",
+						"header": [
+							{ "key": "X-API-Key", "value": "{{WRITER_API_KEY}}" },
+							{ "key": "Content-Type", "value": "application/json" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"message\": \"I want to write a blog post about AI replacing jobs\"\n}"
+						},
+						"url": {
+							"raw": "{{WRITER_BASE_URL}}/api/v1/sessions/{{sessionId}}/chat",
+							"host": ["{{WRITER_BASE_URL}}"],
+							"path": ["api", "v1", "sessions", "{{sessionId}}", "chat"]
+						}
+					},
+					"response": [
+						{
+							"name": "200 — AI response",
+							"status": "OK",
+							"code": 200,
+							"header": [
+								{ "key": "Content-Type", "value": "application/json" }
+							],
+							"body": "{\n  \"text\": \"Great topic! AI's impact on employment is something a lot of people are thinking about. Let me ask you a few questions to shape the article...\\n\\n1. **Who is your target audience?** Are you writing for tech professionals, business leaders, or a general audience?\\n2. **What angle do you want to take?** For example: optimistic (AI creates new jobs), cautionary (jobs at risk), or balanced (both sides)?\\n3. **Do you have any personal experiences or examples** you'd like to include?\",\n  \"finishReason\": \"stop\",\n  \"usage\": {\n    \"promptTokens\": 234,\n    \"completionTokens\": 156\n  }\n}"
+						},
+						{
+							"name": "400 — Missing message",
+							"status": "Bad Request",
+							"code": 400,
+							"header": [
+								{ "key": "Content-Type", "value": "application/json" }
+							],
+							"body": "{\n  \"error\": \"message is required\"\n}"
+						},
+						{
+							"name": "500 — Generation failure",
+							"status": "Internal Server Error",
+							"code": 500,
+							"header": [
+								{ "key": "Content-Type", "value": "application/json" }
+							],
+							"body": "{\n  \"error\": \"Failed to generate response\"\n}"
+						}
+					]
+				},
+				{
+					"name": "Send Follow-up Message",
+					"description": "Send a follow-up message in an ongoing conversation. The agent maintains full conversation context, so it will remember everything discussed previously.\n\nThis is the same endpoint as \"Send Chat Message\" — shown separately to demonstrate multi-turn conversation.",
+					"request": {
+						"method": "POST",
+						"header": [
+							{ "key": "X-API-Key", "value": "{{WRITER_API_KEY}}" },
+							{ "key": "Content-Type", "value": "application/json" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"message\": \"Target audience is tech professionals. I want a balanced take with real examples.\"\n}"
+						},
+						"url": {
+							"raw": "{{WRITER_BASE_URL}}/api/v1/sessions/{{sessionId}}/chat",
+							"host": ["{{WRITER_BASE_URL}}"],
+							"path": ["api", "v1", "sessions", "{{sessionId}}", "chat"]
+						}
+					},
+					"response": [
+						{
+							"name": "200 — Follow-up response",
+							"status": "OK",
+							"code": 200,
+							"header": [
+								{ "key": "Content-Type", "value": "application/json" }
+							],
+							"body": "{\n  \"text\": \"Perfect — tech professionals with a balanced perspective. A few more questions...\\n\\n1. **Desired length?** Short (500-800 words), medium (1000-1500), or long-form (2000+)?\\n2. **Any specific industries** you want to focus on? (e.g., software engineering, data science, customer support)\\n3. **Tone preference?** Conversational, formal/analytical, or thought-leadership style?\",\n  \"finishReason\": \"stop\",\n  \"usage\": {\n    \"promptTokens\": 456,\n    \"completionTokens\": 198\n  }\n}"
+						}
+					]
+				}
+			]
+		},
+		{
+			"name": "WebSocket (Reference)",
+			"description": "## WebSocket Connection\n\nThe AI conversation happens over WebSocket, not REST. This folder documents the connection details for reference.\n\n### Connection URL\n\n```\nws://localhost:8789/agents/writer-agent/{sessionId}\n```\n\nReplace `{sessionId}` with the session ID from `POST /api/v1/sessions`.\n\n### Protocol\n\nThe WebSocket uses the Cloudflare Agents SDK protocol. Messages are JSON with these types:\n\n**Client → Agent:**\n```json\n{\n  \"type\": \"cf_agent_use_chat_request\",\n  \"id\": \"unique-message-id\",\n  \"init\": {\n    \"method\": \"POST\",\n    \"body\": \"{\\\"messages\\\": [{\\\"role\\\": \\\"user\\\", \\\"content\\\": \\\"Write a blog post about edge functions\\\"}]}\"\n  }\n}\n```\n\n**Agent → Client (streaming):**\n```json\n{\n  \"type\": \"cf_agent_use_chat_response\",\n  \"id\": \"unique-message-id\",\n  \"body\": \"data chunk...\",\n  \"done\": false\n}\n```\n\n**Agent → Client (state update):**\nState changes are automatically broadcast to all connected clients.\n\n### State Object\n\nThe agent maintains reactive state that clients receive:\n\n```json\n{\n  \"sessionId\": \"\",\n  \"userId\": \"\",\n  \"title\": \"Why Edge Functions Matter\",\n  \"writingPhase\": \"revising\",\n  \"currentDraftVersion\": 2,\n  \"isGenerating\": false,\n  \"lastError\": null,\n  \"cmsPostId\": null\n}\n```\n\n### Writing Phases\n\n| Phase | Description |\n|-------|-------------|\n| `idle` | Initial — agent greets the user |\n| `interviewing` | Gathering topic, audience, key points |\n| `researching` | Using search/lookup tools |\n| `drafting` | Writing initial content |\n| `revising` | Iterating based on feedback |\n| `published` | Post pushed to CMS |\n\n### Agent Tools (called by LLM)\n\nDuring conversation, the LLM can call these tools:\n\n| Tool | Description |\n|------|-------------|\n| `save_draft` | Save content as a new draft version |\n| `get_current_draft` | Retrieve the latest draft |\n| `list_drafts` | List all draft versions |\n| `publish_to_cms` | Push final draft to CMS |\n| `search_web` | Web search (stub) |\n| `lookup_source` | URL lookup for citations (stub) |\n\n### Testing with wscat\n\n```bash\n# Install wscat\nnpm install -g wscat\n\n# Connect to a session\nwscat -c ws://localhost:8789/agents/writer-agent/{sessionId}\n```\n\n**Note:** Postman does not natively support the Agents SDK WebSocket protocol. Use `wscat` or a custom WebSocket client for testing.",
+			"item": [
+				{
+					"name": "WebSocket Connection Info",
+					"description": "This is a placeholder request to document the WebSocket endpoint. **Do not send this as HTTP** — it's a WebSocket connection.\n\n### How to Connect\n\n1. Create a session via `POST /api/v1/sessions`\n2. Copy the `id` from the response\n3. Connect with wscat:\n   ```\n   wscat -c ws://localhost:8789/agents/writer-agent/{id}\n   ```\n4. Send a message to start the conversation",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{WRITER_BASE_URL}}/agents/writer-agent/{{sessionId}}",
+							"host": ["{{WRITER_BASE_URL}}"],
+							"path": ["agents", "writer-agent", "{{sessionId}}"]
+						},
+						"description": "This is a WebSocket endpoint — use wscat or a WebSocket client, not a regular HTTP request.\n\nURL: ws://localhost:8789/agents/writer-agent/{sessionId}"
+					},
+					"response": []
+				}
+			]
+		}
+	]
+}

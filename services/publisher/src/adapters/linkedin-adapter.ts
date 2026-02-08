@@ -1,5 +1,5 @@
 import type { Post } from '@hotmetal/content-core'
-import type { CmsApi } from '../lib/cms-api'
+import type { CmsApi } from '@hotmetal/shared'
 import type { OutletAdapter, PreparedRendition, ValidationResult, PublishResult } from './types'
 import { formatForLinkedIn } from '../linkedin/formatter'
 import { LinkedInApiClient, type ShareMediaCategory } from '../linkedin/api'

@@ -1,44 +1,46 @@
-/**
- * For more details on how to configure Wrangler, refer to:
- * https://developers.cloudflare.com/workers/wrangler/configuration/
- */
 {
 	"$schema": "node_modules/wrangler/config-schema.json",
 	"name": "hotmetal-writer-agent",
 	"main": "src/index.ts",
 	"compatibility_date": "2026-02-05",
+	"compatibility_flags": ["nodejs_compat"],
 	"observability": {
-		"enabled": true
+		"enabled": true,
 	},
-	"compatibility_flags": [
-		"nodejs_compat"
-	]
-	/**
-	 * Smart Placement
-	 * https://developers.cloudflare.com/workers/configuration/smart-placement/#smart-placement
-	 */
-	// "placement": {  "mode": "smart" }
-	/**
-	 * Bindings
-	 * Bindings allow your Worker to interact with resources on the Cloudflare Developer Platform, including
-	 * databases, object storage, AI inference, real-time communication and more.
-	 * https://developers.cloudflare.com/workers/runtime-apis/bindings/
-	 */
-	/**
-	 * Environment Variables
-	 * https://developers.cloudflare.com/workers/wrangler/configuration/#environment-variables
-	 * Note: Use secrets to store sensitive data.
-	 * https://developers.cloudflare.com/workers/configuration/secrets/
-	 */
-	// "vars": {  "MY_VARIABLE": "production_value" }
-	/**
-	 * Static Assets
-	 * https://developers.cloudflare.com/workers/static-assets/binding/
-	 */
-	// "assets": {  "directory": "./public/",  "binding": "ASSETS" }
-	/**
-	 * Service Bindings (communicate between multiple Workers)
-	 * https://developers.cloudflare.com/workers/wrangler/configuration/#service-bindings
-	 */
-	// "services": [  {   "binding": "MY_SERVICE",   "service": "my-service"  } ]
+
+	// Durable Objects — one WriterAgent instance per writing session
+	"durable_objects": {
+		"bindings": [
+			{
+				"name": "WRITER_AGENT",
+				"class_name": "WriterAgent",
+			},
+		],
+	},
+
+	// SQLite migrations for agent-local state (drafts, research_notes)
+	"migrations": [
+		{
+			"tag": "v1",
+			"new_sqlite_classes": ["WriterAgent"],
+		},
+	],
+
+	// D1 Database for cross-session metadata (listing, search)
+	"d1_databases": [
+		{
+			"binding": "WRITER_DB",
+			"database_name": "hotmetal-writer-db",
+			"database_id": "5fc8f7a4-e05f-47ce-b638-f78a90057f43",
+			"migrations_dir": "./migrations",
+		},
+	],
+
+	// Environment variables (non-secret)
+	"vars": {
+		"CMS_URL": "http://localhost:8787",
+	},
+
+	// Secrets (set via `wrangler secret put`):
+	// ANTHROPIC_API_KEY, CMS_API_KEY, WRITER_API_KEY
 }
