@@ -1,0 +1,432 @@
+{
+	"info": {
+		"name": "Hot Metal — Publisher Service",
+		"description": "# Hot Metal Publisher Service\n\nThe Publisher service is a Cloudflare Worker that handles publishing posts to various outlets: **blog** and **LinkedIn**.\n\nIt communicates with the CMS API to fetch posts, update statuses, and create rendition records.\n\n## Authentication\n\nAll `/publish/*` endpoints require an `X-API-Key` header (same shared secret as the CMS API).\n\nOAuth endpoints (`/oauth/*`) are unauthenticated since they handle the browser-based LinkedIn OAuth flow.\n\n## Endpoints Overview\n\n### Publishing\n| Method | Path | Auth | Description |\n|--------|------|------|-------------|\n| POST | `/publish/blog` | API Key | Publish an existing draft post to the blog |\n| POST | `/publish/blog/create` | API Key | Create a new post and immediately publish |\n| POST | `/publish/linkedin` | API Key | Share a post to LinkedIn |\n\n### LinkedIn OAuth\n| Method | Path | Auth | Description |\n|--------|------|------|-------------|\n| GET | `/oauth/linkedin` | None | Start LinkedIn OAuth flow (browser redirect) |\n| GET | `/oauth/linkedin/callback` | None | OAuth callback (called by LinkedIn) |\n| GET | `/oauth/linkedin/status` | None | Check if LinkedIn is connected |\n\n### Health\n| Method | Path | Auth | Description |\n|--------|------|------|-------------|\n| GET | `/health` | None | Service health check |\n\n## Publish Flow\n\n1. **Blog publish:** Fetches post from CMS → validates content → updates post status to `published` → creates blog rendition → writes audit log\n2. **LinkedIn publish:** Fetches post from CMS → formats for LinkedIn → calls LinkedIn API → creates rendition in CMS → writes audit log\n\n## Error Responses\n\nAll errors return JSON: `{ \"error\": \"<message>\" }`\n\n| Status | Meaning |\n|--------|-------------------------------------------|\n| 400 | Missing or invalid required fields |\n| 401 | Missing API key or LinkedIn not connected |\n| 409 | Post is already published (blog) |\n| 422 | Content validation failed |\n| 502 | Upstream API error (CMS or LinkedIn) |\n| 500 | Internal server error |\n\n## Base URL\n\nDefault local development: `http://localhost:8788`",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"variable": [
+		{
+			"key": "PUBLISHER_BASE_URL",
+			"value": "{{PUBLISHER_BASE_URL}}",
+			"type": "string"
+		},
+		{
+			"key": "postId",
+			"value": "",
+			"type": "string",
+			"description": "Post ID for chaining publish requests"
+		}
+	],
+	"item": [
+		{
+			"name": "Health",
+			"description": "Service health check. No authentication required.",
+			"item": [
+				{
+					"name": "Health Check",
+					"description": "Returns the service status. Use this to verify the publisher worker is running.\n\n### Response\n\n```json\n{\n  \"status\": \"ok\",\n  \"service\": \"hotmetal-publisher\"\n}\n```\n\nNo authentication required.",
+					"request": {
+						"auth": { "type": "noauth" },
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{PUBLISHER_BASE_URL}}/health",
+							"host": ["{{PUBLISHER_BASE_URL}}"],
+							"path": ["health"]
+						}
+					},
+					"response": [
+						{
+							"name": "200 — Healthy",
+							"status": "OK",
+							"code": 200,
+							"header": [
+								{ "key": "Content-Type", "value": "application/json" }
+							],
+							"body": "{\n  \"status\": \"ok\",\n  \"service\": \"hotmetal-publisher\"\n}"
+						}
+					]
+				}
+			]
+		},
+		{
+			"name": "Blog Publishing",
+			"description": "Publish posts to the first-party blog.\n\n**Blog publish flow:**\n1. Fetch post from CMS API\n2. Validate the post has content\n3. Update post status to `published` with current timestamp\n4. Create a `blog` rendition record in the CMS\n5. Write an audit log entry\n6. Return the result with the blog URL\n\nAll endpoints require `X-API-Key` authentication.",
+			"item": [
+				{
+					"name": "Publish Existing Post to Blog",
+					"description": "Publish an existing draft post to the blog.\n\n### Request Body\n\n| Field | Type | Required | Description |\n|---------|--------|----------|-----------------------------------|\n| `postId`| string | Yes | UUID of the post to publish |\n\n### Flow\n\n1. Fetches the post from CMS\n2. Checks the post is not already published (returns `409` if it is)\n3. Validates the content is not empty\n4. Updates post status to `published` in CMS\n5. Creates a `blog` rendition in CMS\n6. Writes audit log\n\n### Response — PublishResult\n\n```json\n{\n  \"success\": true,\n  \"outlet\": \"blog\",\n  \"externalUrl\": \"https://blog.hotmetal.dev/posts/my-post\",\n  \"renditionStatus\": \"published\"\n}\n```\n\n### Possible Errors\n\n- `400` — Missing `postId`\n- `409` — Post is already published\n- `422` — Content validation failed (empty content)\n- `502` — CMS API error",
+					"request": {
+						"auth": {
+							"type": "apikey",
+							"apikey": [
+								{ "key": "value", "value": "{{PUBLISHER_API_KEY}}", "type": "string" },
+								{ "key": "key", "value": "X-API-Key", "type": "string" },
+								{ "key": "in", "value": "header", "type": "string" }
+							]
+						},
+						"method": "POST",
+						"header": [
+							{ "key": "Content-Type", "value": "application/json" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"postId\": \"{{postId}}\"\n}"
+						},
+						"url": {
+							"raw": "{{PUBLISHER_BASE_URL}}/publish/blog",
+							"host": ["{{PUBLISHER_BASE_URL}}"],
+							"path": ["publish", "blog"]
+						}
+					},
+					"response": [
+						{
+							"name": "200 — Published successfully",
+							"status": "OK",
+							"code": 200,
+							"header": [
+								{ "key": "Content-Type", "value": "application/json" }
+							],
+							"body": "{\n  \"success\": true,\n  \"outlet\": \"blog\",\n  \"externalUrl\": \"https://blog.hotmetal.dev/posts/my-first-post\",\n  \"renditionStatus\": \"published\"\n}"
+						},
+						{
+							"name": "400 — Missing postId",
+							"status": "Bad Request",
+							"code": 400,
+							"header": [
+								{ "key": "Content-Type", "value": "application/json" }
+							],
+							"body": "{\n  \"error\": \"postId is required\"\n}"
+						},
+						{
+							"name": "401 — Unauthorized",
+							"status": "Unauthorized",
+							"code": 401,
+							"header": [
+								{ "key": "Content-Type", "value": "application/json" }
+							],
+							"body": "{\n  \"error\": \"Unauthorized\"\n}"
+						},
+						{
+							"name": "409 — Already published",
+							"status": "Conflict",
+							"code": 409,
+							"header": [
+								{ "key": "Content-Type", "value": "application/json" }
+							],
+							"body": "{\n  \"error\": \"Post is already published\"\n}"
+						},
+						{
+							"name": "422 — Validation failed",
+							"status": "Unprocessable Entity",
+							"code": 422,
+							"header": [
+								{ "key": "Content-Type", "value": "application/json" }
+							],
+							"body": "{\n  \"error\": \"Validation failed\",\n  \"details\": [\"Post content is empty\"]\n}"
+						}
+					]
+				},
+				{
+					"name": "Create + Publish New Post",
+					"description": "Create a new post in the CMS and immediately publish it to the blog in one step.\n\n### Request Body\n\n| Field | Type | Required | Description |\n|---------|--------|----------|-----------------------------------|\n| `title` | string | Yes | Post title |\n| `slug` | string | Yes | URL slug |\n| `content`| string | Yes | HTML content body |\n| `author`| string | No | Author name (default: Shahar) |\n| `hook` | string | No | Short opening hook |\n| `excerpt`| string | No | Summary for listings |\n| `tags` | string | No | Comma-separated tags |\n\n### Flow\n\n1. Creates a `draft` post in CMS\n2. Validates the content\n3. Publishes to blog (updates status, creates rendition)\n4. Writes audit log\n\n### Response\n\nReturns both the created post (with status updated to `published`) and the publish result.\n\n```json\n{\n  \"post\": { \"id\": \"...\", \"title\": \"...\", \"status\": \"published\", ... },\n  \"result\": { \"success\": true, \"outlet\": \"blog\", \"externalUrl\": \"...\" }\n}\n```",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"if (pm.response.code === 201) {",
+									"    var jsonData = pm.response.json();",
+									"    pm.collectionVariables.set('postId', jsonData.post.id);",
+									"}"
+								]
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "apikey",
+							"apikey": [
+								{ "key": "value", "value": "{{PUBLISHER_API_KEY}}", "type": "string" },
+								{ "key": "key", "value": "X-API-Key", "type": "string" },
+								{ "key": "in", "value": "header", "type": "string" }
+							]
+						},
+						"method": "POST",
+						"header": [
+							{ "key": "Content-Type", "value": "application/json" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"title\": \"Quick Thought: Why Edge Functions Matter\",\n  \"slug\": \"quick-thought-edge-functions\",\n  \"content\": \"<p>I've been thinking about why edge functions are such a game-changer. The ability to run code within milliseconds of your users fundamentally changes how we architect applications.</p><p>No more choosing between static and dynamic. No more CDN cache invalidation headaches. Just code, running everywhere, instantly.</p>\",\n  \"author\": \"Shahar\",\n  \"hook\": \"Edge functions change everything about web architecture\",\n  \"excerpt\": \"A quick take on why edge functions fundamentally change web architecture\",\n  \"tags\": \"edge-computing,opinion,quick-thought\"\n}"
+						},
+						"url": {
+							"raw": "{{PUBLISHER_BASE_URL}}/publish/blog/create",
+							"host": ["{{PUBLISHER_BASE_URL}}"],
+							"path": ["publish", "blog", "create"]
+						}
+					},
+					"response": [
+						{
+							"name": "201 — Created and published",
+							"status": "Created",
+							"code": 201,
+							"header": [
+								{ "key": "Content-Type", "value": "application/json" }
+							],
+							"body": "{\n  \"post\": {\n    \"id\": \"e5f6a7b8-c9d0-1234-ef56-789012345678\",\n    \"title\": \"Quick Thought: Why Edge Functions Matter\",\n    \"slug\": \"quick-thought-edge-functions\",\n    \"content\": \"<p>I've been thinking about why edge functions are such a game-changer...</p>\",\n    \"status\": \"published\",\n    \"author\": \"Shahar\",\n    \"hook\": \"Edge functions change everything about web architecture\",\n    \"excerpt\": \"A quick take on why edge functions fundamentally change web architecture\",\n    \"tags\": \"edge-computing,opinion,quick-thought\",\n    \"createdAt\": \"1707350400\",\n    \"updatedAt\": \"1707350400\"\n  },\n  \"result\": {\n    \"success\": true,\n    \"outlet\": \"blog\",\n    \"externalUrl\": \"https://blog.hotmetal.dev/posts/quick-thought-edge-functions\",\n    \"renditionStatus\": \"published\"\n  }\n}"
+						},
+						{
+							"name": "400 — Missing title",
+							"status": "Bad Request",
+							"code": 400,
+							"header": [
+								{ "key": "Content-Type", "value": "application/json" }
+							],
+							"body": "{\n  \"error\": \"title is required\"\n}"
+						},
+						{
+							"name": "400 — Missing slug",
+							"status": "Bad Request",
+							"code": 400,
+							"header": [
+								{ "key": "Content-Type", "value": "application/json" }
+							],
+							"body": "{\n  \"error\": \"slug is required\"\n}"
+						},
+						{
+							"name": "400 — Missing content",
+							"status": "Bad Request",
+							"code": 400,
+							"header": [
+								{ "key": "Content-Type", "value": "application/json" }
+							],
+							"body": "{\n  \"error\": \"content is required\"\n}"
+						}
+					]
+				}
+			]
+		},
+		{
+			"name": "LinkedIn Publishing",
+			"description": "Publish posts to LinkedIn.\n\n**Prerequisites:** You must complete the LinkedIn OAuth flow first (see the LinkedIn OAuth folder).\n\n**LinkedIn publish flow:**\n1. Verify a valid LinkedIn token exists\n2. Fetch post from CMS API\n3. Format content for LinkedIn (strip HTML, add hook, truncate to 3000 chars)\n4. Call LinkedIn ugcPosts API\n5. Create a `linkedin` rendition record in CMS\n6. Write audit log\n\n**Share types:**\n- `article` (default) — includes a link card back to the blog post\n- `text` — plain text post, no link card\n\nRequires `X-API-Key` authentication.",
+			"item": [
+				{
+					"name": "Publish Post to LinkedIn — Article Share",
+					"description": "Publish a post to LinkedIn as an article share (includes a link card back to the blog).\n\n### Request Body\n\n| Field | Type | Required | Default | Description |\n|------------|--------|----------|----------|------------------------------------------|\n| `postId` | string | Yes | — | UUID of the post to share |\n| `shareType`| string | No | `article`| Share type: `article` or `text` |\n\n### Share Type: `article`\n\nCreates a LinkedIn post with:\n- Formatted text (HTML stripped, hook emphasized)\n- Link card with the blog URL, post title, and description\n- \"Originally published at ...\" footer\n\n### Response — PublishResult\n\n```json\n{\n  \"success\": true,\n  \"outlet\": \"linkedin\",\n  \"externalId\": \"urn:li:share:12345\",\n  \"externalUrl\": \"https://www.linkedin.com/feed/update/urn:li:share:12345\",\n  \"renditionStatus\": \"published\"\n}\n```\n\n### Possible Errors\n\n- `400` — Missing `postId`\n- `401` — LinkedIn not connected (no valid token)\n- `422` — Content validation failed\n- `502` — LinkedIn API error",
+					"request": {
+						"auth": {
+							"type": "apikey",
+							"apikey": [
+								{ "key": "value", "value": "{{PUBLISHER_API_KEY}}", "type": "string" },
+								{ "key": "key", "value": "X-API-Key", "type": "string" },
+								{ "key": "in", "value": "header", "type": "string" }
+							]
+						},
+						"method": "POST",
+						"header": [
+							{ "key": "Content-Type", "value": "application/json" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"postId\": \"{{postId}}\",\n  \"shareType\": \"article\"\n}"
+						},
+						"url": {
+							"raw": "{{PUBLISHER_BASE_URL}}/publish/linkedin",
+							"host": ["{{PUBLISHER_BASE_URL}}"],
+							"path": ["publish", "linkedin"]
+						}
+					},
+					"response": [
+						{
+							"name": "200 — Published to LinkedIn",
+							"status": "OK",
+							"code": 200,
+							"header": [
+								{ "key": "Content-Type", "value": "application/json" }
+							],
+							"body": "{\n  \"success\": true,\n  \"outlet\": \"linkedin\",\n  \"externalId\": \"urn:li:share:7654321098765432100\",\n  \"externalUrl\": \"https://www.linkedin.com/feed/update/urn%3Ali%3Ashare%3A7654321098765432100\",\n  \"renditionStatus\": \"published\"\n}"
+						},
+						{
+							"name": "401 — LinkedIn not connected",
+							"status": "Unauthorized",
+							"code": 401,
+							"header": [
+								{ "key": "Content-Type", "value": "application/json" }
+							],
+							"body": "{\n  \"error\": \"LinkedIn not connected. Visit /oauth/linkedin to authorize.\"\n}"
+						},
+						{
+							"name": "502 — LinkedIn API failed",
+							"status": "Bad Gateway",
+							"code": 502,
+							"header": [
+								{ "key": "Content-Type", "value": "application/json" }
+							],
+							"body": "{\n  \"success\": false,\n  \"outlet\": \"linkedin\",\n  \"renditionStatus\": \"failed\",\n  \"errors\": [\"LinkedIn ugcPosts failed: 403 Insufficient permissions\"]\n}"
+						}
+					]
+				},
+				{
+					"name": "Publish Post to LinkedIn — Text Only",
+					"description": "Publish a post to LinkedIn as a text-only post (no link card).\n\nThe `shareType: \"text\"` option creates a plain text post without an article link card. The formatted text includes the title, hook, content, and footer.\n\nUse this when you want maximum engagement (LinkedIn's algorithm often favors native text posts over link shares).",
+					"request": {
+						"auth": {
+							"type": "apikey",
+							"apikey": [
+								{ "key": "value", "value": "{{PUBLISHER_API_KEY}}", "type": "string" },
+								{ "key": "key", "value": "X-API-Key", "type": "string" },
+								{ "key": "in", "value": "header", "type": "string" }
+							]
+						},
+						"method": "POST",
+						"header": [
+							{ "key": "Content-Type", "value": "application/json" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"postId\": \"{{postId}}\",\n  \"shareType\": \"text\"\n}"
+						},
+						"url": {
+							"raw": "{{PUBLISHER_BASE_URL}}/publish/linkedin",
+							"host": ["{{PUBLISHER_BASE_URL}}"],
+							"path": ["publish", "linkedin"]
+						}
+					},
+					"response": [
+						{
+							"name": "200 — Text post published",
+							"status": "OK",
+							"code": 200,
+							"header": [
+								{ "key": "Content-Type", "value": "application/json" }
+							],
+							"body": "{\n  \"success\": true,\n  \"outlet\": \"linkedin\",\n  \"externalId\": \"urn:li:share:9876543210987654321\",\n  \"externalUrl\": \"https://www.linkedin.com/feed/update/urn%3Ali%3Ashare%3A9876543210987654321\",\n  \"renditionStatus\": \"published\"\n}"
+						}
+					]
+				}
+			]
+		},
+		{
+			"name": "LinkedIn OAuth",
+			"description": "LinkedIn OAuth 2.0 flow for authorizing the publisher to post on your behalf.\n\n**Setup prerequisites:**\n1. Create a LinkedIn App at https://www.linkedin.com/developers/apps\n2. Add `w_member_social` scope\n3. Set the redirect URI to match `LINKEDIN_REDIRECT_URI` env var\n4. Configure `LINKEDIN_CLIENT_ID` and `LINKEDIN_CLIENT_SECRET` secrets\n\n**Flow:**\n1. Open `GET /oauth/linkedin` in a browser\n2. LinkedIn redirects to their login/consent page\n3. After approval, LinkedIn redirects to `/oauth/linkedin/callback`\n4. The callback exchanges the code for a token and stores it encrypted in D1\n\n**Token lifetime:** ~60 days. No refresh token. Re-authorize when expired.\n\nNo API key authentication required on these endpoints.",
+			"item": [
+				{
+					"name": "Start OAuth Flow",
+					"description": "Initiate the LinkedIn OAuth authorization flow.\n\n**Important:** Open this URL in a **browser**, not in Postman's request runner. It returns a `302` redirect to LinkedIn's authorization page where you need to log in and approve access.\n\n### Flow\n\n1. Generates a random UUID state parameter\n2. Stores the state in D1 (expires in 10 minutes)\n3. Redirects to LinkedIn's authorization URL with:\n   - `client_id` from env\n   - `redirect_uri` from env\n   - `scope: w_member_social`\n   - `state` for CSRF protection\n\n### How to Test\n\nCopy the request URL and paste it into your browser:\n```\nhttp://localhost:8788/oauth/linkedin\n```\n\nAfter approving, LinkedIn will redirect to the callback URL.",
+					"request": {
+						"auth": { "type": "noauth" },
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{PUBLISHER_BASE_URL}}/oauth/linkedin",
+							"host": ["{{PUBLISHER_BASE_URL}}"],
+							"path": ["oauth", "linkedin"]
+						}
+					},
+					"response": [
+						{
+							"name": "302 — Redirect to LinkedIn",
+							"status": "Found",
+							"code": 302,
+							"header": [
+								{ "key": "Location", "value": "https://www.linkedin.com/oauth/v2/authorization?response_type=code&client_id=...&redirect_uri=...&state=...&scope=w_member_social" }
+							],
+							"body": ""
+						}
+					]
+				},
+				{
+					"name": "OAuth Callback",
+					"description": "LinkedIn OAuth callback endpoint. **Called automatically by LinkedIn** after the user approves access.\n\nYou should not call this manually. It is documented here for reference.\n\n### Query Parameters (set by LinkedIn)\n\n| Parameter | Type | Description |\n|-----------|--------|-------------------------------------------|\n| `code` | string | Authorization code from LinkedIn |\n| `state` | string | CSRF state (must match stored state) |\n| `error` | string | Error code if user denied access |\n| `error_description` | string | Human-readable error description |\n\n### Flow\n\n1. Validates the `state` parameter against D1 (atomic consume)\n2. Exchanges `code` for an access token via LinkedIn API\n3. Fetches the user's person URN from `/v2/me`\n4. Encrypts the token with AES-GCM and stores in D1\n\n### Success Response\n\n```json\n{\n  \"status\": \"connected\",\n  \"personUrn\": \"urn:li:person:abc123\",\n  \"expiresIn\": 5184000\n}\n```\n\n### Error Responses\n\n- `400` — OAuth failed (user denied), invalid/expired state, or missing parameters",
+					"request": {
+						"auth": { "type": "noauth" },
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{PUBLISHER_BASE_URL}}/oauth/linkedin/callback?code=AUTHORIZATION_CODE_HERE&state=STATE_UUID_HERE",
+							"host": ["{{PUBLISHER_BASE_URL}}"],
+							"path": ["oauth", "linkedin", "callback"],
+							"query": [
+								{
+									"key": "code",
+									"value": "AUTHORIZATION_CODE_HERE",
+									"description": "Authorization code from LinkedIn (set automatically during OAuth flow)"
+								},
+								{
+									"key": "state",
+									"value": "STATE_UUID_HERE",
+									"description": "CSRF state parameter (must match the one stored in D1)"
+								}
+							]
+						}
+					},
+					"response": [
+						{
+							"name": "200 — Connected successfully",
+							"status": "OK",
+							"code": 200,
+							"header": [
+								{ "key": "Content-Type", "value": "application/json" }
+							],
+							"body": "{\n  \"status\": \"connected\",\n  \"personUrn\": \"urn:li:person:abc123def456\",\n  \"expiresIn\": 5184000\n}"
+						},
+						{
+							"name": "400 — User denied access",
+							"status": "Bad Request",
+							"code": 400,
+							"header": [
+								{ "key": "Content-Type", "value": "application/json" }
+							],
+							"body": "{\n  \"error\": \"OAuth failed\",\n  \"detail\": \"user_cancelled_authorize\"\n}"
+						},
+						{
+							"name": "400 — Invalid state",
+							"status": "Bad Request",
+							"code": 400,
+							"header": [
+								{ "key": "Content-Type", "value": "application/json" }
+							],
+							"body": "{\n  \"error\": \"Invalid or expired state parameter\"\n}"
+						}
+					]
+				},
+				{
+					"name": "Check LinkedIn Connection Status",
+					"description": "Check whether a valid (non-expired) LinkedIn token exists.\n\nUse this before attempting to publish to LinkedIn to verify the connection is active.\n\n### Response\n\n```json\n{ \"connected\": true }\n```\n\nor\n\n```json\n{ \"connected\": false }\n```\n\nIf `connected` is `false`, direct the user to `GET /oauth/linkedin` to re-authorize.\n\nLinkedIn tokens expire after ~60 days with no refresh token available.",
+					"request": {
+						"auth": { "type": "noauth" },
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{PUBLISHER_BASE_URL}}/oauth/linkedin/status",
+							"host": ["{{PUBLISHER_BASE_URL}}"],
+							"path": ["oauth", "linkedin", "status"]
+						}
+					},
+					"response": [
+						{
+							"name": "200 — Connected",
+							"status": "OK",
+							"code": 200,
+							"header": [
+								{ "key": "Content-Type", "value": "application/json" }
+							],
+							"body": "{\n  \"connected\": true\n}"
+						},
+						{
+							"name": "200 — Not connected",
+							"status": "OK",
+							"code": 200,
+							"header": [
+								{ "key": "Content-Type", "value": "application/json" }
+							],
+							"body": "{\n  \"connected\": false\n}"
+						}
+					]
+				}
+			]
+		}
+	]
+}

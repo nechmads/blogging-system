@@ -1,0 +1,590 @@
+{
+	"info": {
+		"name": "Hot Metal — CMS API",
+		"description": "# Hot Metal CMS REST API\n\nThe CMS API provides a clean REST interface over the SonicJS headless CMS. It manages **Posts** and **Renditions** — the two core content types in the Hot Metal blogging platform.\n\n## Authentication\n\nAll endpoints require an `X-API-Key` header. The key is validated against the `CMS_API_KEY` secret configured on the CMS Worker.\n\n## Data Model\n\n### Post\n\nThe canonical blog post. Key fields:\n- `id` — UUID, auto-generated\n- `title`, `slug`, `content` — **required** on create\n- `status` — one of: `idea`, `draft`, `review`, `scheduled`, `published`, `archived` (default: `draft`)\n- `author` — defaults to `Shahar`\n- `hook` — short opening paragraph for LinkedIn / social\n- `tags`, `topics` — comma-separated strings\n- `citations` — JSON array of `{ url, title, publisher?, accessedAt?, excerpt? }`\n- `publishedAt`, `scheduledAt` — ISO 8601 datetime strings\n- SEO fields: `seoTitle`, `seoDescription`, `canonicalUrl`, `ogImage`\n\n### Rendition\n\nA per-outlet variant of a post (blog, linkedin, medium, substack). Key fields:\n- `postId`, `outlet`, `content` — **required** on create\n- `status` — one of: `draft`, `ready`, `scheduled`, `published`, `failed`\n- `externalId`, `externalUrl` — set after publishing to an external platform\n- `publishErrors` — array of error strings if publishing failed\n\n## Error Responses\n\nAll errors return JSON: `{ \"error\": \"<message>\" }`\n\n| Status | Meaning |\n|--------|-------------------------------------------|\n| 400 | Missing or invalid required fields |\n| 401 | Missing or invalid API key |\n| 404 | Resource not found |\n| 500 | Server error (misconfiguration, DB issue) |\n\n## Base URL\n\nDefault local development: `http://localhost:8787`",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"auth": {
+		"type": "apikey",
+		"apikey": [
+			{
+				"key": "value",
+				"value": "{{CMS_API_KEY}}",
+				"type": "string"
+			},
+			{
+				"key": "key",
+				"value": "X-API-Key",
+				"type": "string"
+			},
+			{
+				"key": "in",
+				"value": "header",
+				"type": "string"
+			}
+		]
+	},
+	"variable": [
+		{
+			"key": "CMS_BASE_URL",
+			"value": "{{CMS_BASE_URL}}",
+			"type": "string"
+		},
+		{
+			"key": "postId",
+			"value": "",
+			"type": "string",
+			"description": "Stores the ID of the last created/fetched post for chaining requests"
+		},
+		{
+			"key": "renditionId",
+			"value": "",
+			"type": "string",
+			"description": "Stores the ID of the last created/fetched rendition for chaining requests"
+		}
+	],
+	"item": [
+		{
+			"name": "Posts",
+			"description": "CRUD operations for canonical blog posts.\n\nPosts are the core content unit. They go through a lifecycle: `idea` → `draft` → `review` → `scheduled` → `published` → `archived`.\n\nRequired fields on create: `title`, `slug`, `content`.",
+			"item": [
+				{
+					"name": "List Posts",
+					"description": "Retrieve a paginated list of posts, optionally filtered by status.\n\n### Query Parameters\n\n| Parameter | Type | Default | Description |\n|-----------|--------|---------|----------------------------------------------|\n| `status` | string | _(all)_ | Filter by post status (e.g. `draft`, `published`) |\n| `limit` | number | `50` | Results per page (1–100) |\n| `offset` | number | `0` | Number of results to skip |\n\n### Response Shape\n\n```json\n{\n  \"data\": [ Post, Post, ... ],\n  \"meta\": { \"limit\": 50, \"offset\": 0 }\n}\n```\n\nPosts are sorted by `created_at` descending (newest first).",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{CMS_BASE_URL}}/api/v1/posts?status=draft&limit=10&offset=0",
+							"host": ["{{CMS_BASE_URL}}"],
+							"path": ["api", "v1", "posts"],
+							"query": [
+								{
+									"key": "status",
+									"value": "draft",
+									"description": "Filter by status. Valid values: idea, draft, review, scheduled, published, archived. Omit to return all."
+								},
+								{
+									"key": "limit",
+									"value": "10",
+									"description": "Number of posts to return (1–100, default 50)"
+								},
+								{
+									"key": "offset",
+									"value": "0",
+									"description": "Number of posts to skip for pagination (default 0)"
+								}
+							]
+						}
+					},
+					"response": [
+						{
+							"name": "200 — Posts retrieved",
+							"status": "OK",
+							"code": 200,
+							"header": [
+								{ "key": "Content-Type", "value": "application/json" }
+							],
+							"body": "{\n  \"data\": [\n    {\n      \"id\": \"a1b2c3d4-e5f6-7890-abcd-ef1234567890\",\n      \"title\": \"Getting Started with Cloudflare Workers\",\n      \"slug\": \"getting-started-cloudflare-workers\",\n      \"content\": \"<p>Cloudflare Workers let you run JavaScript at the edge...</p>\",\n      \"status\": \"draft\",\n      \"author\": \"Shahar\",\n      \"hook\": \"Deploy globally in seconds\",\n      \"excerpt\": \"A quick guide to building your first Worker\",\n      \"tags\": \"cloudflare,serverless,edge\",\n      \"topics\": \"web development\",\n      \"createdAt\": \"1707350400\",\n      \"updatedAt\": \"1707350400\"\n    }\n  ],\n  \"meta\": {\n    \"limit\": 10,\n    \"offset\": 0\n  }\n}"
+						},
+						{
+							"name": "200 — Empty list",
+							"status": "OK",
+							"code": 200,
+							"header": [
+								{ "key": "Content-Type", "value": "application/json" }
+							],
+							"body": "{\n  \"data\": [],\n  \"meta\": {\n    \"limit\": 10,\n    \"offset\": 0\n  }\n}"
+						},
+						{
+							"name": "401 — Unauthorized",
+							"status": "Unauthorized",
+							"code": 401,
+							"header": [
+								{ "key": "Content-Type", "value": "application/json" }
+							],
+							"body": "{\n  \"error\": \"Unauthorized\"\n}"
+						}
+					]
+				},
+				{
+					"name": "List Posts — All (no filters)",
+					"description": "Retrieve all posts without any filters, using default pagination (limit 50, offset 0).",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{CMS_BASE_URL}}/api/v1/posts",
+							"host": ["{{CMS_BASE_URL}}"],
+							"path": ["api", "v1", "posts"]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "List Posts — Published only",
+					"description": "Retrieve only published posts. Useful for the blog frontend to fetch displayable content.",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{CMS_BASE_URL}}/api/v1/posts?status=published",
+							"host": ["{{CMS_BASE_URL}}"],
+							"path": ["api", "v1", "posts"],
+							"query": [
+								{
+									"key": "status",
+									"value": "published",
+									"description": "Only return published posts"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "List Posts — Page 2",
+					"description": "Retrieve the second page of results (posts 11–20).",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{CMS_BASE_URL}}/api/v1/posts?limit=10&offset=10",
+							"host": ["{{CMS_BASE_URL}}"],
+							"path": ["api", "v1", "posts"],
+							"query": [
+								{
+									"key": "limit",
+									"value": "10",
+									"description": "10 posts per page"
+								},
+								{
+									"key": "offset",
+									"value": "10",
+									"description": "Skip the first 10 posts (page 2)"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Post by ID",
+					"description": "Retrieve a single post by its UUID.\n\n### Path Parameters\n\n| Parameter | Type | Description |\n|-----------|--------|-------------------------------|\n| `id` | string | UUID of the post to retrieve |\n\nReturns a flat `Post` object directly (not wrapped in `data`).\n\nReturns `404` if the post does not exist.",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{CMS_BASE_URL}}/api/v1/posts/{{postId}}",
+							"host": ["{{CMS_BASE_URL}}"],
+							"path": ["api", "v1", "posts", "{{postId}}"]
+						}
+					},
+					"response": [
+						{
+							"name": "200 — Post found",
+							"status": "OK",
+							"code": 200,
+							"header": [
+								{ "key": "Content-Type", "value": "application/json" }
+							],
+							"body": "{\n  \"id\": \"a1b2c3d4-e5f6-7890-abcd-ef1234567890\",\n  \"title\": \"Getting Started with Cloudflare Workers\",\n  \"slug\": \"getting-started-cloudflare-workers\",\n  \"content\": \"<p>Cloudflare Workers let you run JavaScript at the edge...</p>\",\n  \"status\": \"draft\",\n  \"author\": \"Shahar\",\n  \"hook\": \"Deploy globally in seconds\",\n  \"excerpt\": \"A quick guide to building your first Worker\",\n  \"tags\": \"cloudflare,serverless,edge\",\n  \"createdAt\": \"1707350400\",\n  \"updatedAt\": \"1707350400\"\n}"
+						},
+						{
+							"name": "404 — Post not found",
+							"status": "Not Found",
+							"code": 404,
+							"header": [
+								{ "key": "Content-Type", "value": "application/json" }
+							],
+							"body": "{\n  \"error\": \"Post not found\"\n}"
+						}
+					]
+				},
+				{
+					"name": "Create Post — Minimal",
+					"description": "Create a new post with only the required fields.\n\n### Required Body Fields\n\n| Field | Type | Description |\n|-----------|--------|-------------------------------|\n| `title` | string | Post title (max 200 chars) |\n| `slug` | string | URL slug (max 200 chars) |\n| `content` | string | HTML content body |\n\nAll other fields are optional. `status` defaults to `draft`, `author` defaults to `Shahar`.\n\nReturns the created post with `201` status.\n\n**Tip:** The `postId` collection variable is automatically set from the response so you can chain follow-up requests.",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"if (pm.response.code === 201) {",
+									"    var jsonData = pm.response.json();",
+									"    pm.collectionVariables.set('postId', jsonData.id);",
+									"    pm.test('Post created successfully', function () {",
+									"        pm.expect(jsonData.id).to.be.a('string');",
+									"        pm.expect(jsonData.title).to.equal('My First Post');",
+									"        pm.expect(jsonData.status).to.equal('draft');",
+									"    });",
+									"}"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"title\": \"My First Post\",\n  \"slug\": \"my-first-post\",\n  \"content\": \"<p>Hello world! This is my first post on Hot Metal.</p>\"\n}"
+						},
+						"url": {
+							"raw": "{{CMS_BASE_URL}}/api/v1/posts",
+							"host": ["{{CMS_BASE_URL}}"],
+							"path": ["api", "v1", "posts"]
+						}
+					},
+					"response": [
+						{
+							"name": "201 — Post created",
+							"status": "Created",
+							"code": 201,
+							"header": [
+								{ "key": "Content-Type", "value": "application/json" }
+							],
+							"body": "{\n  \"id\": \"f47ac10b-58cc-4372-a567-0e02b2c3d479\",\n  \"title\": \"My First Post\",\n  \"slug\": \"my-first-post\",\n  \"content\": \"<p>Hello world! This is my first post on Hot Metal.</p>\",\n  \"status\": \"draft\",\n  \"author\": \"Shahar\",\n  \"createdAt\": \"1707350400\",\n  \"updatedAt\": \"1707350400\"\n}"
+						},
+						{
+							"name": "400 — Missing required fields",
+							"status": "Bad Request",
+							"code": 400,
+							"header": [
+								{ "key": "Content-Type", "value": "application/json" }
+							],
+							"body": "{\n  \"error\": \"title, slug, and content are required and must be strings\"\n}"
+						}
+					]
+				},
+				{
+					"name": "Create Post — Full",
+					"description": "Create a new post with all available fields populated.\n\n### All Body Fields\n\n| Field | Type | Required | Default | Description |\n|-----------------|----------|----------|-----------|-------------------------------------------|\n| `title` | string | Yes | — | Post title |\n| `slug` | string | Yes | — | URL-friendly slug |\n| `content` | string | Yes | — | HTML content body |\n| `status` | string | No | `draft` | Post status (idea/draft/review/scheduled/published/archived) |\n| `author` | string | No | `Shahar` | Author name |\n| `subtitle` | string | No | — | Subtitle (max 200 chars) |\n| `hook` | string | No | — | Short opening hook for social sharing |\n| `excerpt` | string | No | — | Summary for cards and listings (max 300) |\n| `tags` | string | No | — | Comma-separated tags |\n| `topics` | string | No | — | Comma-separated topics |\n| `citations` | array | No | — | Array of Citation objects |\n| `seoTitle` | string | No | — | Meta title override (max 70) |\n| `seoDescription`| string | No | — | Meta description (max 160) |\n| `canonicalUrl` | string | No | — | Canonical URL if published elsewhere |\n| `ogImage` | string | No | — | Open Graph image URL |\n| `featuredImage` | string | No | — | Featured image path/URL |\n| `publishedAt` | string | No | — | ISO 8601 publish date |\n| `scheduledAt` | string | No | — | ISO 8601 scheduled date |\n| `publicationId` | string | No | — | ID of the parent publication |",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"if (pm.response.code === 201) {",
+									"    var jsonData = pm.response.json();",
+									"    pm.collectionVariables.set('postId', jsonData.id);",
+									"}"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"title\": \"The Future of Edge Computing\",\n  \"slug\": \"future-of-edge-computing\",\n  \"content\": \"<h2>Introduction</h2><p>Edge computing is reshaping how we build web applications. By moving compute closer to users, we can achieve lower latency and better performance.</p><h2>Key Benefits</h2><ul><li>Sub-millisecond response times</li><li>Reduced origin server load</li><li>Better user experience globally</li></ul><p>In this article, we explore the latest trends and what they mean for developers.</p>\",\n  \"status\": \"review\",\n  \"author\": \"Shahar\",\n  \"subtitle\": \"How edge-first architectures are changing web development\",\n  \"hook\": \"What if your server was everywhere?\",\n  \"excerpt\": \"Edge computing moves your code closer to users. Here's why that matters and how to get started.\",\n  \"tags\": \"edge-computing,cloudflare,performance,serverless\",\n  \"topics\": \"web development,infrastructure\",\n  \"citations\": [\n    {\n      \"url\": \"https://blog.cloudflare.com/workers-at-the-edge\",\n      \"title\": \"Workers at the Edge\",\n      \"publisher\": \"Cloudflare Blog\",\n      \"accessedAt\": \"2026-02-08T10:00:00Z\",\n      \"excerpt\": \"How Cloudflare Workers enables edge computing at scale\"\n    }\n  ],\n  \"seoTitle\": \"The Future of Edge Computing in 2026\",\n  \"seoDescription\": \"Explore how edge computing is reshaping web development with lower latency, better performance, and global scalability.\",\n  \"canonicalUrl\": \"https://blog.hotmetal.dev/posts/future-of-edge-computing\",\n  \"ogImage\": \"https://images.hotmetal.dev/og/edge-computing.png\",\n  \"featuredImage\": \"https://images.hotmetal.dev/featured/edge-computing.jpg\",\n  \"scheduledAt\": \"2026-02-15T09:00:00Z\"\n}"
+						},
+						"url": {
+							"raw": "{{CMS_BASE_URL}}/api/v1/posts",
+							"host": ["{{CMS_BASE_URL}}"],
+							"path": ["api", "v1", "posts"]
+						}
+					},
+					"response": [
+						{
+							"name": "201 — Full post created",
+							"status": "Created",
+							"code": 201,
+							"header": [
+								{ "key": "Content-Type", "value": "application/json" }
+							],
+							"body": "{\n  \"id\": \"b2c3d4e5-f6a7-8901-bcde-f23456789012\",\n  \"title\": \"The Future of Edge Computing\",\n  \"slug\": \"future-of-edge-computing\",\n  \"subtitle\": \"How edge-first architectures are changing web development\",\n  \"content\": \"<h2>Introduction</h2><p>Edge computing is reshaping how we build web applications...</p>\",\n  \"status\": \"review\",\n  \"author\": \"Shahar\",\n  \"hook\": \"What if your server was everywhere?\",\n  \"excerpt\": \"Edge computing moves your code closer to users. Here's why that matters and how to get started.\",\n  \"tags\": \"edge-computing,cloudflare,performance,serverless\",\n  \"topics\": \"web development,infrastructure\",\n  \"citations\": [\n    {\n      \"url\": \"https://blog.cloudflare.com/workers-at-the-edge\",\n      \"title\": \"Workers at the Edge\",\n      \"publisher\": \"Cloudflare Blog\",\n      \"accessedAt\": \"2026-02-08T10:00:00Z\",\n      \"excerpt\": \"How Cloudflare Workers enables edge computing at scale\"\n    }\n  ],\n  \"seoTitle\": \"The Future of Edge Computing in 2026\",\n  \"seoDescription\": \"Explore how edge computing is reshaping web development with lower latency, better performance, and global scalability.\",\n  \"canonicalUrl\": \"https://blog.hotmetal.dev/posts/future-of-edge-computing\",\n  \"ogImage\": \"https://images.hotmetal.dev/og/edge-computing.png\",\n  \"featuredImage\": \"https://images.hotmetal.dev/featured/edge-computing.jpg\",\n  \"scheduledAt\": \"2026-02-15T09:00:00Z\",\n  \"createdAt\": \"1707350400\",\n  \"updatedAt\": \"1707350400\"\n}"
+						}
+					]
+				},
+				{
+					"name": "Update Post — Change Status",
+					"description": "Partially update a post. Only the fields you include in the body will be changed — all other fields remain untouched.\n\n### Common Use Cases\n\n- **Change status:** `{ \"status\": \"published\", \"publishedAt\": \"...\" }`\n- **Edit content:** `{ \"content\": \"<p>Updated...</p>\" }`\n- **Update SEO:** `{ \"seoTitle\": \"...\", \"seoDescription\": \"...\" }`\n\nReturns the full updated post.",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"status\": \"published\",\n  \"publishedAt\": \"2026-02-08T12:00:00Z\"\n}"
+						},
+						"url": {
+							"raw": "{{CMS_BASE_URL}}/api/v1/posts/{{postId}}",
+							"host": ["{{CMS_BASE_URL}}"],
+							"path": ["api", "v1", "posts", "{{postId}}"]
+						}
+					},
+					"response": [
+						{
+							"name": "200 — Post updated",
+							"status": "OK",
+							"code": 200,
+							"header": [
+								{ "key": "Content-Type", "value": "application/json" }
+							],
+							"body": "{\n  \"id\": \"a1b2c3d4-e5f6-7890-abcd-ef1234567890\",\n  \"title\": \"My First Post\",\n  \"slug\": \"my-first-post\",\n  \"content\": \"<p>Hello world!</p>\",\n  \"status\": \"published\",\n  \"author\": \"Shahar\",\n  \"publishedAt\": \"2026-02-08T12:00:00Z\",\n  \"createdAt\": \"1707350400\",\n  \"updatedAt\": \"1707393600\"\n}"
+						},
+						{
+							"name": "404 — Post not found",
+							"status": "Not Found",
+							"code": 404,
+							"header": [
+								{ "key": "Content-Type", "value": "application/json" }
+							],
+							"body": "{\n  \"error\": \"Post not found\"\n}"
+						}
+					]
+				},
+				{
+					"name": "Update Post — Edit Content & SEO",
+					"description": "Update a post's content body, hook, excerpt, and SEO metadata in one request.",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"content\": \"<h2>Updated Introduction</h2><p>This post has been revised with new information about edge computing trends in 2026.</p>\",\n  \"hook\": \"Updated: The edge is closer than you think\",\n  \"excerpt\": \"Revised guide to edge computing trends in 2026\",\n  \"seoTitle\": \"Edge Computing Trends 2026 — Updated Guide\",\n  \"seoDescription\": \"Updated guide covering the latest edge computing trends and what they mean for developers in 2026.\"\n}"
+						},
+						"url": {
+							"raw": "{{CMS_BASE_URL}}/api/v1/posts/{{postId}}",
+							"host": ["{{CMS_BASE_URL}}"],
+							"path": ["api", "v1", "posts", "{{postId}}"]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Renditions",
+			"description": "CRUD operations for outlet-specific content renditions.\n\nRenditions are variants of a post formatted for specific outlets (blog, linkedin, medium, substack). Each rendition tracks its own publish status and external platform identifiers.\n\nRequired fields on create: `postId`, `outlet`, `content`.",
+			"item": [
+				{
+					"name": "List Renditions — All",
+					"description": "Retrieve all renditions without filters.\n\n### Query Parameters\n\n| Parameter | Type | Default | Description |\n|-----------|--------|---------|----------------------------------------------|\n| `postId` | string | _(all)_ | Filter by parent post ID |\n| `outlet` | string | _(all)_ | Filter by outlet (blog/linkedin/medium/substack) |\n| `limit` | number | `50` | Results per page (1–100) |\n| `offset` | number | `0` | Number of results to skip |\n\n### Response Shape\n\n```json\n{\n  \"data\": [ Rendition, Rendition, ... ],\n  \"meta\": { \"limit\": 50, \"offset\": 0 }\n}\n```",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{CMS_BASE_URL}}/api/v1/renditions",
+							"host": ["{{CMS_BASE_URL}}"],
+							"path": ["api", "v1", "renditions"]
+						}
+					},
+					"response": [
+						{
+							"name": "200 — Renditions retrieved",
+							"status": "OK",
+							"code": 200,
+							"header": [
+								{ "key": "Content-Type", "value": "application/json" }
+							],
+							"body": "{\n  \"data\": [\n    {\n      \"id\": \"c3d4e5f6-a7b8-9012-cdef-345678901234\",\n      \"postId\": \"a1b2c3d4-e5f6-7890-abcd-ef1234567890\",\n      \"outlet\": \"blog\",\n      \"content\": \"<p>Hello world!</p>\",\n      \"status\": \"published\",\n      \"externalUrl\": \"https://blog.hotmetal.dev/posts/my-first-post\",\n      \"publishedAt\": \"2026-02-08T12:00:00Z\",\n      \"lastGeneratedAt\": \"2026-02-08T12:00:00Z\",\n      \"createdAt\": \"1707350400\",\n      \"updatedAt\": \"1707350400\"\n    }\n  ],\n  \"meta\": {\n    \"limit\": 50,\n    \"offset\": 0\n  }\n}"
+						}
+					]
+				},
+				{
+					"name": "List Renditions — By Post ID",
+					"description": "Retrieve all renditions for a specific post. Useful to see which outlets a post has been published to.",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{CMS_BASE_URL}}/api/v1/renditions?postId={{postId}}",
+							"host": ["{{CMS_BASE_URL}}"],
+							"path": ["api", "v1", "renditions"],
+							"query": [
+								{
+									"key": "postId",
+									"value": "{{postId}}",
+									"description": "Filter renditions by parent post UUID"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "List Renditions — By Outlet",
+					"description": "Retrieve all renditions for a specific outlet (e.g. all LinkedIn renditions).",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{CMS_BASE_URL}}/api/v1/renditions?outlet=linkedin",
+							"host": ["{{CMS_BASE_URL}}"],
+							"path": ["api", "v1", "renditions"],
+							"query": [
+								{
+									"key": "outlet",
+									"value": "linkedin",
+									"description": "Filter by outlet. Valid values: blog, linkedin, medium, substack"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "List Renditions — By Post + Outlet",
+					"description": "Retrieve renditions for a specific post on a specific outlet. Commonly used to check if a post already has a LinkedIn rendition before publishing.",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{CMS_BASE_URL}}/api/v1/renditions?postId={{postId}}&outlet=blog",
+							"host": ["{{CMS_BASE_URL}}"],
+							"path": ["api", "v1", "renditions"],
+							"query": [
+								{
+									"key": "postId",
+									"value": "{{postId}}",
+									"description": "Parent post UUID"
+								},
+								{
+									"key": "outlet",
+									"value": "blog",
+									"description": "Outlet type"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Create Rendition",
+					"description": "Create a new rendition for a post.\n\n### Required Body Fields\n\n| Field | Type | Description |\n|---------|--------|------------------------------------|\n| `postId`| string | UUID of the parent post |\n| `outlet`| string | Target outlet (blog/linkedin/medium/substack) |\n| `content`| string | Formatted content for the outlet |\n\n### Optional Body Fields\n\n| Field | Type | Description |\n|--------------------|--------|----------------------------------------------|\n| `status` | string | Rendition status (default: `draft`) |\n| `formatRulesVersion`| string | Semver of format rules used |\n| `externalId` | string | ID on the external platform |\n| `externalUrl` | string | URL on the external platform |\n| `publishedAt` | string | ISO 8601 when published externally |\n| `lastGeneratedAt` | string | ISO 8601 when AI last generated |\n| `lastEditedAt` | string | ISO 8601 when manually edited |\n| `publishErrors` | array | Array of error strings |",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"if (pm.response.code === 201) {",
+									"    var jsonData = pm.response.json();",
+									"    pm.collectionVariables.set('renditionId', jsonData.id);",
+									"}"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"postId\": \"{{postId}}\",\n  \"outlet\": \"linkedin\",\n  \"content\": \"What if your server was everywhere?\\n\\nEdge computing is reshaping how we build web applications. By moving compute closer to users, we achieve lower latency and better performance.\\n\\nKey benefits:\\n- Sub-millisecond response times\\n- Reduced origin server load\\n- Better UX globally\\n\\nOriginally published at https://blog.hotmetal.dev/posts/future-of-edge-computing\",\n  \"status\": \"ready\",\n  \"formatRulesVersion\": \"1.0.0\",\n  \"lastGeneratedAt\": \"2026-02-08T12:00:00Z\"\n}"
+						},
+						"url": {
+							"raw": "{{CMS_BASE_URL}}/api/v1/renditions",
+							"host": ["{{CMS_BASE_URL}}"],
+							"path": ["api", "v1", "renditions"]
+						}
+					},
+					"response": [
+						{
+							"name": "201 — Rendition created",
+							"status": "Created",
+							"code": 201,
+							"header": [
+								{ "key": "Content-Type", "value": "application/json" }
+							],
+							"body": "{\n  \"id\": \"d4e5f6a7-b8c9-0123-def4-567890123456\",\n  \"postId\": \"a1b2c3d4-e5f6-7890-abcd-ef1234567890\",\n  \"outlet\": \"linkedin\",\n  \"content\": \"What if your server was everywhere?\\n\\nEdge computing is reshaping...\",\n  \"status\": \"ready\",\n  \"formatRulesVersion\": \"1.0.0\",\n  \"lastGeneratedAt\": \"2026-02-08T12:00:00Z\",\n  \"createdAt\": \"1707350400\",\n  \"updatedAt\": \"1707350400\"\n}"
+						},
+						{
+							"name": "400 — Missing required fields",
+							"status": "Bad Request",
+							"code": 400,
+							"header": [
+								{ "key": "Content-Type", "value": "application/json" }
+							],
+							"body": "{\n  \"error\": \"postId, outlet, and content are required and must be strings\"\n}"
+						}
+					]
+				},
+				{
+					"name": "Update Rendition — Mark Published",
+					"description": "Update a rendition after successful external publishing. Typically sets status, externalId, externalUrl, and publishedAt.\n\nOnly the fields you include will be changed.",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"status\": \"published\",\n  \"externalId\": \"urn:li:share:7654321098765432100\",\n  \"externalUrl\": \"https://www.linkedin.com/feed/update/urn:li:share:7654321098765432100\",\n  \"publishedAt\": \"2026-02-08T14:30:00Z\"\n}"
+						},
+						"url": {
+							"raw": "{{CMS_BASE_URL}}/api/v1/renditions/{{renditionId}}",
+							"host": ["{{CMS_BASE_URL}}"],
+							"path": ["api", "v1", "renditions", "{{renditionId}}"]
+						}
+					},
+					"response": [
+						{
+							"name": "200 — Rendition updated",
+							"status": "OK",
+							"code": 200,
+							"header": [
+								{ "key": "Content-Type", "value": "application/json" }
+							],
+							"body": "{\n  \"id\": \"d4e5f6a7-b8c9-0123-def4-567890123456\",\n  \"postId\": \"a1b2c3d4-e5f6-7890-abcd-ef1234567890\",\n  \"outlet\": \"linkedin\",\n  \"content\": \"What if your server was everywhere?...\",\n  \"status\": \"published\",\n  \"externalId\": \"urn:li:share:7654321098765432100\",\n  \"externalUrl\": \"https://www.linkedin.com/feed/update/urn:li:share:7654321098765432100\",\n  \"publishedAt\": \"2026-02-08T14:30:00Z\",\n  \"createdAt\": \"1707350400\",\n  \"updatedAt\": \"1707393600\"\n}"
+						}
+					]
+				},
+				{
+					"name": "Update Rendition — Mark Failed",
+					"description": "Update a rendition to record a publishing failure with error details.",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"status\": \"failed\",\n  \"publishErrors\": [\n    \"LinkedIn API returned 403: Insufficient permissions\",\n    \"Token may have expired — re-authorize at /oauth/linkedin\"\n  ]\n}"
+						},
+						"url": {
+							"raw": "{{CMS_BASE_URL}}/api/v1/renditions/{{renditionId}}",
+							"host": ["{{CMS_BASE_URL}}"],
+							"path": ["api", "v1", "renditions", "{{renditionId}}"]
+						}
+					},
+					"response": []
+				}
+			]
+		}
+	]
+}
