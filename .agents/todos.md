@@ -52,9 +52,22 @@
   - Agent state updates trigger draft panel refresh when `currentDraftVersion` changes
   - AI SDK v6 `UIMessage` parts rendering (text, tool invocations)
 
+- [x] **Writer Web — Publish Flow** — End-to-end publishing from the UI. PublishModal with outlet selector (blog/LinkedIn), auto-generated slug, author, tags, excerpt fields. Backend: `/publish` and `/generate-seo` routes on writer-agent, D1 session status update on success. Markdown-to-HTML conversion via `marked` before CMS publish. Slug validation, concurrency guard ('publishing' phase), safe JSON.parse for citations.
+
+- [x] **Writer Web — AI-Generated SEO Fields** — When publish modal opens, calls Claude Haiku to generate SEO excerpt and tags from draft content. Auto-fills form fields with loading states and AI badge indicator. User can edit before publishing.
+
+- [x] **Blog Frontend — Fix Post Routing & Query Filters** — Fixed SonicJS query API: replaced unsupported `filter[field][operator]` syntax with `where` JSON parameter for slug lookup and direct `status` parameter for post listing.
+
 ## Upcoming
 
-- [x] Writer Agent — Phase 2: Research integration (Alexander AI: crawl_url, research_topic, search_web, search_news, ask_question)
+- [ ] **Blog Automation** — Full automation system. See `.agents/plans/blog-automation.md` and `.agents/plans/scout.md` for detailed plans. Phases:
+  - Phase 1: Data model & users (D1 migration: users, publications, topics, ideas tables)
+  - Phase 2: API endpoints (CRUD for publications, topics, ideas)
+  - Phase 3: Left nav restructure (sidebar layout with Ideas/Writing/Schedule)
+  - Phase 4: Publication & topics management UI
+  - Phase 5: Content Scout worker (CF Queue + Workflow + KV cache, Alexander API, LLM idea generation)
+  - Phase 6: Ideas center UI
+  - Phase 7: Schedule & auto-publish config
+  - Phase 8: Writer-agent updates (publication-aware sessions, seed context)
 - [ ] Writer Agent — Phase 2: Voice input (transcription in `input-processor.ts`)
 - [ ] Writer Agent — Phase 2: D1 session sync (synchronize DO state back to D1 for listing accuracy)
-- [ ] Multi-blog support (Phase 4) — Add `blogId` field to posts and renditions
