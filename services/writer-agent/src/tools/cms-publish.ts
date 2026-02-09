@@ -1,5 +1,6 @@
 import { tool } from 'ai'
 import { z } from 'zod'
+import { marked } from 'marked'
 import { CmsApi } from '@hotmetal/shared'
 import type { WriterAgent } from '../agent/writer-agent'
 
@@ -24,18 +25,36 @@ export function createPublishTools(agent: WriterAgent) {
       }
 
       try {
+        // Convert markdown to HTML — the CMS stores content as HTML
+        const htmlContent = await marked.parse(draft.content)
+
+        let parsedCitations: unknown
+        try {
+          parsedCitations = draft.citations ? JSON.parse(draft.citations) : undefined
+        } catch {
+          parsedCitations = undefined
+        }
+
+        const firstContentLine = draft.content.split('\n').find((line) => line.trim().length > 0)
+        const hook = firstContentLine
+          ?.replace(/^#+\s*/, '')
+          .replace(/\*\*/g, '')
+          .replace(/\*/g, '')
+          .replace(/`/g, '')
+          .trim() || undefined
+
         const cmsApi = new CmsApi(agent.getEnv().CMS_URL, agent.getEnv().CMS_API_KEY)
 
         const post = await cmsApi.createPost({
           title: draft.title || 'Untitled',
           slug,
-          content: draft.content,
+          content: htmlContent,
           status: 'published',
           author,
           tags,
           excerpt,
-          hook: draft.content.split('\n')[0] || undefined,
-          citations: draft.citations ? JSON.parse(draft.citations) : undefined,
+          hook,
+          citations: parsedCitations as undefined,
           publishedAt: new Date().toISOString(),
         })
 

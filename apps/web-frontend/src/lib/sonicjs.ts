@@ -52,7 +52,7 @@ function mapToPost(item: SonicJSContentItem): Post {
  * Fetch all published posts, sorted by created_at descending.
  */
 export async function fetchPosts(): Promise<Post[]> {
-  const url = `${API_URL}/api/collections/posts/content?filter[status][equals]=published&limit=50`;
+  const url = `${API_URL}/api/collections/posts/content?status=published&limit=50`;
 
   const res = await fetch(url, {
     signal: AbortSignal.timeout(5000),
@@ -81,7 +81,8 @@ export async function fetchPostBySlug(
     return null;
   }
 
-  const url = `${API_URL}/api/collections/posts/content?filter[data.slug][equals]=${encodeURIComponent(slug)}&limit=1`;
+  const where = JSON.stringify({ and: [{ field: 'slug', operator: 'equals', value: slug }] });
+  const url = `${API_URL}/api/collections/posts/content?where=${encodeURIComponent(where)}&limit=1`;
 
   const res = await fetch(url, {
     signal: AbortSignal.timeout(5000),

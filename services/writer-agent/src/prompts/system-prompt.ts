@@ -50,6 +50,8 @@ After saving a draft, briefly summarize what you wrote and ask for feedback.`,
 
   revising: `You are revising the draft based on user feedback. Focus on the specific changes requested. Use get_current_draft to see the latest version, then use save_draft to save the updated version. Be precise about what you changed and why.`,
 
+  publishing: `The post is being published to the CMS. This is handled automatically — no action needed from the assistant.`,
+
   published: `The post has been published. Congratulate the user and let them know where they can find it. Offer to help with anything else.`,
 }
 

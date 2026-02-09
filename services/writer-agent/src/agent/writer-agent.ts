@@ -8,6 +8,8 @@ import { initAgentSqlite } from './sqlite-schema'
 import { buildSystemPrompt } from '../prompts/system-prompt'
 import { createToolSet } from '../tools'
 import { cleanupMessages } from './message-utils'
+import { CmsApi } from '@hotmetal/shared'
+import { marked } from 'marked'
 
 export interface DraftRow {
   id: string
@@ -172,6 +174,14 @@ export class WriterAgent extends AIChatAgent<WriterAgentEnv, WriterAgentState> {
       return this.handleGetDraft(parseInt(draftVersionMatch[1], 10))
     }
 
+    if (url.pathname.endsWith('/generate-seo') && request.method === 'POST') {
+      return this.handleGenerateSeo()
+    }
+
+    if (url.pathname.endsWith('/publish') && request.method === 'POST') {
+      return this.handlePublishToCms(request)
+    }
+
     if (url.pathname.endsWith('/chat') && request.method === 'POST') {
       let body: { message?: string }
       try {
@@ -228,6 +238,141 @@ export class WriterAgent extends AIChatAgent<WriterAgentEnv, WriterAgentState> {
         { error: 'Failed to generate response' },
         { status: 500 },
       )
+    }
+  }
+
+  async handleGenerateSeo(): Promise<Response> {
+    const draft = this.getCurrentDraft()
+    if (!draft) {
+      return Response.json({ error: 'No draft exists.' }, { status: 400 })
+    }
+
+    // Truncate content to avoid using too many tokens
+    const contentPreview = draft.content.length > 4000
+      ? draft.content.slice(0, 4000) + '\n\n[truncated]'
+      : draft.content
+
+    try {
+      const result = await generateText({
+        model: anthropic('claude-haiku-3-5-20241022'),
+        system: `You are an SEO expert for a technology blog. Given a blog post, generate:
+1. An SEO-optimized excerpt (1-2 sentences, max 160 characters, compelling and descriptive)
+2. Relevant tags (3-6 tags, comma-separated, lowercase)
+
+Respond in JSON format only:
+{"excerpt": "...", "tags": "tag1, tag2, tag3"}`,
+        messages: [
+          {
+            role: 'user',
+            content: `Title: ${draft.title || 'Untitled'}\n\n${contentPreview}`,
+          },
+        ],
+      })
+
+      const text = result.text.trim()
+      // Extract JSON from the response (handle potential markdown code blocks)
+      const jsonMatch = text.match(/\{[\s\S]*\}/)
+      if (!jsonMatch) {
+        return Response.json({ error: 'Failed to parse SEO suggestions' }, { status: 502 })
+      }
+
+      const seo = JSON.parse(jsonMatch[0]) as { excerpt?: string; tags?: string }
+
+      return Response.json({
+        excerpt: seo.excerpt || '',
+        tags: seo.tags || '',
+      })
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Failed to generate SEO data'
+      return Response.json({ error: message }, { status: 502 })
+    }
+  }
+
+  async handlePublishToCms(request: Request): Promise<Response> {
+    const draft = this.getCurrentDraft()
+    if (!draft) {
+      return Response.json({ error: 'No draft exists to publish.' }, { status: 400 })
+    }
+
+    if (this.state.writingPhase === 'published') {
+      return Response.json({ error: 'This session has already been published.' }, { status: 409 })
+    }
+
+    if (this.state.writingPhase === 'publishing') {
+      return Response.json({ error: 'A publish operation is already in progress.' }, { status: 429 })
+    }
+
+    let body: { slug: string; author?: string; tags?: string; excerpt?: string }
+    try {
+      body = await request.json() as typeof body
+    } catch {
+      return Response.json({ error: 'Invalid JSON in request body' }, { status: 400 })
+    }
+
+    const slug = body.slug?.trim()
+    if (!slug) {
+      return Response.json({ error: 'slug is required' }, { status: 400 })
+    }
+
+    const slugPattern = /^[a-z0-9]+(?:-[a-z0-9]+)*$/
+    if (!slugPattern.test(slug)) {
+      return Response.json(
+        { error: 'Slug must contain only lowercase letters, numbers, and hyphens' },
+        { status: 400 },
+      )
+    }
+
+    this.setWritingPhase('publishing')
+
+    try {
+      let parsedCitations: unknown
+      try {
+        parsedCitations = draft.citations ? JSON.parse(draft.citations) : undefined
+      } catch {
+        console.warn(`Invalid citations JSON for draft v${draft.version}, skipping`)
+        parsedCitations = undefined
+      }
+
+      // Extract hook as plain text (first non-empty line, stripped of markdown)
+      const firstContentLine = draft.content.split('\n').find((line) => line.trim().length > 0)
+      const hook = firstContentLine
+        ?.replace(/^#+\s*/, '')
+        .replace(/\*\*/g, '')
+        .replace(/\*/g, '')
+        .replace(/`/g, '')
+        .trim() || undefined
+
+      // Convert markdown to HTML — the CMS stores content as HTML (Quill editor format)
+      const htmlContent = await marked.parse(draft.content)
+
+      const cmsApi = new CmsApi(this.env.CMS_URL, this.env.CMS_API_KEY)
+
+      const post = await cmsApi.createPost({
+        title: draft.title || 'Untitled',
+        slug,
+        content: htmlContent,
+        status: 'published',
+        author: body.author?.trim() || 'Shahar',
+        tags: body.tags?.trim() || undefined,
+        excerpt: body.excerpt?.trim() || undefined,
+        hook,
+        citations: parsedCitations as undefined,
+        publishedAt: new Date().toISOString(),
+      })
+
+      this.finalizeDraft(post.id)
+
+      return Response.json({
+        success: true,
+        postId: post.id,
+        slug: post.slug,
+        title: post.title,
+      })
+    } catch (err) {
+      // Revert phase so the user can retry
+      this.setWritingPhase('revising')
+      const message = err instanceof Error ? err.message : 'Unknown CMS error'
+      return Response.json({ error: `Failed to publish: ${message}` }, { status: 502 })
     }
   }
 

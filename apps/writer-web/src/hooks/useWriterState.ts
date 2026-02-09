@@ -2,7 +2,7 @@
  * Mirrors the WriterAgentState from the writer-agent service.
  * The agent broadcasts this state over WebSocket via the agents SDK.
  */
-export type WritingPhase = 'idle' | 'interviewing' | 'researching' | 'drafting' | 'revising' | 'published'
+export type WritingPhase = 'idle' | 'interviewing' | 'researching' | 'drafting' | 'revising' | 'publishing' | 'published'
 
 export interface WriterAgentState {
   sessionId: string

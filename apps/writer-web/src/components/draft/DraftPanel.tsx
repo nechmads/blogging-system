@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useImperativeHandle, useState } from 'react'
-import { CopyIcon, RocketLaunchIcon } from '@phosphor-icons/react'
+import { CheckCircleIcon, CopyIcon, RocketLaunchIcon } from '@phosphor-icons/react'
 import { MemoizedMarkdown } from '@/components/memoized-markdown'
 import { Loader } from '@/components/loader/Loader'
 import { DraftVersionSelector } from './DraftVersionSelector'
+import { PublishModal } from './PublishModal'
 import { fetchDrafts, fetchDraft } from '@/lib/api'
 import type { Draft, DraftContent } from '@/lib/types'
 import React from 'react'
@@ -13,17 +14,20 @@ export interface DraftPanelHandle {
 
 interface DraftPanelProps {
   sessionId: string
+  cmsPostId?: string | null
   ref?: React.Ref<DraftPanelHandle>
 }
 
 export const DraftPanel = React.forwardRef<DraftPanelHandle, DraftPanelProps>(
-  function DraftPanel({ sessionId }, ref) {
+  function DraftPanel({ sessionId, cmsPostId }, ref) {
     const [drafts, setDrafts] = useState<Draft[]>([])
     const [selectedVersion, setSelectedVersion] = useState<number | null>(null)
     const [content, setContent] = useState<DraftContent | null>(null)
     const [loading, setLoading] = useState(true)
     const [loadingContent, setLoadingContent] = useState(false)
     const [showToast, setShowToast] = useState<string | null>(null)
+    const [showPublishModal, setShowPublishModal] = useState(false)
+    const [publishedPostId, setPublishedPostId] = useState<string | null>(null)
 
     const loadDrafts = useCallback(async () => {
       try {
@@ -82,8 +86,12 @@ export const DraftPanel = React.forwardRef<DraftPanelHandle, DraftPanelProps>(
     }
 
     const handlePublish = () => {
-      setShowToast('Coming soon')
-      setTimeout(() => setShowToast(null), 2000)
+      if (!content) return
+      setShowPublishModal(true)
+    }
+
+    const handlePublished = (postId: string) => {
+      setPublishedPostId(postId)
     }
 
     if (loading) {
@@ -116,14 +124,22 @@ export const DraftPanel = React.forwardRef<DraftPanelHandle, DraftPanelProps>(
             >
               <CopyIcon size={16} />
             </button>
-            <button
-              type="button"
-              onClick={handlePublish}
-              className="flex items-center gap-1 rounded-md px-2 py-1.5 text-xs font-medium text-[#6b7280] transition-colors hover:bg-[#e5e7eb] hover:text-[#0a0a0a] dark:hover:bg-[#374151]"
-            >
-              <RocketLaunchIcon size={14} />
-              Publish
-            </button>
+            {publishedPostId || cmsPostId ? (
+              <span className="flex items-center gap-1 rounded-md px-2 py-1.5 text-xs font-medium text-green-600">
+                <CheckCircleIcon size={14} weight="fill" />
+                Published
+              </span>
+            ) : (
+              <button
+                type="button"
+                onClick={handlePublish}
+                disabled={!content}
+                className="flex items-center gap-1 rounded-md px-2 py-1.5 text-xs font-medium text-[#6b7280] transition-colors hover:bg-[#e5e7eb] hover:text-[#0a0a0a] disabled:opacity-30 dark:hover:bg-[#374151]"
+              >
+                <RocketLaunchIcon size={14} />
+                Publish
+              </button>
+            )}
           </div>
         </div>
 
@@ -156,6 +172,15 @@ export const DraftPanel = React.forwardRef<DraftPanelHandle, DraftPanelProps>(
             {showToast}
           </div>
         )}
+
+        {/* Publish Modal */}
+        <PublishModal
+          isOpen={showPublishModal}
+          onClose={() => setShowPublishModal(false)}
+          sessionId={sessionId}
+          draftTitle={content?.title ?? null}
+          onPublished={handlePublished}
+        />
       </div>
     )
   }

@@ -1,4 +1,4 @@
-export type WritingPhase = 'idle' | 'interviewing' | 'researching' | 'drafting' | 'revising' | 'published'
+export type WritingPhase = 'idle' | 'interviewing' | 'researching' | 'drafting' | 'revising' | 'publishing' | 'published'
 
 export interface WriterAgentState {
   sessionId: string

@@ -1,4 +1,4 @@
-import type { Session, Draft, DraftContent } from './types'
+import type { Session, Draft, DraftContent, SeoSuggestion, PublishInput, PublishResult } from './types'
 
 const JSON_HEADERS = { 'Content-Type': 'application/json' }
 const DEFAULT_USER_ID = 'default'
@@ -66,4 +66,21 @@ export async function fetchDraft(
   return request<DraftContent>(
     `/api/sessions/${sessionId}/drafts/${version}`
   )
+}
+
+export async function generateSeo(sessionId: string): Promise<SeoSuggestion> {
+  return request<SeoSuggestion>(`/api/sessions/${sessionId}/generate-seo`, {
+    method: 'POST',
+  })
+}
+
+export async function publishDraft(
+  sessionId: string,
+  input: PublishInput
+): Promise<PublishResult> {
+  return request<PublishResult>(`/api/sessions/${sessionId}/publish`, {
+    method: 'POST',
+    headers: JSON_HEADERS,
+    body: JSON.stringify(input),
+  })
 }
