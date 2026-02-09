@@ -60,14 +60,14 @@
 
 ## Upcoming
 
-- [ ] **Blog Automation** — Full automation system. See `.agents/plans/blog-automation.md` and `.agents/plans/scout.md` for detailed plans. Phases:
-  - Phase 1: Data model & users (D1 migration: users, publications, topics, ideas tables)
-  - Phase 2: API endpoints (CRUD for publications, topics, ideas)
-  - Phase 3: Left nav restructure (sidebar layout with Ideas/Writing/Schedule)
-  - Phase 4: Publication & topics management UI
-  - Phase 5: Content Scout worker (CF Queue + Workflow + KV cache, Alexander API, LLM idea generation)
-  - Phase 6: Ideas center UI
-  - Phase 7: Schedule & auto-publish config
-  - Phase 8: Writer-agent updates (publication-aware sessions, seed context)
+- [x] **Blog Automation** — Full automation system. See `.agents/plans/blog-automation.md` and `.agents/plans/scout.md` for detailed plans. Phases:
+  - [x] Phase 1: Data model & users (D1 migration: users, publications, topics, ideas tables)
+  - [x] Phase 2: API endpoints (CRUD for publications, topics, ideas)
+  - [x] Phase 8 (partial): Writer-agent updates (publication-aware sessions, seed context, publicationId in publish)
+  - [x] Phase 3: Left nav restructure (sidebar layout with Ideas/Writing/Schedule centers)
+  - [x] Phase 4: Publication & topics management UI (SchedulePage, PublicationSettingsPage with topics CRUD, auto-publish mode, cadence)
+  - [x] Phase 6: Ideas center UI (IdeasPage with filters, IdeaDetailPage with promote/dismiss, shared constants)
+  - [x] Phase 5: Content Scout worker (CF Queue + Workflow + KV cache, Alexander API, LLM idea generation, auto-write pipeline)
+  - [x] Phase 7: Schedule & auto-publish config (content calendar, manual scout trigger, "Run Scout Now" button, activity timeline)
 - [ ] Writer Agent — Phase 2: Voice input (transcription in `input-processor.ts`)
 - [ ] Writer Agent — Phase 2: D1 session sync (synchronize DO state back to D1 for listing accuracy)
