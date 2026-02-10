@@ -7,11 +7,13 @@ import type { WriterAgentState } from '@/hooks/useWriterState'
 
 interface ChatPanelProps {
   sessionId: string
+  seedContext?: string | null
+  sessionTitle?: string | null
   onAssistantResponse?: () => void
   onStateUpdate?: (state: WriterAgentState) => void
 }
 
-export function ChatPanel({ sessionId, onAssistantResponse, onStateUpdate }: ChatPanelProps) {
+export function ChatPanel({ sessionId, seedContext, sessionTitle, onAssistantResponse, onStateUpdate }: ChatPanelProps) {
   const { messages, status, error, sendMessage, stop } = useWriterChat({
     sessionId,
     onStateUpdate,
@@ -21,10 +23,42 @@ export function ChatPanel({ sessionId, onAssistantResponse, onStateUpdate }: Cha
   const prevStatusRef = useRef<ChatStatus>(status)
   const onAssistantResponseRef = useRef(onAssistantResponse)
   onAssistantResponseRef.current = onAssistantResponse
+  const autoSentRef = useRef(false)
+  const isStuckToBottomRef = useRef(true)
 
-  // Auto-scroll on new messages
+  // Auto-send initial message for promoted-idea sessions
   useEffect(() => {
-    if (scrollRef.current) {
+    if (
+      seedContext &&
+      !autoSentRef.current &&
+      status === 'ready' &&
+      messages.length === 0
+    ) {
+      autoSentRef.current = true
+      const ideaLabel = sessionTitle ? `"${sessionTitle}"` : 'this idea'
+      sendMessage({
+        text: `I promoted ${ideaLabel} to this writing session. Please review the research context and start drafting the blog post. Begin by outlining the key points you plan to cover.`,
+      })
+    }
+  }, [seedContext, status, messages.length, sendMessage])
+
+  // Track whether the user has scrolled away from the bottom
+  useEffect(() => {
+    const el = scrollRef.current
+    if (!el) return
+
+    const handleScroll = () => {
+      const distanceFromBottom = el.scrollHeight - el.scrollTop - el.clientHeight
+      isStuckToBottomRef.current = distanceFromBottom < 40
+    }
+
+    el.addEventListener('scroll', handleScroll, { passive: true })
+    return () => el.removeEventListener('scroll', handleScroll)
+  }, [])
+
+  // Auto-scroll on new messages — only when stuck to bottom
+  useEffect(() => {
+    if (scrollRef.current && isStuckToBottomRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight
     }
   }, [messages])

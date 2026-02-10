@@ -98,6 +98,8 @@ export function WorkspacePage() {
           {mobileTab === 'chat' ? (
             <ChatPanel
               sessionId={id}
+              seedContext={session.seedContext}
+              sessionTitle={session.title}
               onAssistantResponse={handleAssistantResponse}
               onStateUpdate={handleStateUpdate}
             />
@@ -122,6 +124,8 @@ export function WorkspacePage() {
       >
         <ChatPanel
           sessionId={id}
+          seedContext={session.seedContext}
+          sessionTitle={session.title}
           onAssistantResponse={handleAssistantResponse}
           onStateUpdate={handleStateUpdate}
         />
