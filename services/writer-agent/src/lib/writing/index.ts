@@ -6,3 +6,4 @@ export interface DraftInput {
 export { createHook } from './create-hook'
 export { createSeoMeta, type SeoMetaResult } from './create-seo-meta'
 export { createImagePrompt } from './create-image-prompt'
+export { createPostTitle } from './create-post-title'

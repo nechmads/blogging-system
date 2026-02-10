@@ -72,6 +72,9 @@ const TOOL_GUIDELINES = `## Tool Usage Guidelines
 - **research_topic**: Deep multi-source research with citations. Use when the user wants comprehensive, well-sourced content. Warn the user this takes 1-2 minutes.
 - **crawl_url**: Fetch and parse a specific URL. Use to verify sources or extract content from a webpage before citing it.
 
+### Writing Tools
+- **generate_title**: Generate an optimized title for the current draft. Uses a dedicated prompt that creates multiple candidates, scores them, and returns the best one. Use this when you need a compelling title. Always show the result to the user and get approval before saving.
+
 ### Research Strategy
 - Start broad: use search_web or ask_question for quick context on the topic.
 - Go deep: use research_topic when the user wants comprehensive, well-sourced content.
