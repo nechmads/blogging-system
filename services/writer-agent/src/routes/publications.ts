@@ -4,7 +4,7 @@ import { PublicationManager } from '../lib/publication-manager'
 import { TopicManager } from '../lib/topic-manager'
 import { writerApiKeyAuth } from '../middleware/api-key-auth'
 import { AUTO_PUBLISH_MODES, type AutoPublishMode, type ScoutSchedule } from '@hotmetal/content-core'
-import { validateSchedule, validateTimezone, computeNextRun } from '@hotmetal/shared'
+import { validateSchedule, validateTimezone, computeNextRun, CmsApi } from '@hotmetal/shared'
 
 const publications = new Hono<{ Bindings: WriterAgentEnv }>()
 
@@ -64,6 +64,19 @@ publications.post('/api/publications', async (c) => {
     scoutSchedule: body.scoutSchedule,
     timezone: body.timezone,
   })
+
+  // Create matching publication in the CMS so published posts can reference it
+  try {
+    const cmsApi = new CmsApi(c.env.CMS_URL, c.env.CMS_API_KEY)
+    const cmsPub = await cmsApi.createPublication({
+      title: body.name.trim(),
+      slug: body.slug.trim(),
+    })
+    await manager.update(id, { cmsPublicationId: cmsPub.id })
+    publication.cmsPublicationId = cmsPub.id
+  } catch (err) {
+    console.error('Failed to create CMS publication (non-blocking):', err)
+  }
 
   return c.json(publication, 201)
 })

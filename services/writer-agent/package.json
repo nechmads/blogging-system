@@ -17,6 +17,7 @@
 	},
 	"dependencies": {
 		"@ai-sdk/anthropic": "^3.0.39",
+		"@cloudflare/ai-chat": "^0.0.6",
 		"@hotmetal/content-core": "workspace:*",
 		"@hotmetal/shared": "workspace:*",
 		"agents": "^0.3.10",

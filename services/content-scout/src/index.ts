@@ -42,25 +42,34 @@ export default {
 
   // Hourly cron — enqueue publications whose next_scout_at has passed
   async scheduled(_event: ScheduledEvent, env: ScoutEnv, ctx: ExecutionContext) {
+    console.log('[cron] Scout cron tick started')
     ctx.waitUntil((async () => {
-      await backfillNullSchedules(env)
-      await enqueueDuePublications(env)
+      try {
+        await backfillNullSchedules(env)
+        const count = await enqueueDuePublications(env)
+        console.log(`[cron] Scout cron tick complete — ${count} publication(s) enqueued`)
+      } catch (err) {
+        console.error('[cron] Scout cron tick failed:', err)
+      }
     })())
   },
 
   // Queue consumer — start a workflow per publication
   async queue(batch: MessageBatch<ScoutQueueMessage>, env: ScoutEnv) {
+    console.log(`[queue] Processing batch of ${batch.messages.length} message(s)`)
     for (const message of batch.messages) {
       const { publicationId, triggeredBy } = message.body
 
       try {
+        const workflowId = `scout-${publicationId}-${crypto.randomUUID()}`
+        console.log(`[queue] Starting workflow ${workflowId} (trigger: ${triggeredBy})`)
         await env.SCOUT_WORKFLOW.create({
-          id: `scout-${publicationId}-${crypto.randomUUID()}`,
+          id: workflowId,
           params: { publicationId, triggeredBy },
         })
         message.ack()
       } catch (err) {
-        console.error(`Failed to start workflow for publication ${publicationId}:`, err)
+        console.error(`[queue] Failed to start workflow for publication ${publicationId}:`, err)
         message.retry()
       }
     }
@@ -88,10 +97,13 @@ async function backfillNullSchedules(env: ScoutEnv): Promise<void> {
   const pubs = result.results ?? []
   if (pubs.length === 0) return
 
+  console.log(`[backfill] Found ${pubs.length} publication(s) with NULL next_scout_at`)
+
   for (const pub of pubs) {
     const schedule = parseSchedule(pub.scout_schedule)
     const tz = pub.timezone ?? DEFAULT_TIMEZONE
     const nextRun = computeNextRun(schedule, tz)
+    console.log(`[backfill] pub=${pub.id} schedule=${JSON.stringify(schedule)} tz=${tz} nextRun=${new Date(nextRun * 1000).toISOString()}`)
 
     await runWithRetry(() =>
       env.WRITER_DB
@@ -100,8 +112,6 @@ async function backfillNullSchedules(env: ScoutEnv): Promise<void> {
         .run(),
     )
   }
-
-  console.log(`Backfilled next_scout_at for ${pubs.length} publication(s)`)
 }
 
 /**
@@ -112,6 +122,7 @@ async function backfillNullSchedules(env: ScoutEnv): Promise<void> {
  */
 async function enqueueDuePublications(env: ScoutEnv): Promise<number> {
   const now = Math.floor(Date.now() / 1000)
+  console.log(`[enqueue] Checking for due publications (now=${new Date(now * 1000).toISOString()})`)
 
   const result = await runWithRetry(() =>
     env.WRITER_DB
@@ -121,12 +132,19 @@ async function enqueueDuePublications(env: ScoutEnv): Promise<number> {
   )
 
   const pubs = result.results ?? []
-  if (pubs.length === 0) return 0
+  if (pubs.length === 0) {
+    console.log('[enqueue] No publications due')
+    return 0
+  }
+
+  console.log(`[enqueue] Found ${pubs.length} due publication(s)`)
 
   for (const pub of pubs) {
     const schedule = parseSchedule(pub.scout_schedule)
     const tz = pub.timezone ?? DEFAULT_TIMEZONE
     const nextRun = computeNextRun(schedule, tz)
+
+    console.log(`[enqueue] pub=${pub.id} — advancing next_scout_at to ${new Date(nextRun * 1000).toISOString()}`)
 
     // Optimistic update BEFORE enqueue to prevent double-enqueue
     await runWithRetry(() =>
@@ -138,9 +156,9 @@ async function enqueueDuePublications(env: ScoutEnv): Promise<number> {
 
     // Enqueue immediately after update
     await env.SCOUT_QUEUE.send({ publicationId: pub.id, triggeredBy: 'cron' })
+    console.log(`[enqueue] pub=${pub.id} — queued`)
   }
 
-  console.log(`Enqueued ${pubs.length} due publication(s)`)
   return pubs.length
 }
 

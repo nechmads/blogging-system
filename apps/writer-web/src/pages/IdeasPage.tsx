@@ -6,7 +6,7 @@ import { Loader } from '@/components/loader/Loader'
 import { fetchPublications, fetchIdeas, updateIdeaStatus } from '@/lib/api'
 import type { PublicationConfig, Idea, IdeaStatus } from '@/lib/types'
 import { IDEA_STATUS_COLORS } from '@/lib/constants'
-import { scoutStore$, clearNewIdeasBadge } from '@/stores/scout-store'
+import { scoutStore$, refreshNewIdeasCount } from '@/stores/scout-store'
 
 const STATUS_FILTERS: { value: IdeaStatus | 'all'; label: string }[] = [
   { value: 'all', label: 'All' },
@@ -42,9 +42,9 @@ export function IdeasPage() {
   const pollingPubId = useValue(scoutStore$.pollingPubId)
   const prevNewIdeasCount = useRef(0)
 
-  // Clear badge on mount (ideas list will load immediately after)
+  // Refresh badge count on mount (user may have reviewed ideas elsewhere)
   useEffect(() => {
-    if (newIdeasCount > 0) clearNewIdeasBadge()
+    refreshNewIdeasCount()
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Load publications
@@ -87,7 +87,6 @@ export function IdeasPage() {
   // Auto-refresh when new ideas arrive while on this page
   useEffect(() => {
     if (newIdeasCount > 0 && prevNewIdeasCount.current === 0) {
-      clearNewIdeasBadge()
       // Only refresh if the new ideas are for the currently selected publication
       if (!pollingPubId || pollingPubId === selectedPubId) {
         loadIdeas()
@@ -101,6 +100,7 @@ export function IdeasPage() {
     try {
       await updateIdeaStatus(id, 'dismissed')
       setIdeas((prev) => prev.map((i) => (i.id === id ? { ...i, status: 'dismissed' as IdeaStatus } : i)))
+      refreshNewIdeasCount()
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to dismiss idea')
     }

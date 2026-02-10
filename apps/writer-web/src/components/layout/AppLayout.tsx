@@ -1,11 +1,17 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Outlet } from 'react-router'
 import { Sidebar, SidebarToggle } from './Sidebar'
 import { useScoutPolling } from '@/hooks/useScoutPolling'
+import { refreshNewIdeasCount } from '@/stores/scout-store'
 
 export function AppLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(false)
   useScoutPolling()
+
+  // Load new ideas count on app mount
+  useEffect(() => {
+    refreshNewIdeasCount()
+  }, [])
 
   return (
     <div className="flex h-screen">

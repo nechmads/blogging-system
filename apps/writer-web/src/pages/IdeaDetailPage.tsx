@@ -11,6 +11,7 @@ import { Loader } from '@/components/loader/Loader'
 import { fetchIdea, updateIdeaStatus, promoteIdea } from '@/lib/api'
 import type { Idea, IdeaStatus } from '@/lib/types'
 import { IDEA_STATUS_COLORS } from '@/lib/constants'
+import { refreshNewIdeasCount } from '@/stores/scout-store'
 
 function formatDate(timestamp: number): string {
   return new Date(timestamp * 1000).toLocaleDateString('en-US', {
@@ -53,6 +54,7 @@ export function IdeaDetailPage() {
     try {
       const updated = await updateIdeaStatus(id, status)
       setIdea(updated)
+      refreshNewIdeasCount()
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to update status')
     }
@@ -63,6 +65,7 @@ export function IdeaDetailPage() {
     setPromoting(true)
     try {
       const session = await promoteIdea(id)
+      refreshNewIdeasCount()
       navigate(`/writing/${session.id}`)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to promote idea')

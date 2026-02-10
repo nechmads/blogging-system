@@ -90,7 +90,11 @@ function rowToPost(row: SonicJSRow): Post {
   const ogImage = str(d.ogImage); if (ogImage) post.ogImage = ogImage
   const publishedAt = str(d.publishedAt); if (publishedAt) post.publishedAt = publishedAt
   const scheduledAt = str(d.scheduledAt); if (scheduledAt) post.scheduledAt = scheduledAt
-  if (Array.isArray(d.citations)) post.citations = d.citations as Citation[]
+  if (typeof d.citations === 'string') {
+    try { post.citations = JSON.parse(d.citations) as Citation[] } catch { /* invalid JSON — skip */ }
+  } else if (Array.isArray(d.citations)) {
+    post.citations = d.citations as Citation[]
+  }
 
   return post
 }
@@ -142,6 +146,88 @@ function isNonEmptyString(val: unknown): val is string {
 const apiV1 = new Hono()
 
 apiV1.use('*', apiKeyAuth)
+
+// ==================== PUBLICATIONS ====================
+
+interface CmsPublication {
+  id: string
+  title: string
+  slug: string
+  url?: string
+  image?: string
+  createdAt: string
+  updatedAt: string
+}
+
+function rowToPublication(row: SonicJSRow): CmsPublication {
+  const d = safeParseJson(row.data)
+  const pub: CmsPublication = {
+    id: row.id,
+    title: row.title,
+    slug: row.slug,
+    createdAt: String(row.created_at),
+    updatedAt: String(row.updated_at),
+  }
+  const url = str(d.url); if (url) pub.url = url
+  const image = str(d.image); if (image) pub.image = image
+  return pub
+}
+
+apiV1.get('/publications', async (c) => {
+  const db = (c.env as Record<string, unknown>).DB as D1Database
+  const collectionId = await resolveCollectionId(db, 'publications')
+  if (!collectionId) {
+    return c.json({ error: 'Publications collection not found. Run CMS migrations first.' }, 500)
+  }
+
+  const result = await db
+    .prepare('SELECT * FROM content WHERE collection_id = ? ORDER BY created_at DESC')
+    .bind(collectionId)
+    .all<SonicJSRow>()
+
+  return c.json({ data: (result.results ?? []).map(rowToPublication) })
+})
+
+apiV1.post('/publications', async (c) => {
+  const db = (c.env as Record<string, unknown>).DB as D1Database
+  const body = await c.req.json<Record<string, unknown>>()
+
+  if (!isNonEmptyString(body.title)) {
+    return c.json({ error: 'title is required' }, 400)
+  }
+
+  const collectionId = await resolveCollectionId(db, 'publications')
+  if (!collectionId) {
+    return c.json({ error: 'Publications collection not found. Run CMS migrations first.' }, 500)
+  }
+
+  const authorId = await getDefaultAuthorId(db)
+  if (!authorId) {
+    return c.json({ error: 'No users found. Create an admin user first.' }, 500)
+  }
+
+  const id = generateId()
+  const now = nowUnix()
+  const slug = isNonEmptyString(body.slug) ? body.slug : body.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
+
+  const data = stripUndefined({
+    url: body.url,
+    image: body.image,
+  })
+
+  await db
+    .prepare(
+      'INSERT INTO content (id, title, slug, status, collection_id, author_id, data, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)'
+    )
+    .bind(id, body.title, slug, 'published', collectionId, authorId, JSON.stringify(data), now, now)
+    .run()
+
+  const row = await db.prepare('SELECT * FROM content WHERE id = ?').bind(id).first<SonicJSRow>()
+  if (!row) {
+    return c.json({ error: 'Failed to retrieve created publication' }, 500)
+  }
+  return c.json(rowToPublication(row), 201)
+})
 
 // ==================== POSTS ====================
 
@@ -225,7 +311,7 @@ apiV1.post('/posts', async (c) => {
     status: postStatus,
     tags: body.tags,
     topics: body.topics,
-    citations: body.citations,
+    citations: Array.isArray(body.citations) ? JSON.stringify(body.citations) : body.citations,
     seoTitle: body.seoTitle,
     seoDescription: body.seoDescription,
     canonicalUrl: body.canonicalUrl,
@@ -294,7 +380,12 @@ apiV1.put('/posts/:id', async (c) => {
 
   for (const [bodyKey, dataKey] of Object.entries(updateMap)) {
     if (bodyKey in body) {
-      existingData[dataKey] = body[bodyKey]
+      // Normalize citations to always store as a JSON string
+      if (bodyKey === 'citations' && Array.isArray(body[bodyKey])) {
+        existingData[dataKey] = JSON.stringify(body[bodyKey])
+      } else {
+        existingData[dataKey] = body[bodyKey]
+      }
     }
   }
 
