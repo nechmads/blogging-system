@@ -1,7 +1,7 @@
 import type {
   Session, Draft, DraftContent, SeoSuggestion, PublishInput, PublishResult,
   PublicationConfig, Topic, Idea, IdeaStatus, AutoPublishMode, ActivityItem,
-  ScoutSchedule,
+  ScoutSchedule, GeneratedImage,
 } from './types'
 
 const JSON_HEADERS = { 'Content-Type': 'application/json' }
@@ -86,6 +86,30 @@ export async function publishDraft(
     method: 'POST',
     headers: JSON_HEADERS,
     body: JSON.stringify(input),
+  })
+}
+
+// --- Image Generation ---
+
+export async function generateImagePrompt(sessionId: string): Promise<{ prompt: string }> {
+  return request<{ prompt: string }>(`/api/sessions/${sessionId}/generate-image-prompt`, {
+    method: 'POST',
+  })
+}
+
+export async function generateImages(sessionId: string, prompt: string): Promise<{ images: GeneratedImage[] }> {
+  return request<{ images: GeneratedImage[] }>(`/api/sessions/${sessionId}/generate-images`, {
+    method: 'POST',
+    headers: JSON_HEADERS,
+    body: JSON.stringify({ prompt }),
+  })
+}
+
+export async function selectFeaturedImage(sessionId: string, imageUrl: string): Promise<{ featuredImageUrl: string }> {
+  return request<{ featuredImageUrl: string }>(`/api/sessions/${sessionId}/select-image`, {
+    method: 'POST',
+    headers: JSON_HEADERS,
+    body: JSON.stringify({ imageUrl }),
   })
 }
 
@@ -180,6 +204,11 @@ export async function deleteTopic(id: string): Promise<void> {
 
 export async function fetchIdeasCount(pubId: string): Promise<number> {
   const result = await request<{ count: number }>(`/api/publications/${pubId}/ideas/count`)
+  return result.count
+}
+
+export async function fetchNewIdeasCount(): Promise<number> {
+  const result = await request<{ count: number }>('/api/ideas/new-count')
   return result.count
 }
 

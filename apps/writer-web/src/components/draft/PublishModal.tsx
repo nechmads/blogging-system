@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { CheckCircleIcon, GlobeIcon, LinkedinLogoIcon, SparkleIcon } from '@phosphor-icons/react'
+import { CheckCircleIcon, GlobeIcon, ImageIcon, LinkedinLogoIcon, SparkleIcon } from '@phosphor-icons/react'
 import { Modal } from '@/components/modal/Modal'
 import { Loader } from '@/components/loader/Loader'
 import { generateSeo, publishDraft } from '@/lib/api'
@@ -11,6 +11,7 @@ interface PublishModalProps {
   onClose: () => void
   sessionId: string
   draftTitle: string | null
+  featuredImageUrl?: string | null
   onPublished: (postId: string) => void
 }
 
@@ -23,12 +24,13 @@ function slugify(text: string): string {
     .replace(/^-|-$/g, '')
 }
 
-export function PublishModal({ isOpen, onClose, sessionId, draftTitle, onPublished }: PublishModalProps) {
+export function PublishModal({ isOpen, onClose, sessionId, draftTitle, featuredImageUrl, onPublished }: PublishModalProps) {
   const [selectedOutlet, setSelectedOutlet] = useState<Outlet>('blog')
   const [slug, setSlug] = useState('')
   const [author, setAuthor] = useState('Shahar')
   const [tags, setTags] = useState('')
   const [excerpt, setExcerpt] = useState('')
+  const [hook, setHook] = useState('')
   const [publishing, setPublishing] = useState(false)
   const [generatingSeo, setGeneratingSeo] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -40,6 +42,10 @@ export function PublishModal({ isOpen, onClose, sessionId, draftTitle, onPublish
       setError(null)
       setPublished(false)
       setPublishing(false)
+      setHook('')
+      setExcerpt('')
+      setTags('')
+      setSlug('')
       return
     }
 
@@ -54,6 +60,7 @@ export function PublishModal({ isOpen, onClose, sessionId, draftTitle, onPublish
     generateSeo(sessionId)
       .then((seo) => {
         if (cancelled) return
+        if (seo.hook) setHook(seo.hook)
         if (seo.excerpt) setExcerpt(seo.excerpt)
         if (seo.tags) setTags(seo.tags)
       })
@@ -80,6 +87,7 @@ export function PublishModal({ isOpen, onClose, sessionId, draftTitle, onPublish
         author: author.trim() || undefined,
         tags: tags.trim() || undefined,
         excerpt: excerpt.trim() || undefined,
+        hook: hook.trim() || undefined,
       })
 
       setPublished(true)
@@ -147,6 +155,26 @@ export function PublishModal({ isOpen, onClose, sessionId, draftTitle, onPublish
               </div>
             </div>
 
+            {/* Featured Image preview */}
+            <div>
+              <label className="mb-1.5 block text-xs font-medium text-[#6b7280]">Featured Image</label>
+              {featuredImageUrl ? (
+                <div className="flex items-center gap-3">
+                  <img
+                    src={featuredImageUrl}
+                    alt="Featured"
+                    className="h-20 w-20 rounded-lg object-cover"
+                  />
+                  <span className="text-xs text-[#6b7280]">Image selected</span>
+                </div>
+              ) : (
+                <div className="flex items-center gap-2 rounded-lg border border-dashed border-[#e5e7eb] px-3 py-2.5 dark:border-[#374151]">
+                  <ImageIcon size={16} className="text-[#9ca3af]" />
+                  <span className="text-xs text-[#9ca3af]">No featured image — add one from the draft panel</span>
+                </div>
+              )}
+            </div>
+
             {/* Blog-specific fields */}
             {selectedOutlet === 'blog' && (
               <div className="space-y-3">
@@ -193,6 +221,27 @@ export function PublishModal({ isOpen, onClose, sessionId, draftTitle, onPublish
                 </div>
 
                 <div>
+                  <label htmlFor="publish-hook" className="mb-1 flex items-center gap-1.5 text-xs font-medium text-[#6b7280]">
+                    Hook
+                    {generatingSeo && <Loader size={10} />}
+                    {!generatingSeo && hook && (
+                      <span className="flex items-center gap-0.5 text-[#d97706]">
+                        <SparkleIcon size={10} weight="fill" />
+                        <span className="text-[10px]">AI</span>
+                      </span>
+                    )}
+                  </label>
+                  <textarea
+                    id="publish-hook"
+                    value={hook}
+                    onChange={(e) => setHook(e.target.value)}
+                    placeholder={generatingSeo ? 'Generating...' : 'A short opening to grab readers...'}
+                    rows={3}
+                    className="w-full resize-none rounded-lg border border-[#e5e7eb] bg-white px-3 py-2 text-sm text-[#0a0a0a] placeholder:text-[#6b7280] focus:border-[#d97706] focus:outline-none focus:ring-1 focus:ring-[#d97706] dark:border-[#374151] dark:bg-[#1a1a1a] dark:text-[#fafafa]"
+                  />
+                </div>
+
+                <div>
                   <label htmlFor="publish-excerpt" className="mb-1 flex items-center gap-1.5 text-xs font-medium text-[#6b7280]">
                     Excerpt
                     {generatingSeo && <Loader size={10} />}
@@ -208,7 +257,7 @@ export function PublishModal({ isOpen, onClose, sessionId, draftTitle, onPublish
                     value={excerpt}
                     onChange={(e) => setExcerpt(e.target.value)}
                     placeholder={generatingSeo ? 'Generating...' : 'A brief summary for SEO and previews...'}
-                    rows={2}
+                    rows={3}
                     className="w-full resize-none rounded-lg border border-[#e5e7eb] bg-white px-3 py-2 text-sm text-[#0a0a0a] placeholder:text-[#6b7280] focus:border-[#d97706] focus:outline-none focus:ring-1 focus:ring-[#d97706] dark:border-[#374151] dark:bg-[#1a1a1a] dark:text-[#fafafa]"
                   />
                 </div>

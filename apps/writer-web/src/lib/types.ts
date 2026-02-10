@@ -8,8 +8,14 @@ export interface Session {
   publicationId: string | null
   ideaId: string | null
   seedContext: string | null
+  featuredImageUrl: string | null
   createdAt: number
   updatedAt: number
+}
+
+export interface GeneratedImage {
+  id: string
+  url: string
 }
 
 export interface Draft {
@@ -28,6 +34,7 @@ export interface DraftContent extends Draft {
 }
 
 export interface SeoSuggestion {
+  hook: string
   excerpt: string
   tags: string
 }
@@ -37,6 +44,7 @@ export interface PublishInput {
   author?: string
   tags?: string
   excerpt?: string
+  hook?: string
 }
 
 export interface PublishResult {

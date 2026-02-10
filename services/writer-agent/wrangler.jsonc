@@ -42,9 +42,20 @@
 
 	// Environment variables (non-secret)
 	"vars": {
-		"CMS_URL": "https://hotmetal-cms-admin.shahar-nechmad.workers.dev",
+		"CMS_URL": "https://cms.hotmetalapp.com",
 		"ALEXANDER_API_URL": "https://alexanderai.farfarawaylabs.com",
 	},
+
+	// Workers AI binding (for image generation)
+	"ai": { "binding": "AI" },
+
+	// R2 bucket for generated images
+	"r2_buckets": [
+		{
+			"binding": "IMAGE_BUCKET",
+			"bucket_name": "hotmetal-cms-bucket",
+		},
+	],
 
 	// Secrets (set via `wrangler secret put`):
 	// ANTHROPIC_API_KEY, CMS_API_KEY, WRITER_API_KEY, ALEXANDER_API_KEY

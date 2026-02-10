@@ -1,4 +1,4 @@
-import { AIChatAgent } from 'agents/ai-chat-agent'
+import { AIChatAgent } from '@cloudflare/ai-chat'
 import { anthropic } from '@ai-sdk/anthropic'
 import { convertToModelMessages, createUIMessageStream, createUIMessageStreamResponse, generateText, streamText, stepCountIs, type StreamTextOnFinishCallback, type ToolSet } from 'ai'
 import type { Connection, WSMessage } from 'partyserver'
@@ -42,9 +42,9 @@ export class WriterAgent extends AIChatAgent<WriterAgentEnv, WriterAgentState> {
     if (!this.state.sessionId) {
       const sessionId = this.name
       const row = await this.env.WRITER_DB
-        .prepare('SELECT id, user_id, title, status, current_draft_version, cms_post_id, publication_id, seed_context FROM sessions WHERE id = ?')
+        .prepare('SELECT id, user_id, title, status, current_draft_version, cms_post_id, publication_id, seed_context, featured_image_url FROM sessions WHERE id = ?')
         .bind(sessionId)
-        .first<{ id: string; user_id: string; title: string | null; current_draft_version: number; cms_post_id: string | null; publication_id: string | null; seed_context: string | null }>()
+        .first<{ id: string; user_id: string; title: string | null; current_draft_version: number; cms_post_id: string | null; publication_id: string | null; seed_context: string | null; featured_image_url: string | null }>()
 
       if (row) {
         this.setState({
@@ -56,6 +56,7 @@ export class WriterAgent extends AIChatAgent<WriterAgentEnv, WriterAgentState> {
           cmsPostId: row.cms_post_id,
           publicationId: row.publication_id,
           seedContext: row.seed_context,
+          featuredImageUrl: row.featured_image_url,
         })
       }
     }
@@ -185,6 +186,10 @@ export class WriterAgent extends AIChatAgent<WriterAgentEnv, WriterAgentState> {
       return this.handlePublishToCms(request)
     }
 
+    if (url.pathname.endsWith('/update-featured-image') && request.method === 'POST') {
+      return this.handleUpdateFeaturedImage(request)
+    }
+
     if (url.pathname.endsWith('/chat') && request.method === 'POST') {
       let body: { message?: string }
       try {
@@ -244,6 +249,26 @@ export class WriterAgent extends AIChatAgent<WriterAgentEnv, WriterAgentState> {
     }
   }
 
+  async handleUpdateFeaturedImage(request: Request): Promise<Response> {
+    let body: { featuredImageUrl: unknown }
+    try {
+      body = await request.json() as typeof body
+    } catch {
+      return Response.json({ error: 'Invalid JSON' }, { status: 400 })
+    }
+
+    if (body.featuredImageUrl !== null && typeof body.featuredImageUrl !== 'string') {
+      return Response.json({ error: 'featuredImageUrl must be a string or null' }, { status: 400 })
+    }
+
+    this.setState({
+      ...this.state,
+      featuredImageUrl: body.featuredImageUrl ?? null,
+    })
+
+    return Response.json({ ok: true })
+  }
+
   async handleGenerateSeo(): Promise<Response> {
     const draft = this.getCurrentDraft()
     if (!draft) {
@@ -257,13 +282,14 @@ export class WriterAgent extends AIChatAgent<WriterAgentEnv, WriterAgentState> {
 
     try {
       const result = await generateText({
-        model: anthropic('claude-haiku-3-5-20241022'),
+        model: anthropic('claude-haiku-4-5-20251001'),
         system: `You are an SEO expert for a technology blog. Given a blog post, generate:
-1. An SEO-optimized excerpt (1-2 sentences, max 160 characters, compelling and descriptive)
-2. Relevant tags (3-6 tags, comma-separated, lowercase)
+1. A hook — a short, engaging opening paragraph (1-3 sentences) that grabs the reader's attention and makes them want to read the full article. It should NOT repeat the title.
+2. An SEO-optimized excerpt (1-2 sentences, max 160 characters, compelling and descriptive)
+3. Relevant tags (3-6 tags, comma-separated, lowercase)
 
 Respond in JSON format only:
-{"excerpt": "...", "tags": "tag1, tag2, tag3"}`,
+{"hook": "...", "excerpt": "...", "tags": "tag1, tag2, tag3"}`,
         messages: [
           {
             role: 'user',
@@ -279,13 +305,15 @@ Respond in JSON format only:
         return Response.json({ error: 'Failed to parse SEO suggestions' }, { status: 502 })
       }
 
-      const seo = JSON.parse(jsonMatch[0]) as { excerpt?: string; tags?: string }
+      const seo = JSON.parse(jsonMatch[0]) as { hook?: string; excerpt?: string; tags?: string }
 
       return Response.json({
+        hook: seo.hook || '',
         excerpt: seo.excerpt || '',
         tags: seo.tags || '',
       })
     } catch (err) {
+      console.error('generate-seo error:', err)
       const message = err instanceof Error ? err.message : 'Failed to generate SEO data'
       return Response.json({ error: message }, { status: 502 })
     }
@@ -305,7 +333,7 @@ Respond in JSON format only:
       return Response.json({ error: 'A publish operation is already in progress.' }, { status: 429 })
     }
 
-    let body: { slug: string; author?: string; tags?: string; excerpt?: string }
+    let body: { slug: string; author?: string; tags?: string; excerpt?: string; hook?: string }
     try {
       body = await request.json() as typeof body
     } catch {
@@ -336,14 +364,33 @@ Respond in JSON format only:
         parsedCitations = undefined
       }
 
-      // Extract hook as plain text (first non-empty line, stripped of markdown)
-      const firstContentLine = draft.content.split('\n').find((line) => line.trim().length > 0)
-      const hook = firstContentLine
-        ?.replace(/^#+\s*/, '')
-        .replace(/\*\*/g, '')
-        .replace(/\*/g, '')
-        .replace(/`/g, '')
-        .trim() || undefined
+      const hook = body.hook?.trim() || undefined
+
+      // Resolve CMS publication ID from writer-agent publication
+      let cmsPublicationId: string | undefined
+      if (this.state.publicationId) {
+        const pubRow = await this.env.WRITER_DB
+          .prepare('SELECT cms_publication_id, name, slug FROM publications WHERE id = ?')
+          .bind(this.state.publicationId)
+          .first<{ cms_publication_id: string | null; name: string; slug: string }>()
+
+        if (pubRow?.cms_publication_id) {
+          cmsPublicationId = pubRow.cms_publication_id
+        } else if (pubRow) {
+          // CMS publication wasn't created earlier — try now
+          try {
+            const cmsApi2 = new CmsApi(this.env.CMS_URL, this.env.CMS_API_KEY)
+            const cmsPub = await cmsApi2.createPublication({ title: pubRow.name, slug: pubRow.slug })
+            cmsPublicationId = cmsPub.id
+            await this.env.WRITER_DB
+              .prepare('UPDATE publications SET cms_publication_id = ? WHERE id = ?')
+              .bind(cmsPub.id, this.state.publicationId)
+              .run()
+          } catch (err) {
+            console.error('Failed to create CMS publication during publish:', err)
+          }
+        }
+      }
 
       // Convert markdown to HTML — the CMS stores content as HTML (Quill editor format)
       const htmlContent = await marked.parse(draft.content)
@@ -359,9 +406,10 @@ Respond in JSON format only:
         tags: body.tags?.trim() || undefined,
         excerpt: body.excerpt?.trim() || undefined,
         hook,
-        citations: parsedCitations as undefined,
+        citations: parsedCitations ? JSON.stringify(parsedCitations) : undefined,
+        featuredImage: this.state.featuredImageUrl || undefined,
         publishedAt: new Date().toISOString(),
-        publicationId: this.state.publicationId ?? undefined,
+        publicationId: cmsPublicationId,
       })
 
       this.finalizeDraft(post.id)
