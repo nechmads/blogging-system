@@ -12,9 +12,9 @@
 		"port": 8790,
 	},
 
-	// Cron trigger — daily at 7 AM UTC
+	// Cron trigger — hourly, queries per-publication next_scout_at
 	"triggers": {
-		"crons": ["0 7 * * *"],
+		"crons": ["0 * * * *"],
 	},
 
 	// Durable workflow for multi-step scout pipeline
@@ -60,11 +60,18 @@
 			"database_id": "5fc8f7a4-e05f-47ce-b638-f78a90057f43",
 		},
 	],
+	"routes": [
+		{
+			"pattern": "scout.hotmetalapp.com",
+			"zone_name": "hotmetalapp.com",
+			"custom_domain": true,
+		},
+	],
 
 	// Non-secret environment variables
 	"vars": {
 		"ALEXANDER_API_URL": "https://alexanderai.farfarawaylabs.com",
-		"WRITER_AGENT_URL": "https://hotmetal-writer-agent.shahar-nechmad.workers.dev",
+		"WRITER_AGENT_URL": "https://agent.hotmetalapp.com",
 	},
 
 	// Secrets (set via `wrangler secret put`):

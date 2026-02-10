@@ -3,6 +3,8 @@ import type { WriterAgent } from './agent/writer-agent'
 export interface WriterAgentEnv {
   WRITER_DB: D1Database
   WRITER_AGENT: DurableObjectNamespace<WriterAgent>
+  AI: Ai
+  IMAGE_BUCKET: R2Bucket
   ANTHROPIC_API_KEY: string
   CMS_URL: string
   CMS_API_KEY: string

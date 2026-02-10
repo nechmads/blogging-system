@@ -13,10 +13,11 @@
 		"typecheck": "tsc --noEmit",
 		"db:migrate:local": "wrangler d1 migrations apply WRITER_DB --local --persist-to ../../.wrangler/shared-state",
 		"db:migrate:remote": "wrangler d1 migrations apply WRITER_DB --remote",
-		"db:reset:remote": "wrangler d1 execute WRITER_DB --remote --command \"DROP TABLE IF EXISTS ideas; DROP TABLE IF EXISTS topics; DROP TABLE IF EXISTS publications; DROP TABLE IF EXISTS sessions; DROP TABLE IF EXISTS users; DROP TABLE IF EXISTS d1_migrations;\" && pnpm db:migrate:remote"
+		"db:reset:remote": "wrangler d1 execute WRITER_DB --remote --command \"UPDATE sessions SET idea_id = NULL, publication_id = NULL; UPDATE ideas SET session_id = NULL, topic_id = NULL;\" && wrangler d1 execute WRITER_DB --remote --command \"DELETE FROM ideas; DELETE FROM topics; DELETE FROM sessions; DELETE FROM publications; DELETE FROM users;\" && wrangler d1 execute WRITER_DB --remote --command \"DROP TABLE IF EXISTS ideas; DROP TABLE IF EXISTS topics; DROP TABLE IF EXISTS sessions; DROP TABLE IF EXISTS publications; DROP TABLE IF EXISTS users; DROP TABLE IF EXISTS d1_migrations;\" && pnpm db:migrate:remote"
 	},
 	"dependencies": {
 		"@ai-sdk/anthropic": "^3.0.39",
+		"@cloudflare/ai-chat": "^0.0.6",
 		"@hotmetal/content-core": "workspace:*",
 		"@hotmetal/shared": "workspace:*",
 		"agents": "^0.3.10",

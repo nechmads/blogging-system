@@ -12,6 +12,14 @@ ideas.use('/api/publications/:pubId/ideas', writerApiKeyAuth)
 ideas.use('/api/publications/:pubId/ideas/*', writerApiKeyAuth)
 ideas.use('/api/ideas/*', writerApiKeyAuth)
 ideas.use('/api/ideas', writerApiKeyAuth)
+ideas.use('/api/ideas/new-count', writerApiKeyAuth)
+
+/** Return the global count of ideas with status 'new'. */
+ideas.get('/api/ideas/new-count', async (c) => {
+  const manager = new IdeaManager(c.env.WRITER_DB)
+  const count = await manager.countByStatus('new')
+  return c.json({ count })
+})
 
 /** Return the count of ideas for a publication. */
 ideas.get('/api/publications/:pubId/ideas/count', async (c) => {

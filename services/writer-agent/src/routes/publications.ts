@@ -3,7 +3,8 @@ import type { WriterAgentEnv } from '../env'
 import { PublicationManager } from '../lib/publication-manager'
 import { TopicManager } from '../lib/topic-manager'
 import { writerApiKeyAuth } from '../middleware/api-key-auth'
-import { AUTO_PUBLISH_MODES, type AutoPublishMode } from '@hotmetal/content-core'
+import { AUTO_PUBLISH_MODES, type AutoPublishMode, type ScoutSchedule } from '@hotmetal/content-core'
+import { validateSchedule, validateTimezone, computeNextRun, CmsApi } from '@hotmetal/shared'
 
 const publications = new Hono<{ Bindings: WriterAgentEnv }>()
 
@@ -21,6 +22,8 @@ publications.post('/api/publications', async (c) => {
     defaultAuthor?: string
     autoPublishMode?: string
     cadencePostsPerWeek?: number
+    scoutSchedule?: ScoutSchedule
+    timezone?: string
   }>()
 
   if (!body.name?.trim()) {
@@ -39,6 +42,14 @@ publications.post('/api/publications', async (c) => {
     return c.json({ error: `Invalid autoPublishMode. Must be one of: ${AUTO_PUBLISH_MODES.join(', ')}` }, 400)
   }
 
+  if (body.scoutSchedule && !validateSchedule(body.scoutSchedule)) {
+    return c.json({ error: 'Invalid scoutSchedule' }, 400)
+  }
+
+  if (body.timezone && !validateTimezone(body.timezone)) {
+    return c.json({ error: 'Invalid timezone' }, 400)
+  }
+
   const id = crypto.randomUUID()
   const manager = new PublicationManager(c.env.WRITER_DB)
   const publication = await manager.create(id, {
@@ -50,7 +61,22 @@ publications.post('/api/publications', async (c) => {
     defaultAuthor: body.defaultAuthor?.trim(),
     autoPublishMode: body.autoPublishMode as AutoPublishMode | undefined,
     cadencePostsPerWeek: body.cadencePostsPerWeek,
+    scoutSchedule: body.scoutSchedule,
+    timezone: body.timezone,
   })
+
+  // Create matching publication in the CMS so published posts can reference it
+  try {
+    const cmsApi = new CmsApi(c.env.CMS_URL, c.env.CMS_API_KEY)
+    const cmsPub = await cmsApi.createPublication({
+      title: body.name.trim(),
+      slug: body.slug.trim(),
+    })
+    await manager.update(id, { cmsPublicationId: cmsPub.id })
+    publication.cmsPublicationId = cmsPub.id
+  } catch (err) {
+    console.error('Failed to create CMS publication (non-blocking):', err)
+  }
 
   return c.json(publication, 201)
 })
@@ -100,6 +126,8 @@ publications.patch('/api/publications/:id', async (c) => {
     autoPublishMode?: string
     cadencePostsPerWeek?: number
     cmsPublicationId?: string | null
+    scoutSchedule?: ScoutSchedule
+    timezone?: string
   }>()
 
   if (body.autoPublishMode && !AUTO_PUBLISH_MODES.includes(body.autoPublishMode as AutoPublishMode)) {
@@ -113,6 +141,27 @@ publications.patch('/api/publications/:id', async (c) => {
     }
   }
 
+  if (body.scoutSchedule && !validateSchedule(body.scoutSchedule)) {
+    return c.json({ error: 'Invalid scoutSchedule' }, 400)
+  }
+
+  if (body.timezone && !validateTimezone(body.timezone)) {
+    return c.json({ error: 'Invalid timezone' }, 400)
+  }
+
+  // Only recompute nextScoutAt if schedule or timezone actually changed
+  let nextScoutAt: number | undefined
+  if (body.scoutSchedule !== undefined || body.timezone !== undefined) {
+    const effectiveSchedule = body.scoutSchedule ?? existing.scoutSchedule
+    const effectiveTz = body.timezone ?? existing.timezone
+    const scheduleChanged = body.scoutSchedule !== undefined &&
+      JSON.stringify(body.scoutSchedule) !== JSON.stringify(existing.scoutSchedule)
+    const tzChanged = body.timezone !== undefined && body.timezone !== existing.timezone
+    if (scheduleChanged || tzChanged) {
+      nextScoutAt = computeNextRun(effectiveSchedule, effectiveTz)
+    }
+  }
+
   const updated = await manager.update(c.req.param('id'), {
     name: body.name?.trim(),
     slug: body.slug?.trim(),
@@ -122,6 +171,9 @@ publications.patch('/api/publications/:id', async (c) => {
     autoPublishMode: body.autoPublishMode as AutoPublishMode | undefined,
     cadencePostsPerWeek: body.cadencePostsPerWeek,
     cmsPublicationId: body.cmsPublicationId,
+    scoutSchedule: body.scoutSchedule,
+    timezone: body.timezone,
+    nextScoutAt,
   })
 
   return c.json(updated)

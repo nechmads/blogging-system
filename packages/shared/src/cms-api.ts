@@ -45,6 +45,10 @@ export class CmsApi {
     return res.json() as Promise<T>
   }
 
+  async createPublication(data: { title: string; slug: string; url?: string }): Promise<{ id: string; title: string; slug: string }> {
+    return this.request('POST', '/api/v1/publications', data)
+  }
+
   async listPosts(params?: { status?: string; limit?: number; offset?: number }): Promise<{ data: Post[] }> {
     const search = new URLSearchParams()
     if (params?.status) search.set('status', params.status)

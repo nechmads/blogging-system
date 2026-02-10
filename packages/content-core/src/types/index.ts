@@ -17,3 +17,12 @@ export type {
   Idea,
 } from './automation'
 export { AUTO_PUBLISH_MODES, IDEA_STATUSES } from './automation'
+
+export type {
+  ScoutSchedule,
+  DailySchedule,
+  TimesPerDaySchedule,
+  EveryNDaysSchedule,
+  ScheduleType,
+} from './schedule'
+export { SCHEDULE_TYPES, DEFAULT_SCHEDULE, DEFAULT_TIMEZONE } from './schedule'

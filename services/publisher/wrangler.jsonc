@@ -21,12 +21,19 @@
 			"migrations_dir": "./migrations",
 		},
 	],
+	"routes": [
+		{
+			"pattern": "publisher.hotmetalapp.com",
+			"zone_name": "hotmetalapp.com",
+			"custom_domain": true,
+		},
+	],
 
 	// Environment variables (non-secret)
 	"vars": {
-		"CMS_URL": "http://localhost:8787",
+		"CMS_URL": "https://cms.hotmetalapp.com",
 		"BLOG_BASE_URL": "http://localhost:4321",
-		"LINKEDIN_REDIRECT_URI": "http://localhost:8788/oauth/linkedin/callback",
+		"LINKEDIN_REDIRECT_URI": "https://publisher.hotmetalapp.com/oauth/linkedin/callback",
 	},
 
 	// Secrets (set via `wrangler secret put`):

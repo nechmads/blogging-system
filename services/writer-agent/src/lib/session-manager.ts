@@ -10,6 +10,7 @@ export interface Session {
   publicationId: string | null
   ideaId: string | null
   seedContext: string | null
+  featuredImageUrl: string | null
   createdAt: number
   updatedAt: number
 }
@@ -24,6 +25,7 @@ interface SessionRow {
   publication_id: string | null
   idea_id: string | null
   seed_context: string | null
+  featured_image_url: string | null
   created_at: number
   updated_at: number
 }
@@ -39,6 +41,7 @@ function rowToSession(row: SessionRow): Session {
     publicationId: row.publication_id,
     ideaId: row.idea_id,
     seedContext: row.seed_context,
+    featuredImageUrl: row.featured_image_url,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   }
@@ -76,6 +79,7 @@ export class SessionManager {
       publicationId: pubId,
       ideaId,
       seedContext: seedCtx,
+      featuredImageUrl: null,
       createdAt: now,
       updatedAt: now,
     }
@@ -118,7 +122,7 @@ export class SessionManager {
 
   async update(
     id: string,
-    data: Partial<Pick<Session, 'title' | 'status' | 'currentDraftVersion' | 'cmsPostId' | 'publicationId' | 'ideaId' | 'seedContext'>>,
+    data: Partial<Pick<Session, 'title' | 'status' | 'currentDraftVersion' | 'cmsPostId' | 'publicationId' | 'ideaId' | 'seedContext' | 'featuredImageUrl'>>,
   ): Promise<Session | null> {
     const sets: string[] = []
     const bindings: (string | number | null)[] = []
@@ -150,6 +154,10 @@ export class SessionManager {
     if (data.seedContext !== undefined) {
       sets.push('seed_context = ?')
       bindings.push(data.seedContext)
+    }
+    if (data.featuredImageUrl !== undefined) {
+      sets.push('featured_image_url = ?')
+      bindings.push(data.featuredImageUrl)
     }
 
     if (sets.length === 0) return this.getById(id)

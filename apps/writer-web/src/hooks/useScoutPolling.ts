@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react'
 import { useValue } from '@legendapp/state/react'
-import { scoutStore$, stopScoutPolling } from '@/stores/scout-store'
+import { scoutStore$, stopScoutPolling, refreshNewIdeasCount } from '@/stores/scout-store'
 import { fetchIdeasCount } from '@/lib/api'
 
 const POLL_INTERVAL = 10_000
@@ -24,7 +24,8 @@ export function useScoutPolling() {
         const count = await fetchIdeasCount(pollingPubId)
         if (cancelled) return
         if (count > baselineCount) {
-          scoutStore$.newIdeasCount.set(count - baselineCount)
+          // New ideas detected — refresh the real "new" status count
+          await refreshNewIdeasCount()
           stopScoutPolling()
         }
       } catch {

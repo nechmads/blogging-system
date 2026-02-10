@@ -14,8 +14,8 @@
 
   // Environment variables (non-secret)
   "vars": {
-    "WRITER_AGENT_URL": "https://hotmetal-writer-agent.shahar-nechmad.workers.dev",
-    "CONTENT_SCOUT_URL": "https://hotmetal-content-scout.shahar-nechmad.workers.dev",
+    "WRITER_AGENT_URL": "https://agent.hotmetalapp.com",
+    "CONTENT_SCOUT_URL": "https://scout.hotmetalapp.com",
   },
 
   // SPA fallback — serve index.html for unmatched routes (client-side routing)

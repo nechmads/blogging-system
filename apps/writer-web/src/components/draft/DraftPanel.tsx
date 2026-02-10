@@ -4,6 +4,7 @@ import { MemoizedMarkdown } from '@/components/memoized-markdown'
 import { Loader } from '@/components/loader/Loader'
 import { DraftVersionSelector } from './DraftVersionSelector'
 import { PublishModal } from './PublishModal'
+import { ImageGenerator } from './ImageGenerator'
 import { fetchDrafts, fetchDraft } from '@/lib/api'
 import type { Draft, DraftContent } from '@/lib/types'
 import React from 'react'
@@ -15,11 +16,12 @@ export interface DraftPanelHandle {
 interface DraftPanelProps {
   sessionId: string
   cmsPostId?: string | null
+  initialFeaturedImageUrl?: string | null
   ref?: React.Ref<DraftPanelHandle>
 }
 
 export const DraftPanel = React.forwardRef<DraftPanelHandle, DraftPanelProps>(
-  function DraftPanel({ sessionId, cmsPostId }, ref) {
+  function DraftPanel({ sessionId, cmsPostId, initialFeaturedImageUrl }, ref) {
     const [drafts, setDrafts] = useState<Draft[]>([])
     const [selectedVersion, setSelectedVersion] = useState<number | null>(null)
     const [content, setContent] = useState<DraftContent | null>(null)
@@ -28,6 +30,7 @@ export const DraftPanel = React.forwardRef<DraftPanelHandle, DraftPanelProps>(
     const [showToast, setShowToast] = useState<string | null>(null)
     const [showPublishModal, setShowPublishModal] = useState(false)
     const [publishedPostId, setPublishedPostId] = useState<string | null>(null)
+    const [featuredImageUrl, setFeaturedImageUrl] = useState<string | null>(initialFeaturedImageUrl ?? null)
 
     const loadDrafts = useCallback(async () => {
       try {
@@ -143,6 +146,14 @@ export const DraftPanel = React.forwardRef<DraftPanelHandle, DraftPanelProps>(
           </div>
         </div>
 
+        {/* Image Generator */}
+        <ImageGenerator
+          sessionId={sessionId}
+          hasDraft={!!content}
+          featuredImageUrl={featuredImageUrl}
+          onImageSelected={setFeaturedImageUrl}
+        />
+
         {/* Content */}
         <div className="flex-1 overflow-y-auto p-6">
           {loadingContent ? (
@@ -179,6 +190,7 @@ export const DraftPanel = React.forwardRef<DraftPanelHandle, DraftPanelProps>(
           onClose={() => setShowPublishModal(false)}
           sessionId={sessionId}
           draftTitle={content?.title ?? null}
+          featuredImageUrl={featuredImageUrl}
           onPublished={handlePublished}
         />
       </div>

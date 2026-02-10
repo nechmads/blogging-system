@@ -8,8 +8,14 @@ export interface Session {
   publicationId: string | null
   ideaId: string | null
   seedContext: string | null
+  featuredImageUrl: string | null
   createdAt: number
   updatedAt: number
+}
+
+export interface GeneratedImage {
+  id: string
+  url: string
 }
 
 export interface Draft {
@@ -28,6 +34,7 @@ export interface DraftContent extends Draft {
 }
 
 export interface SeoSuggestion {
+  hook: string
   excerpt: string
   tags: string
 }
@@ -37,6 +44,7 @@ export interface PublishInput {
   author?: string
   tags?: string
   excerpt?: string
+  hook?: string
 }
 
 export interface PublishResult {
@@ -50,6 +58,26 @@ export interface PublishResult {
 
 export type AutoPublishMode = 'draft' | 'publish' | 'full-auto'
 
+export type ScheduleType = 'daily' | 'times_per_day' | 'every_n_days'
+
+export interface DailySchedule {
+  type: 'daily'
+  hour: number
+}
+
+export interface TimesPerDaySchedule {
+  type: 'times_per_day'
+  count: number
+}
+
+export interface EveryNDaysSchedule {
+  type: 'every_n_days'
+  days: number
+  hour: number
+}
+
+export type ScoutSchedule = DailySchedule | TimesPerDaySchedule | EveryNDaysSchedule
+
 export interface PublicationConfig {
   id: string
   userId: string
@@ -61,6 +89,9 @@ export interface PublicationConfig {
   defaultAuthor: string
   autoPublishMode: AutoPublishMode
   cadencePostsPerWeek: number
+  scoutSchedule: ScoutSchedule
+  timezone: string
+  nextScoutAt: number | null
   createdAt: number
   updatedAt: number
   topics?: Topic[]
