@@ -39,7 +39,7 @@ const TOOL_CONFIG: Record<string, { label: string | (() => string); icon: React.
   get_draft: { label: 'Reading draft', icon: FileTextIcon },
   list_drafts: { label: 'Listing drafts', icon: ListBulletsIcon },
   publish_to_cms: { label: 'Publishing', icon: RocketLaunchIcon },
-  ask_question: { label: 'Asking a follow-up', icon: ChatCircleDotsIcon },
+  ask_question: { label: 'Searching for answers', icon: ChatCircleDotsIcon },
 }
 
 interface ToolCallIndicatorProps {
