@@ -1,10 +1,12 @@
 /**
  * Writer Web — backend Worker
  *
- * This is a thin server that serves the Vite-built React SPA and proxies
- * API requests to the writer-agent service. It also proxies WebSocket
- * connections for the Agents SDK streaming protocol, and scout trigger
- * requests directly to the content-scout service.
+ * Only receives requests for paths listed in `run_worker_first` in wrangler.jsonc
+ * (/api/*, /agents/*, /health). All other requests (SPA routes, static assets)
+ * are handled by the Cloudflare asset pipeline automatically.
+ *
+ * Proxies API & WebSocket requests to writer-agent, and scout trigger
+ * requests directly to content-scout.
  */
 
 /** Match `/api/publications/:id/scout` */
@@ -40,8 +42,10 @@ export default {
       return Response.json({ status: 'ok', service: 'writer-web' });
     }
 
-    // Everything else — serve static assets or SPA fallback (index.html)
-    return env.ASSETS.fetch(request);
+    // Unmatched Worker route — return 404.
+    // Static assets & SPA fallback are handled automatically by the asset
+    // pipeline via `not_found_handling: "single-page-application"` in wrangler.jsonc.
+    return new Response('Not found', { status: 404 });
   },
 } satisfies ExportedHandler<Env>;
 
