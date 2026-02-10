@@ -5,11 +5,11 @@
 	"compatibility_date": "2026-02-05",
 	"compatibility_flags": ["nodejs_compat"],
 	"observability": {
-		"enabled": true
+		"enabled": true,
 	},
 
 	"dev": {
-		"port": 8788
+		"port": 8788,
 	},
 
 	// D1 Database for publisher state (tokens, audit logs)
@@ -17,17 +17,17 @@
 		{
 			"binding": "PUBLISHER_DB",
 			"database_name": "hotmetal-publisher-db",
-			"database_id": "placeholder-set-after-create",
-			"migrations_dir": "./migrations"
-		}
+			"database_id": "53b804ac-b7ad-4e81-8c7a-e1647e39987c",
+			"migrations_dir": "./migrations",
+		},
 	],
 
 	// Environment variables (non-secret)
 	"vars": {
 		"CMS_URL": "http://localhost:8787",
 		"BLOG_BASE_URL": "http://localhost:4321",
-		"LINKEDIN_REDIRECT_URI": "http://localhost:8788/oauth/linkedin/callback"
-	}
+		"LINKEDIN_REDIRECT_URI": "http://localhost:8788/oauth/linkedin/callback",
+	},
 
 	// Secrets (set via `wrangler secret put`):
 	// CMS_API_KEY, LINKEDIN_CLIENT_ID, LINKEDIN_CLIENT_SECRET, TOKEN_ENCRYPTION_KEY

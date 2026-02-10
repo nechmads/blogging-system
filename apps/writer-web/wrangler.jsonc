@@ -14,8 +14,8 @@
 
   // Environment variables (non-secret)
   "vars": {
-    "WRITER_AGENT_URL": "http://localhost:8789",
-    "CONTENT_SCOUT_URL": "http://localhost:8790",
+    "WRITER_AGENT_URL": "https://hotmetal-writer-agent.shahar-nechmad.workers.dev",
+    "CONTENT_SCOUT_URL": "https://hotmetal-content-scout.shahar-nechmad.workers.dev",
   },
 
   // SPA fallback — serve index.html for unmatched routes (client-side routing)

@@ -11,7 +11,9 @@
 		"cf-typegen": "wrangler types",
 		"build": "wrangler deploy --dry-run --outdir=dist",
 		"typecheck": "tsc --noEmit",
-		"db:migrate:local": "wrangler d1 migrations apply WRITER_DB --local --persist-to ../../.wrangler/shared-state"
+		"db:migrate:local": "wrangler d1 migrations apply WRITER_DB --local --persist-to ../../.wrangler/shared-state",
+		"db:migrate:remote": "wrangler d1 migrations apply WRITER_DB --remote",
+		"db:reset:remote": "wrangler d1 execute WRITER_DB --remote --command \"DROP TABLE IF EXISTS ideas; DROP TABLE IF EXISTS topics; DROP TABLE IF EXISTS publications; DROP TABLE IF EXISTS sessions; DROP TABLE IF EXISTS users; DROP TABLE IF EXISTS d1_migrations;\" && pnpm db:migrate:remote"
 	},
 	"dependencies": {
 		"@ai-sdk/anthropic": "^3.0.39",

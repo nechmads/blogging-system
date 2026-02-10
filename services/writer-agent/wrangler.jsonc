@@ -9,7 +9,7 @@
 	},
 
 	"dev": {
-		"port": 8789
+		"port": 8789,
 	},
 
 	// Durable Objects — one WriterAgent instance per writing session
@@ -42,7 +42,7 @@
 
 	// Environment variables (non-secret)
 	"vars": {
-		"CMS_URL": "http://localhost:8787",
+		"CMS_URL": "https://hotmetal-cms-admin.shahar-nechmad.workers.dev",
 		"ALEXANDER_API_URL": "https://alexanderai.farfarawaylabs.com",
 	},
 
