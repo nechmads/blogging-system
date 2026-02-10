@@ -173,6 +173,11 @@ export async function deleteTopic(id: string): Promise<void> {
 
 // --- Ideas ---
 
+export async function fetchIdeasCount(pubId: string): Promise<number> {
+  const result = await request<{ count: number }>(`/api/publications/${pubId}/ideas/count`)
+  return result.count
+}
+
 export async function fetchIdeas(pubId: string, status?: IdeaStatus): Promise<Idea[]> {
   const params = status ? `?status=${status}` : ''
   const result = await request<{ data: Idea[] }>(`/api/publications/${pubId}/ideas${params}`)

@@ -1,6 +1,7 @@
 import type { ScoutEnv } from '../env'
 import type { PublicationRow, IdeaRow, IdeaBrief } from '../types'
 import { slugify, getWeekStartTimestamp } from '../utils'
+import { runWithRetry } from './d1-retry'
 
 export async function autoWriteTopIdea(
   env: ScoutEnv,
@@ -27,10 +28,12 @@ export async function autoWriteTopIdea(
   if (!ideaId) return 0
 
   // Fetch the stored idea by primary key
-  const storedIdea = await env.WRITER_DB
-    .prepare('SELECT * FROM ideas WHERE id = ?')
-    .bind(ideaId)
-    .first<IdeaRow>()
+  const storedIdea = await runWithRetry(() =>
+    env.WRITER_DB
+      .prepare('SELECT * FROM ideas WHERE id = ?')
+      .bind(ideaId)
+      .first<IdeaRow>(),
+  )
 
   if (!storedIdea) return 0
 
@@ -40,13 +43,15 @@ export async function autoWriteTopIdea(
 
 async function checkCadence(db: D1Database, publication: PublicationRow): Promise<boolean> {
   const weekStart = getWeekStartTimestamp()
-  const result = await db
-    .prepare(
-      `SELECT COUNT(*) as count FROM sessions
-       WHERE publication_id = ? AND status = 'completed' AND updated_at >= ?`,
-    )
-    .bind(publication.id, weekStart)
-    .first<{ count: number }>()
+  const result = await runWithRetry(() =>
+    db
+      .prepare(
+        `SELECT COUNT(*) as count FROM sessions
+         WHERE publication_id = ? AND status = 'completed' AND updated_at >= ?`,
+      )
+      .bind(publication.id, weekStart)
+      .first<{ count: number }>(),
+  )
 
   return (result?.count ?? 0) < publication.cadence_posts_per_week
 }
@@ -102,10 +107,12 @@ async function writeAndPublish(
   if (!publishRes.ok) throw new Error(`Publish failed: ${await publishRes.text()}`)
 
   // 5. Update idea status
-  await env.WRITER_DB
-    .prepare("UPDATE ideas SET status = 'promoted', session_id = ?, updated_at = unixepoch() WHERE id = ?")
-    .bind(session.id, idea.id)
-    .run()
+  await runWithRetry(() =>
+    env.WRITER_DB
+      .prepare("UPDATE ideas SET status = 'promoted', session_id = ?, updated_at = unixepoch() WHERE id = ?")
+      .bind(session.id, idea.id)
+      .run(),
+  )
 }
 
 function buildSeedContext(idea: IdeaRow, publication: PublicationRow): string {

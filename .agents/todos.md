@@ -69,5 +69,7 @@
   - [x] Phase 6: Ideas center UI (IdeasPage with filters, IdeaDetailPage with promote/dismiss, shared constants)
   - [x] Phase 5: Content Scout worker (CF Queue + Workflow + KV cache, Alexander API, LLM idea generation, auto-write pipeline)
   - [x] Phase 7: Schedule & auto-publish config (content calendar, manual scout trigger, "Run Scout Now" button, activity timeline)
+- [x] **Scout Notification Badge + Polling** — Added Legend State V3 observable store to coordinate scout polling. After "Run Scout Now", polls `GET /api/publications/:pubId/ideas/count` every 10s until new ideas detected (or 3min timeout). Shows notification badge on Ideas nav item. Auto-refreshes IdeasPage when new ideas arrive while user is on that page. Includes cancelled-request safety, accessibility attributes on badge, and publication-aware refresh logic.
+- [x] **Fix D1 Concurrent Access Errors** — Root cause: miniflare sets busy_timeout=0 on the shared SQLite file, causing SQLITE_BUSY when writer-agent and content-scout both access D1. Fixed by: (1) replacing batch() with sequential run() per-INSERT to reduce lock duration, (2) adding runWithRetry() utility with exponential backoff (100/200/400ms) for all D1 ops, (3) using deterministic IDs + INSERT OR IGNORE for idempotent workflow retries, (4) fixing content-scout db:migrate:local to use --persist-to flag.
 - [ ] Writer Agent — Phase 2: Voice input (transcription in `input-processor.ts`)
 - [ ] Writer Agent — Phase 2: D1 session sync (synchronize DO state back to D1 for listing accuracy)

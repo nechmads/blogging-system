@@ -11,7 +11,7 @@
 		"cf-typegen": "wrangler types",
 		"build": "wrangler deploy --dry-run --outdir=dist",
 		"typecheck": "tsc --noEmit",
-		"db:migrate:local": "wrangler d1 migrations apply WRITER_DB --local"
+		"db:migrate:local": "wrangler d1 migrations apply WRITER_DB --local --persist-to ../../.wrangler/shared-state"
 	},
 	"dependencies": {
 		"@ai-sdk/anthropic": "^3.0.39",

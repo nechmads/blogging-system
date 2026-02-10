@@ -9,8 +9,17 @@ import { IDEA_STATUSES, type IdeaStatus } from '@hotmetal/content-core'
 const ideas = new Hono<{ Bindings: WriterAgentEnv }>()
 
 ideas.use('/api/publications/:pubId/ideas', writerApiKeyAuth)
+ideas.use('/api/publications/:pubId/ideas/*', writerApiKeyAuth)
 ideas.use('/api/ideas/*', writerApiKeyAuth)
 ideas.use('/api/ideas', writerApiKeyAuth)
+
+/** Return the count of ideas for a publication. */
+ideas.get('/api/publications/:pubId/ideas/count', async (c) => {
+  const pubId = c.req.param('pubId')
+  const manager = new IdeaManager(c.env.WRITER_DB)
+  const count = await manager.countByPublication(pubId)
+  return c.json({ count })
+})
 
 /** List ideas for a publication (filterable by status). */
 ideas.get('/api/publications/:pubId/ideas', async (c) => {

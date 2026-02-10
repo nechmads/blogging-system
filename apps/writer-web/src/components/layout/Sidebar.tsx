@@ -1,5 +1,7 @@
 import { NavLink } from 'react-router'
 import { LightbulbIcon, PencilLineIcon, CalendarDotsIcon, ListIcon, XIcon } from '@phosphor-icons/react'
+import { useValue } from '@legendapp/state/react'
+import { scoutStore$ } from '@/stores/scout-store'
 
 const NAV_ITEMS = [
   { to: '/ideas', label: 'Ideas', icon: LightbulbIcon },
@@ -13,6 +15,8 @@ interface SidebarProps {
 }
 
 export function Sidebar({ isOpen, onClose }: SidebarProps) {
+  const newIdeasCount = useValue(scoutStore$.newIdeasCount)
+
   return (
     <>
       {/* Mobile overlay */}
@@ -66,7 +70,16 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
                   }
                 >
                   <Icon size={20} />
-                  {label}
+                  <span className="flex-1">{label}</span>
+                  {to === '/ideas' && newIdeasCount > 0 && (
+                    <span
+                      role="status"
+                      aria-label={`${newIdeasCount} new idea${newIdeasCount === 1 ? '' : 's'}`}
+                      className="flex h-5 min-w-5 items-center justify-center rounded-full bg-[var(--color-accent)] px-1.5 text-[10px] font-bold leading-none text-white"
+                    >
+                      {newIdeasCount}
+                    </span>
+                  )}
                 </NavLink>
               </li>
             ))}

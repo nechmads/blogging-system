@@ -1,10 +1,12 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router'
 import { FunnelIcon, LightbulbIcon, ArrowRightIcon } from '@phosphor-icons/react'
+import { useValue } from '@legendapp/state/react'
 import { Loader } from '@/components/loader/Loader'
 import { fetchPublications, fetchIdeas, updateIdeaStatus } from '@/lib/api'
 import type { PublicationConfig, Idea, IdeaStatus } from '@/lib/types'
 import { IDEA_STATUS_COLORS } from '@/lib/constants'
+import { scoutStore$, clearNewIdeasBadge } from '@/stores/scout-store'
 
 const STATUS_FILTERS: { value: IdeaStatus | 'all'; label: string }[] = [
   { value: 'all', label: 'All' },
@@ -35,6 +37,15 @@ export function IdeasPage() {
   const [loading, setLoading] = useState(true)
   const [loadingIdeas, setLoadingIdeas] = useState(false)
   const [error, setError] = useState<string | null>(null)
+
+  const newIdeasCount = useValue(scoutStore$.newIdeasCount)
+  const pollingPubId = useValue(scoutStore$.pollingPubId)
+  const prevNewIdeasCount = useRef(0)
+
+  // Clear badge on mount (ideas list will load immediately after)
+  useEffect(() => {
+    if (newIdeasCount > 0) clearNewIdeasBadge()
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Load publications
   useEffect(() => {
@@ -72,6 +83,18 @@ export function IdeasPage() {
   useEffect(() => {
     if (selectedPubId) loadIdeas()
   }, [selectedPubId, loadIdeas])
+
+  // Auto-refresh when new ideas arrive while on this page
+  useEffect(() => {
+    if (newIdeasCount > 0 && prevNewIdeasCount.current === 0) {
+      clearNewIdeasBadge()
+      // Only refresh if the new ideas are for the currently selected publication
+      if (!pollingPubId || pollingPubId === selectedPubId) {
+        loadIdeas()
+      }
+    }
+    prevNewIdeasCount.current = newIdeasCount
+  }, [newIdeasCount, pollingPubId, selectedPubId, loadIdeas])
 
   const handleDismiss = async (id: string, e: React.MouseEvent) => {
     e.stopPropagation()

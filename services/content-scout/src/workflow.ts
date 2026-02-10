@@ -12,6 +12,7 @@ export class ScoutWorkflow extends WorkflowEntrypoint<ScoutEnv, ScoutWorkflowPar
     const { publicationId } = event.payload
 
     // Step 1: Load publication context from D1
+    // D1 retries are handled inside loadPublicationContext via runWithRetry
     const context = await step.do('load-context', async () => {
       return await loadPublicationContext(this.env.WRITER_DB, publicationId)
     })
@@ -70,6 +71,8 @@ export class ScoutWorkflow extends WorkflowEntrypoint<ScoutEnv, ScoutWorkflowPar
     }
 
     // Step 5: Store ideas in D1
+    // D1 retries are handled inside storeIdeas via runWithRetry per-INSERT.
+    // Deterministic IDs + INSERT OR IGNORE make this idempotent.
     const stored = await step.do('store-ideas', async () => {
       return await storeIdeas(this.env.WRITER_DB, publicationId, ideas, context.topics)
     })

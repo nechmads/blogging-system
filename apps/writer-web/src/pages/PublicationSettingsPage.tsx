@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useParams, useNavigate } from 'react-router'
+import { toast } from 'sonner'
 import {
   ArrowLeftIcon,
   PlusIcon,
@@ -19,7 +20,9 @@ import {
   updateTopic,
   deleteTopic,
   triggerScout,
+  fetchIdeasCount,
 } from '@/lib/api'
+import { startScoutPolling } from '@/stores/scout-store'
 import type { PublicationConfig, Topic, AutoPublishMode } from '@/lib/types'
 
 const MODE_OPTIONS: { value: AutoPublishMode; label: string; description: string }[] = [
@@ -131,8 +134,10 @@ export function PublicationSettingsPage() {
     setScouting(true)
     setError(null)
     try {
+      const currentCount = await fetchIdeasCount(id)
       await triggerScout(id)
-      navigate('/ideas')
+      toast.success('Content scout is running. New ideas will appear shortly.')
+      startScoutPolling(id, currentCount)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to trigger scout')
     } finally {

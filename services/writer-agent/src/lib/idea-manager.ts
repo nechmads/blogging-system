@@ -141,6 +141,15 @@ export class IdeaManager {
     return this.getById(id)
   }
 
+  async countByPublication(publicationId: string): Promise<number> {
+    const row = await this.db
+      .prepare('SELECT COUNT(*) as cnt FROM ideas WHERE publication_id = ?')
+      .bind(publicationId)
+      .first<{ cnt: number }>()
+
+    return row?.cnt ?? 0
+  }
+
   async getRecentByPublication(publicationId: string, daysBack: number = 7): Promise<Idea[]> {
     const cutoff = Math.floor(Date.now() / 1000) - daysBack * 24 * 60 * 60
     const result = await this.db

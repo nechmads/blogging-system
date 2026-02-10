@@ -1,9 +1,11 @@
 import { useState } from 'react'
 import { Outlet } from 'react-router'
 import { Sidebar, SidebarToggle } from './Sidebar'
+import { useScoutPolling } from '@/hooks/useScoutPolling'
 
 export function AppLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(false)
+  useScoutPolling()
 
   return (
     <div className="flex h-screen">
