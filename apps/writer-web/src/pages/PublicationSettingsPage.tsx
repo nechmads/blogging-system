@@ -401,6 +401,86 @@ export function PublicationSettingsPage() {
         </div>
       </section>
 
+      {/* Topics */}
+      <section className="mt-6 space-y-4">
+        <div className="flex items-center justify-between">
+          <h3 className="text-lg font-semibold">Topics</h3>
+          <button
+            type="button"
+            onClick={() => openTopicModal()}
+            className="flex items-center gap-1.5 rounded-lg bg-[var(--color-accent)] px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-[var(--color-accent-hover)]"
+          >
+            <PlusIcon size={14} />
+            Add Topic
+          </button>
+        </div>
+
+        {topics.length === 0 ? (
+          <p className="rounded-lg border border-dashed border-[var(--color-border-default)] p-6 text-center text-sm text-[var(--color-text-muted)]">
+            No topics yet. Add topics to tell the content scout what to look for.
+          </p>
+        ) : (
+          <div className="space-y-2">
+            {topics.map((topic) => (
+              <div
+                key={topic.id}
+                className="flex items-center gap-3 rounded-lg border border-[var(--color-border-default)] bg-[var(--color-bg-primary)] p-3"
+              >
+                <button
+                  type="button"
+                  onClick={() => handleToggleTopic(topic)}
+                  className="shrink-0 text-[var(--color-text-muted)] transition-colors hover:text-[var(--color-accent)]"
+                  aria-label={topic.isActive ? 'Deactivate topic' : 'Activate topic'}
+                >
+                  {topic.isActive ? (
+                    <ToggleRightIcon size={24} weight="fill" className="text-[var(--color-accent)]" />
+                  ) : (
+                    <ToggleLeftIcon size={24} />
+                  )}
+                </button>
+
+                <div
+                  className={`flex-1 cursor-pointer ${!topic.isActive ? 'opacity-50' : ''}`}
+                  onClick={() => openTopicModal(topic)}
+                  onKeyDown={(e) => { if (e.key === 'Enter') openTopicModal(topic) }}
+                  role="button"
+                  tabIndex={0}
+                >
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-medium">{topic.name}</span>
+                    <span
+                      className={`rounded-full px-2 py-0.5 text-xs font-medium ${
+                        topic.priority === 3
+                          ? 'bg-red-100 text-red-700'
+                          : topic.priority === 2
+                            ? 'bg-amber-100 text-amber-700'
+                            : 'bg-gray-100 text-gray-600'
+                      }`}
+                    >
+                      {PRIORITY_OPTIONS.find((p) => p.value === topic.priority)?.label}
+                    </span>
+                  </div>
+                  {topic.description && (
+                    <p className="mt-0.5 line-clamp-1 text-xs text-[var(--color-text-muted)]">
+                      {topic.description}
+                    </p>
+                  )}
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => setTopicToDelete(topic.id)}
+                  className="shrink-0 rounded-md p-1.5 text-[var(--color-text-muted)] transition-colors hover:bg-red-50 hover:text-red-500"
+                  aria-label="Delete topic"
+                >
+                  <TrashIcon size={16} />
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+      </section>
+
       {/* Auto-Publish Mode */}
       <section className="mt-6 space-y-4 rounded-xl border border-[var(--color-border-default)] bg-[var(--color-bg-primary)] p-5">
         <h3 className="font-semibold">Auto-Publish Mode</h3>
@@ -594,86 +674,6 @@ export function PublicationSettingsPage() {
           {saving ? 'Saving...' : 'Save Settings'}
         </button>
       </div>
-
-      {/* Topics */}
-      <section className="mt-8 space-y-4">
-        <div className="flex items-center justify-between">
-          <h3 className="text-lg font-semibold">Topics</h3>
-          <button
-            type="button"
-            onClick={() => openTopicModal()}
-            className="flex items-center gap-1.5 rounded-lg bg-[var(--color-accent)] px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-[var(--color-accent-hover)]"
-          >
-            <PlusIcon size={14} />
-            Add Topic
-          </button>
-        </div>
-
-        {topics.length === 0 ? (
-          <p className="rounded-lg border border-dashed border-[var(--color-border-default)] p-6 text-center text-sm text-[var(--color-text-muted)]">
-            No topics yet. Add topics to tell the content scout what to look for.
-          </p>
-        ) : (
-          <div className="space-y-2">
-            {topics.map((topic) => (
-              <div
-                key={topic.id}
-                className="flex items-center gap-3 rounded-lg border border-[var(--color-border-default)] bg-[var(--color-bg-primary)] p-3"
-              >
-                <button
-                  type="button"
-                  onClick={() => handleToggleTopic(topic)}
-                  className="shrink-0 text-[var(--color-text-muted)] transition-colors hover:text-[var(--color-accent)]"
-                  aria-label={topic.isActive ? 'Deactivate topic' : 'Activate topic'}
-                >
-                  {topic.isActive ? (
-                    <ToggleRightIcon size={24} weight="fill" className="text-[var(--color-accent)]" />
-                  ) : (
-                    <ToggleLeftIcon size={24} />
-                  )}
-                </button>
-
-                <div
-                  className={`flex-1 cursor-pointer ${!topic.isActive ? 'opacity-50' : ''}`}
-                  onClick={() => openTopicModal(topic)}
-                  onKeyDown={(e) => { if (e.key === 'Enter') openTopicModal(topic) }}
-                  role="button"
-                  tabIndex={0}
-                >
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm font-medium">{topic.name}</span>
-                    <span
-                      className={`rounded-full px-2 py-0.5 text-xs font-medium ${
-                        topic.priority === 3
-                          ? 'bg-red-100 text-red-700'
-                          : topic.priority === 2
-                            ? 'bg-amber-100 text-amber-700'
-                            : 'bg-gray-100 text-gray-600'
-                      }`}
-                    >
-                      {PRIORITY_OPTIONS.find((p) => p.value === topic.priority)?.label}
-                    </span>
-                  </div>
-                  {topic.description && (
-                    <p className="mt-0.5 line-clamp-1 text-xs text-[var(--color-text-muted)]">
-                      {topic.description}
-                    </p>
-                  )}
-                </div>
-
-                <button
-                  type="button"
-                  onClick={() => setTopicToDelete(topic.id)}
-                  className="shrink-0 rounded-md p-1.5 text-[var(--color-text-muted)] transition-colors hover:bg-red-50 hover:text-red-500"
-                  aria-label="Delete topic"
-                >
-                  <TrashIcon size={16} />
-                </button>
-              </div>
-            ))}
-          </div>
-        )}
-      </section>
 
       {/* Danger Zone */}
       <section className="mt-8 rounded-xl border border-red-200 p-5">
