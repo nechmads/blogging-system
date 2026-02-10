@@ -1,6 +1,7 @@
 import type {
   Session, Draft, DraftContent, SeoSuggestion, PublishInput, PublishResult,
   PublicationConfig, Topic, Idea, IdeaStatus, AutoPublishMode, ActivityItem,
+  ScoutSchedule,
 } from './types'
 
 const JSON_HEADERS = { 'Content-Type': 'application/json' }
@@ -107,6 +108,8 @@ export async function createPublication(data: {
   defaultAuthor?: string
   autoPublishMode?: AutoPublishMode
   cadencePostsPerWeek?: number
+  scoutSchedule?: ScoutSchedule
+  timezone?: string
 }): Promise<PublicationConfig> {
   return request<PublicationConfig>('/api/publications', {
     method: 'POST',
@@ -125,6 +128,8 @@ export async function updatePublication(
     defaultAuthor: string
     autoPublishMode: AutoPublishMode
     cadencePostsPerWeek: number
+    scoutSchedule: ScoutSchedule
+    timezone: string
   }>,
 ): Promise<PublicationConfig> {
   return request<PublicationConfig>(`/api/publications/${id}`, {

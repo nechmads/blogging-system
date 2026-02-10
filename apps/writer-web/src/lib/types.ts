@@ -50,6 +50,26 @@ export interface PublishResult {
 
 export type AutoPublishMode = 'draft' | 'publish' | 'full-auto'
 
+export type ScheduleType = 'daily' | 'times_per_day' | 'every_n_days'
+
+export interface DailySchedule {
+  type: 'daily'
+  hour: number
+}
+
+export interface TimesPerDaySchedule {
+  type: 'times_per_day'
+  count: number
+}
+
+export interface EveryNDaysSchedule {
+  type: 'every_n_days'
+  days: number
+  hour: number
+}
+
+export type ScoutSchedule = DailySchedule | TimesPerDaySchedule | EveryNDaysSchedule
+
 export interface PublicationConfig {
   id: string
   userId: string
@@ -61,6 +81,9 @@ export interface PublicationConfig {
   defaultAuthor: string
   autoPublishMode: AutoPublishMode
   cadencePostsPerWeek: number
+  scoutSchedule: ScoutSchedule
+  timezone: string
+  nextScoutAt: number | null
   createdAt: number
   updatedAt: number
   topics?: Topic[]

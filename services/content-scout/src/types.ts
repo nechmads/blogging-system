@@ -11,6 +11,9 @@ export interface PublicationRow {
   default_author: string
   auto_publish_mode: 'draft' | 'publish' | 'full-auto'
   cadence_posts_per_week: number
+  scout_schedule: string
+  timezone: string
+  next_scout_at: number | null
   created_at: number
   updated_at: number
 }

@@ -23,13 +23,84 @@ import {
   fetchIdeasCount,
 } from '@/lib/api'
 import { startScoutPolling } from '@/stores/scout-store'
-import type { PublicationConfig, Topic, AutoPublishMode } from '@/lib/types'
+import type { PublicationConfig, Topic, AutoPublishMode, ScoutSchedule, ScheduleType } from '@/lib/types'
 
 const MODE_OPTIONS: { value: AutoPublishMode; label: string; description: string }[] = [
   { value: 'draft', label: 'Draft', description: 'Scout finds ideas. You decide what to write.' },
   { value: 'publish', label: 'Publish', description: 'Scout finds and publishes the best idea each run.' },
   { value: 'full-auto', label: 'Full Auto', description: 'Scout finds ideas and publishes on your cadence.' },
 ]
+
+const SCHEDULE_TYPE_OPTIONS: { value: ScheduleType; label: string; description: string }[] = [
+  { value: 'daily', label: 'Daily', description: 'Scout runs once per day at a specific hour.' },
+  { value: 'times_per_day', label: 'Multiple times per day', description: 'Scout runs evenly spaced throughout the day.' },
+  { value: 'every_n_days', label: 'Every N days', description: 'Scout runs at a specific hour every few days.' },
+]
+
+const CURATED_TIMEZONES = [
+  'UTC',
+  'America/New_York',
+  'America/Chicago',
+  'America/Denver',
+  'America/Los_Angeles',
+  'America/Anchorage',
+  'Pacific/Honolulu',
+  'America/Toronto',
+  'America/Vancouver',
+  'America/Sao_Paulo',
+  'Europe/London',
+  'Europe/Paris',
+  'Europe/Berlin',
+  'Europe/Amsterdam',
+  'Europe/Madrid',
+  'Europe/Rome',
+  'Europe/Zurich',
+  'Europe/Stockholm',
+  'Europe/Helsinki',
+  'Europe/Moscow',
+  'Asia/Dubai',
+  'Asia/Kolkata',
+  'Asia/Singapore',
+  'Asia/Shanghai',
+  'Asia/Tokyo',
+  'Asia/Seoul',
+  'Australia/Sydney',
+  'Australia/Melbourne',
+  'Pacific/Auckland',
+  'Asia/Jerusalem',
+]
+
+function formatHour(hour: number): string {
+  if (hour === 0) return '12:00 AM'
+  if (hour === 12) return '12:00 PM'
+  if (hour < 12) return `${hour}:00 AM`
+  return `${hour - 12}:00 PM`
+}
+
+function formatNextRun(epochSec: number | null, timezone: string): string {
+  if (!epochSec) return 'Not scheduled'
+  const date = new Date(epochSec * 1000)
+  return date.toLocaleString('en-US', {
+    timeZone: timezone,
+    weekday: 'short',
+    month: 'short',
+    day: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+    timeZoneName: 'short',
+  })
+}
+
+function buildSchedule(type: ScheduleType, hour: number, count: number, days: number): ScoutSchedule {
+  switch (type) {
+    case 'daily':
+      return { type: 'daily', hour }
+    case 'times_per_day':
+      return { type: 'times_per_day', count }
+    case 'every_n_days':
+      return { type: 'every_n_days', days, hour }
+  }
+}
 
 const PRIORITY_OPTIONS = [
   { value: 1 as const, label: 'Normal' },
@@ -55,6 +126,14 @@ export function PublicationSettingsPage() {
   const [writingTone, setWritingTone] = useState('')
   const [autoPublishMode, setAutoPublishMode] = useState<AutoPublishMode>('draft')
   const [cadencePostsPerWeek, setCadencePostsPerWeek] = useState(3)
+
+  // Schedule form state
+  const [timezone, setTimezone] = useState(() => Intl.DateTimeFormat().resolvedOptions().timeZone)
+  const [scheduleType, setScheduleType] = useState<ScheduleType>('daily')
+  const [scheduleHour, setScheduleHour] = useState(8)
+  const [scheduleCount, setScheduleCount] = useState(3)
+  const [scheduleDays, setScheduleDays] = useState(2)
+  const [nextScoutAt, setNextScoutAt] = useState<number | null>(null)
 
   // Topic modal
   const [showTopicModal, setShowTopicModal] = useState(false)
@@ -85,6 +164,20 @@ export function PublicationSettingsPage() {
       setWritingTone(data.writingTone ?? '')
       setAutoPublishMode(data.autoPublishMode)
       setCadencePostsPerWeek(data.cadencePostsPerWeek)
+      // Schedule fields
+      if (data.timezone) setTimezone(data.timezone)
+      setNextScoutAt(data.nextScoutAt)
+      if (data.scoutSchedule) {
+        setScheduleType(data.scoutSchedule.type)
+        if (data.scoutSchedule.type === 'daily') {
+          setScheduleHour(data.scoutSchedule.hour)
+        } else if (data.scoutSchedule.type === 'times_per_day') {
+          setScheduleCount(data.scoutSchedule.count)
+        } else if (data.scoutSchedule.type === 'every_n_days') {
+          setScheduleDays(data.scoutSchedule.days)
+          setScheduleHour(data.scoutSchedule.hour)
+        }
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load publication')
     } finally {
@@ -110,6 +203,7 @@ export function PublicationSettingsPage() {
     setError(null)
     setSuccess(null)
     try {
+      const scoutSchedule = buildSchedule(scheduleType, scheduleHour, scheduleCount, scheduleDays)
       const updated = await updatePublication(id, {
         name: name.trim(),
         description: description.trim() || null,
@@ -117,8 +211,11 @@ export function PublicationSettingsPage() {
         writingTone: writingTone.trim() || null,
         autoPublishMode,
         cadencePostsPerWeek,
+        scoutSchedule,
+        timezone,
       })
       setPublication(updated)
+      setNextScoutAt(updated.nextScoutAt)
       setSuccess('Settings saved')
       if (successTimerRef.current) clearTimeout(successTimerRef.current)
       successTimerRef.current = setTimeout(() => setSuccess(null), 2000)
@@ -386,6 +483,119 @@ export function PublicationSettingsPage() {
               Add at least one topic before running the scout.
             </p>
           )}
+        </div>
+      </section>
+
+      {/* Scout Schedule */}
+      <section className="mt-6 space-y-4 rounded-xl border border-[var(--color-border-default)] bg-[var(--color-bg-primary)] p-5">
+        <h3 className="font-semibold">Scout Schedule</h3>
+
+        <div>
+          <label className="mb-1 block text-sm font-medium">Timezone</label>
+          <select
+            value={timezone}
+            onChange={(e) => setTimezone(e.target.value)}
+            className="w-full rounded-lg border border-[var(--color-border-default)] bg-[var(--color-bg-primary)] px-3 py-2 text-sm focus:border-[var(--color-accent)] focus:outline-none focus:ring-1 focus:ring-[var(--color-accent)]"
+          >
+            {CURATED_TIMEZONES.map((tz) => (
+              <option key={tz} value={tz}>{tz.replace(/_/g, ' ')}</option>
+            ))}
+          </select>
+        </div>
+
+        <div className="space-y-2">
+          {SCHEDULE_TYPE_OPTIONS.map((opt) => (
+            <label
+              key={opt.value}
+              className={`flex cursor-pointer items-start gap-3 rounded-lg border p-3 transition-colors ${
+                scheduleType === opt.value
+                  ? 'border-[var(--color-accent)] bg-[var(--color-accent-light)]'
+                  : 'border-[var(--color-border-default)] hover:bg-[var(--color-bg-card)]'
+              }`}
+            >
+              <input
+                type="radio"
+                name="scheduleType"
+                value={opt.value}
+                checked={scheduleType === opt.value}
+                onChange={() => setScheduleType(opt.value)}
+                className="mt-0.5 accent-[var(--color-accent)]"
+              />
+              <div>
+                <span className="text-sm font-medium">{opt.label}</span>
+                <p className="mt-0.5 text-xs text-[var(--color-text-muted)]">{opt.description}</p>
+              </div>
+            </label>
+          ))}
+        </div>
+
+        {/* Schedule-type-specific options */}
+        {scheduleType === 'daily' && (
+          <div>
+            <label className="mb-1 block text-sm font-medium">Time</label>
+            <select
+              value={scheduleHour}
+              onChange={(e) => setScheduleHour(parseInt(e.target.value, 10))}
+              className="w-40 rounded-lg border border-[var(--color-border-default)] bg-[var(--color-bg-primary)] px-3 py-2 text-sm focus:border-[var(--color-accent)] focus:outline-none focus:ring-1 focus:ring-[var(--color-accent)]"
+            >
+              {Array.from({ length: 24 }, (_, i) => (
+                <option key={i} value={i}>{formatHour(i)}</option>
+              ))}
+            </select>
+          </div>
+        )}
+
+        {scheduleType === 'times_per_day' && (
+          <div>
+            <label className="mb-1 block text-sm font-medium">Times per day</label>
+            <select
+              value={scheduleCount}
+              onChange={(e) => setScheduleCount(parseInt(e.target.value, 10))}
+              className="w-40 rounded-lg border border-[var(--color-border-default)] bg-[var(--color-bg-primary)] px-3 py-2 text-sm focus:border-[var(--color-accent)] focus:outline-none focus:ring-1 focus:ring-[var(--color-accent)]"
+            >
+              {[2, 3, 4, 5, 6].map((n) => (
+                <option key={n} value={n}>{n} times</option>
+              ))}
+            </select>
+            <p className="mt-1 text-xs text-[var(--color-text-muted)]">
+              Runs at: {Array.from({ length: scheduleCount }, (_, i) => formatHour(i * Math.floor(24 / scheduleCount))).join(', ')}
+            </p>
+          </div>
+        )}
+
+        {scheduleType === 'every_n_days' && (
+          <div className="flex gap-4">
+            <div>
+              <label className="mb-1 block text-sm font-medium">Every</label>
+              <select
+                value={scheduleDays}
+                onChange={(e) => setScheduleDays(parseInt(e.target.value, 10))}
+                className="w-28 rounded-lg border border-[var(--color-border-default)] bg-[var(--color-bg-primary)] px-3 py-2 text-sm focus:border-[var(--color-accent)] focus:outline-none focus:ring-1 focus:ring-[var(--color-accent)]"
+              >
+                {[2, 3, 4, 5, 6, 7].map((n) => (
+                  <option key={n} value={n}>{n} days</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="mb-1 block text-sm font-medium">At</label>
+              <select
+                value={scheduleHour}
+                onChange={(e) => setScheduleHour(parseInt(e.target.value, 10))}
+                className="w-40 rounded-lg border border-[var(--color-border-default)] bg-[var(--color-bg-primary)] px-3 py-2 text-sm focus:border-[var(--color-accent)] focus:outline-none focus:ring-1 focus:ring-[var(--color-accent)]"
+              >
+                {Array.from({ length: 24 }, (_, i) => (
+                  <option key={i} value={i}>{formatHour(i)}</option>
+                ))}
+              </select>
+            </div>
+          </div>
+        )}
+
+        {/* Next run display */}
+        <div className="rounded-lg border border-[var(--color-border-default)] bg-[var(--color-bg-card)] px-3 py-2">
+          <span className="text-xs font-medium text-[var(--color-text-muted)]">Next scout: </span>
+          <span className="text-sm">{formatNextRun(nextScoutAt, timezone)}</span>
         </div>
       </section>
 

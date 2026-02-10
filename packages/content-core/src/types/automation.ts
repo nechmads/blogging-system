@@ -1,3 +1,5 @@
+import type { ScoutSchedule } from './schedule'
+
 /** Writer platform user record (not CMS user). */
 export interface User {
   id: string
@@ -28,6 +30,9 @@ export interface PublicationConfig {
   defaultAuthor: string
   autoPublishMode: AutoPublishMode
   cadencePostsPerWeek: number
+  scoutSchedule: ScoutSchedule
+  timezone: string
+  nextScoutAt: number | null
   createdAt: number
   updatedAt: number
 }

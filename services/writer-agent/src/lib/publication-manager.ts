@@ -1,4 +1,6 @@
-import type { PublicationConfig, AutoPublishMode } from '@hotmetal/content-core'
+import type { PublicationConfig, AutoPublishMode, ScoutSchedule } from '@hotmetal/content-core'
+import { DEFAULT_SCHEDULE, DEFAULT_TIMEZONE } from '@hotmetal/content-core'
+import { computeNextRun, parseSchedule } from '@hotmetal/shared'
 
 interface PublicationRow {
   id: string
@@ -11,6 +13,9 @@ interface PublicationRow {
   default_author: string
   auto_publish_mode: string
   cadence_posts_per_week: number
+  scout_schedule: string
+  timezone: string
+  next_scout_at: number | null
   created_at: number
   updated_at: number
 }
@@ -27,6 +32,9 @@ function rowToPublication(row: PublicationRow): PublicationConfig {
     defaultAuthor: row.default_author,
     autoPublishMode: row.auto_publish_mode as AutoPublishMode,
     cadencePostsPerWeek: row.cadence_posts_per_week,
+    scoutSchedule: parseSchedule(row.scout_schedule),
+    timezone: row.timezone ?? DEFAULT_TIMEZONE,
+    nextScoutAt: row.next_scout_at,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   }
@@ -41,6 +49,8 @@ export interface CreatePublicationInput {
   defaultAuthor?: string
   autoPublishMode?: AutoPublishMode
   cadencePostsPerWeek?: number
+  scoutSchedule?: ScoutSchedule
+  timezone?: string
 }
 
 export interface UpdatePublicationInput {
@@ -52,6 +62,9 @@ export interface UpdatePublicationInput {
   autoPublishMode?: AutoPublishMode
   cadencePostsPerWeek?: number
   cmsPublicationId?: string | null
+  scoutSchedule?: ScoutSchedule
+  timezone?: string
+  nextScoutAt?: number | null
 }
 
 export class PublicationManager {
@@ -59,11 +72,14 @@ export class PublicationManager {
 
   async create(id: string, input: CreatePublicationInput): Promise<PublicationConfig> {
     const now = Math.floor(Date.now() / 1000)
+    const schedule = input.scoutSchedule ?? DEFAULT_SCHEDULE
+    const tz = input.timezone ?? DEFAULT_TIMEZONE
+    const nextScoutAt = computeNextRun(schedule, tz)
 
     await this.db
       .prepare(
-        `INSERT INTO publications (id, user_id, name, slug, description, writing_tone, default_author, auto_publish_mode, cadence_posts_per_week, created_at, updated_at)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        `INSERT INTO publications (id, user_id, name, slug, description, writing_tone, default_author, auto_publish_mode, cadence_posts_per_week, scout_schedule, timezone, next_scout_at, created_at, updated_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       )
       .bind(
         id,
@@ -75,6 +91,9 @@ export class PublicationManager {
         input.defaultAuthor ?? 'Shahar',
         input.autoPublishMode ?? 'draft',
         input.cadencePostsPerWeek ?? 3,
+        JSON.stringify(schedule),
+        tz,
+        nextScoutAt,
         now,
         now,
       )
@@ -91,6 +110,9 @@ export class PublicationManager {
       defaultAuthor: input.defaultAuthor ?? 'Shahar',
       autoPublishMode: input.autoPublishMode ?? 'draft',
       cadencePostsPerWeek: input.cadencePostsPerWeek ?? 3,
+      scoutSchedule: schedule,
+      timezone: tz,
+      nextScoutAt,
       createdAt: now,
       updatedAt: now,
     }
@@ -157,6 +179,18 @@ export class PublicationManager {
     if (data.cmsPublicationId !== undefined) {
       sets.push('cms_publication_id = ?')
       bindings.push(data.cmsPublicationId)
+    }
+    if (data.scoutSchedule !== undefined) {
+      sets.push('scout_schedule = ?')
+      bindings.push(JSON.stringify(data.scoutSchedule))
+    }
+    if (data.timezone !== undefined) {
+      sets.push('timezone = ?')
+      bindings.push(data.timezone)
+    }
+    if (data.nextScoutAt !== undefined) {
+      sets.push('next_scout_at = ?')
+      bindings.push(data.nextScoutAt)
     }
 
     if (sets.length === 0) return this.getById(id)

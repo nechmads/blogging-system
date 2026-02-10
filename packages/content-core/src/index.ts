@@ -15,6 +15,20 @@ export type {
   IdeaStatus,
   IdeaSource,
   Idea,
+  ScoutSchedule,
+  DailySchedule,
+  TimesPerDaySchedule,
+  EveryNDaysSchedule,
+  ScheduleType,
 } from './types'
 
-export { POST_STATUSES, OUTLETS, RENDITION_STATUSES, AUTO_PUBLISH_MODES, IDEA_STATUSES } from './types'
+export {
+  POST_STATUSES,
+  OUTLETS,
+  RENDITION_STATUSES,
+  AUTO_PUBLISH_MODES,
+  IDEA_STATUSES,
+  SCHEDULE_TYPES,
+  DEFAULT_SCHEDULE,
+  DEFAULT_TIMEZONE,
+} from './types'
