@@ -10,7 +10,7 @@
     "publisher:migrate:local": "pnpm --filter @hotmetal/publisher db:migrate:local",
     "publisher:reset:local": "rm -rf services/publisher/.wrangler/state && pnpm publisher:migrate:local",
     "writer:migrate:local": "pnpm --filter @hotmetal/writer-agent db:migrate:local",
-    "writer:reset:local": "rm -rf services/writer-agent/.wrangler/state && pnpm writer:migrate:local",
+    "writer:reset:local": "rm -rf .wrangler/shared-state && pnpm writer:migrate:local",
     "db:migrate:local": "pnpm cms:migrate:local && pnpm publisher:migrate:local && pnpm writer:migrate:local",
     "db:reset:local": "pnpm cms:reset:local && pnpm publisher:reset:local && pnpm writer:reset:local",
     "dev:cms": "pnpm --filter @hotmetal/cms-admin dev",

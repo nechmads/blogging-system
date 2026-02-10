@@ -137,6 +137,15 @@ publisher.CMS_API_KEY          ══  cms-admin.CMS_API_KEY
 writer-agent.CMS_API_KEY       ══  cms-admin.CMS_API_KEY
 ```
 
+## Shared Local D1
+
+`writer-agent` and `content-scout` share the same D1 database (`hotmetal-writer-db`). In local dev, both services use `--persist-to ../../.wrangler/shared-state` so they read/write the same local SQLite file. Migrations are managed by `writer-agent` and applied to the shared location.
+
+```bash
+# Reset and re-migrate the shared D1:
+pnpm writer:reset:local
+```
+
 ## Setting Secrets Locally
 
 ```bash
