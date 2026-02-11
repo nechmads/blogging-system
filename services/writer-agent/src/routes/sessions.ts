@@ -16,22 +16,22 @@ sessions.use('/api/sessions', writerApiKeyAuth)
 
 /** Create a new writing session. */
 sessions.post('/api/sessions', async (c) => {
+  const userId = c.req.header('X-User-Id')
+  if (!userId) {
+    return c.json({ error: 'Missing X-User-Id header' }, 401)
+  }
+
   const body = await c.req.json<{
-    userId?: string
     title?: string
     publicationId?: string
     ideaId?: string
     seedContext?: string
   }>()
 
-  if (!body.userId || typeof body.userId !== 'string') {
-    return c.json({ error: 'userId is required' }, 400)
-  }
-
   const sessionId = crypto.randomUUID()
   const session = await c.env.DAL.createSession({
     id: sessionId,
-    userId: body.userId,
+    userId,
     title: body.title,
     publicationId: body.publicationId,
     ideaId: body.ideaId,

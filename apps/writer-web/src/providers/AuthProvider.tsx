@@ -99,6 +99,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       signUpUrl="/sign-up"
       waitlistUrl="/waitlist"
       afterSignOutUrl="/"
+      signInFallbackRedirectUrl="/writing"
+      signUpFallbackRedirectUrl="/writing"
     >
       {children}
     </ClerkProvider>
