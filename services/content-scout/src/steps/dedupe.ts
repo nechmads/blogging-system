@@ -1,6 +1,7 @@
 import { generateText } from 'ai'
 import { createAnthropic } from '@ai-sdk/anthropic'
-import type { TopicSearchResults, RecentIdeaRow, FilteredStory } from '../types'
+import type { Idea } from '@hotmetal/data-layer'
+import type { TopicSearchResults, FilteredStory } from '../types'
 
 const DEDUPE_SYSTEM_PROMPT = `You are a news story deduplication assistant.
 
@@ -31,7 +32,7 @@ interface DedupeDecision {
 export async function dedupeStories(
   apiKey: string,
   searchResults: TopicSearchResults[],
-  recentIdeas: RecentIdeaRow[],
+  recentIdeas: Pick<Idea, 'id' | 'title' | 'angle'>[],
 ): Promise<FilteredStory[]> {
   const allStories = flattenToStories(searchResults)
 
@@ -91,7 +92,7 @@ function flattenToStories(searchResults: TopicSearchResults[]): FilteredStory[] 
 
 function buildDedupeUserPrompt(
   searchResults: TopicSearchResults[],
-  recentIdeas: RecentIdeaRow[],
+  recentIdeas: Pick<Idea, 'id' | 'title' | 'angle'>[],
 ): string {
   let prompt = '## Recent News Stories\n\n'
 

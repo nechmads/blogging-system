@@ -52,12 +52,11 @@
 		},
 	],
 
-	// Shared D1 database (same as writer-agent)
-	"d1_databases": [
+	// Data Access Layer via Service Binding
+	"services": [
 		{
-			"binding": "WRITER_DB",
-			"database_name": "hotmetal-writer-db",
-			"database_id": "5fc8f7a4-e05f-47ce-b638-f78a90057f43",
+			"binding": "DAL",
+			"service": "hotmetal-data-layer",
 		},
 	],
 	"routes": [

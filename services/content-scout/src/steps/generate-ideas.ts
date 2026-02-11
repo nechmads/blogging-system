@@ -1,12 +1,13 @@
 import { generateText } from 'ai'
 import { createAnthropic } from '@ai-sdk/anthropic'
-import type { PublicationRow, TopicRow, FilteredStory, IdeaBrief } from '../types'
+import type { Publication, Topic } from '@hotmetal/data-layer'
+import type { FilteredStory, IdeaBrief } from '../types'
 
 export async function generateIdeas(
   apiKey: string,
-  publication: PublicationRow,
+  publication: Publication,
   filteredStories: FilteredStory[],
-  topics: TopicRow[],
+  topics: Topic[],
 ): Promise<IdeaBrief[]> {
   const anthropic = createAnthropic({ apiKey })
 
@@ -24,7 +25,7 @@ export async function generateIdeas(
   return parseIdeaBriefs(result.text)
 }
 
-function buildIdeaSystemPrompt(publication: PublicationRow): string {
+function buildIdeaSystemPrompt(publication: Publication): string {
   return `You are a content scout for a publication called "${publication.name}".
 
 Publication description: ${publication.description || 'No description provided.'}
@@ -63,7 +64,7 @@ IMPORTANT: Respond with valid JSON only. Use this exact format:
 }`
 }
 
-function buildIdeaUserPrompt(filteredStories: FilteredStory[], topics: TopicRow[]): string {
+function buildIdeaUserPrompt(filteredStories: FilteredStory[], topics: Topic[]): string {
   let prompt = '## Topics of Interest\n\n'
 
   for (const topic of topics) {
