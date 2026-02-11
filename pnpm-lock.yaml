@@ -120,6 +120,9 @@ importers:
       clsx:
         specifier: ^2.1.1
         version: 2.1.1
+      hono:
+        specifier: ^4.10.7
+        version: 4.11.8
       marked:
         specifier: ^17.0.1
         version: 17.0.1

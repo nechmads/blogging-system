@@ -26,6 +26,7 @@
   "dependencies": {
     "@hotmetal/data-layer": "workspace:*",
     "@ai-sdk/react": "^3.0.79",
+    "hono": "^4.10.7",
     "@cloudflare/ai-chat": "^0.0.6",
     "@legendapp/state": "3.0.0-beta.43",
     "@phosphor-icons/react": "^2.1.10",
