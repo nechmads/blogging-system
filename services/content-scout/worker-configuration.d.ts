@@ -7,7 +7,7 @@ declare namespace Cloudflare {
 	}
 	interface Env {
 		SCOUT_CACHE: KVNamespace;
-		WRITER_DB: D1Database;
+		DAL: Fetcher;
 		SCOUT_QUEUE: Queue;
 		ALEXANDER_API_URL: "https://alexanderai.farfarawaylabs.com";
 		WRITER_AGENT_URL: "https://hotmetal-writer-agent.shahar-nechmad.workers.dev";

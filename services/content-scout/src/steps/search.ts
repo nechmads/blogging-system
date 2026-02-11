@@ -1,5 +1,6 @@
 import { AlexanderApi } from '@hotmetal/shared'
-import type { TopicRow, TopicSearchResults } from '../types'
+import type { Topic } from '@hotmetal/data-layer'
+import type { TopicSearchResults } from '../types'
 import { hashQuery } from '../utils'
 
 const CACHE_TTL_SECONDS = 24 * 60 * 60 // 24 hours
@@ -8,7 +9,7 @@ export async function searchForContent(
   alexanderUrl: string,
   alexanderKey: string,
   cache: KVNamespace,
-  topics: TopicRow[],
+  topics: Topic[],
 ): Promise<TopicSearchResults[]> {
   const alexander = new AlexanderApi(alexanderUrl, alexanderKey)
 

@@ -1,7 +1,5 @@
 import { Hono } from 'hono'
 import type { WriterAgentEnv } from '../env'
-import { PublicationManager } from '../lib/publication-manager'
-import { TopicManager } from '../lib/topic-manager'
 import { writerApiKeyAuth } from '../middleware/api-key-auth'
 import { AUTO_PUBLISH_MODES, type AutoPublishMode, type ScoutSchedule } from '@hotmetal/content-core'
 import { validateSchedule, validateTimezone, computeNextRun, CmsApi } from '@hotmetal/shared'
@@ -51,8 +49,8 @@ publications.post('/api/publications', async (c) => {
   }
 
   const id = crypto.randomUUID()
-  const manager = new PublicationManager(c.env.WRITER_DB)
-  const publication = await manager.create(id, {
+  const publication = await c.env.DAL.createPublication({
+    id,
     userId: body.userId ?? 'default',
     name: body.name.trim(),
     slug: body.slug.trim(),
@@ -72,7 +70,7 @@ publications.post('/api/publications', async (c) => {
       title: body.name.trim(),
       slug: body.slug.trim(),
     })
-    await manager.update(id, { cmsPublicationId: cmsPub.id })
+    await c.env.DAL.updatePublication(id, { cmsPublicationId: cmsPub.id })
     publication.cmsPublicationId = cmsPub.id
   } catch (err) {
     console.error('Failed to create CMS publication (non-blocking):', err)
@@ -84,34 +82,30 @@ publications.post('/api/publications', async (c) => {
 /** List publications for a user. */
 publications.get('/api/publications', async (c) => {
   const userId = c.req.query('userId')
-  const manager = new PublicationManager(c.env.WRITER_DB)
 
   const result = userId
-    ? await manager.listByUser(userId)
-    : await manager.listAll()
+    ? await c.env.DAL.listPublicationsByUser(userId)
+    : await c.env.DAL.listAllPublications()
 
   return c.json({ data: result })
 })
 
 /** Get a single publication with its topics. */
 publications.get('/api/publications/:id', async (c) => {
-  const pubManager = new PublicationManager(c.env.WRITER_DB)
-  const publication = await pubManager.getById(c.req.param('id'))
+  const publication = await c.env.DAL.getPublicationById(c.req.param('id'))
 
   if (!publication) {
     return c.json({ error: 'Publication not found' }, 404)
   }
 
-  const topicManager = new TopicManager(c.env.WRITER_DB)
-  const topics = await topicManager.listByPublication(publication.id)
+  const topics = await c.env.DAL.listTopicsByPublication(publication.id)
 
   return c.json({ ...publication, topics })
 })
 
 /** Update publication config. */
 publications.patch('/api/publications/:id', async (c) => {
-  const manager = new PublicationManager(c.env.WRITER_DB)
-  const existing = await manager.getById(c.req.param('id'))
+  const existing = await c.env.DAL.getPublicationById(c.req.param('id'))
 
   if (!existing) {
     return c.json({ error: 'Publication not found' }, 404)
@@ -162,7 +156,7 @@ publications.patch('/api/publications/:id', async (c) => {
     }
   }
 
-  const updated = await manager.update(c.req.param('id'), {
+  const updated = await c.env.DAL.updatePublication(c.req.param('id'), {
     name: body.name?.trim(),
     slug: body.slug?.trim(),
     description: body.description,
@@ -181,14 +175,13 @@ publications.patch('/api/publications/:id', async (c) => {
 
 /** Delete a publication and its topics/ideas. */
 publications.delete('/api/publications/:id', async (c) => {
-  const manager = new PublicationManager(c.env.WRITER_DB)
-  const existing = await manager.getById(c.req.param('id'))
+  const existing = await c.env.DAL.getPublicationById(c.req.param('id'))
 
   if (!existing) {
     return c.json({ error: 'Publication not found' }, 404)
   }
 
-  await manager.delete(c.req.param('id'))
+  await c.env.DAL.deletePublication(c.req.param('id'))
   return c.json({ deleted: true })
 })
 

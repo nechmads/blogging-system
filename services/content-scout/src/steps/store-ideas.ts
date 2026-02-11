@@ -1,5 +1,5 @@
-import type { IdeaBrief, TopicRow } from '../types'
-import { runWithRetry } from './d1-retry'
+import type { DataLayerApi, Topic, CreateIdeaInput } from '@hotmetal/data-layer'
+import type { IdeaBrief } from '../types'
 
 export interface StoredIdeasResult {
   count: number
@@ -7,15 +7,15 @@ export interface StoredIdeasResult {
 }
 
 export async function storeIdeas(
-  db: D1Database,
+  dal: DataLayerApi,
   publicationId: string,
   ideas: IdeaBrief[],
-  topics: TopicRow[],
+  topics: Topic[],
 ): Promise<StoredIdeasResult> {
   const topicsByName = new Map(topics.map((t) => [t.name, t]))
 
   // Build entries with deterministic IDs so workflow retries are idempotent.
-  // INSERT OR IGNORE skips rows that already exist from a prior attempt.
+  // The DAL uses INSERT OR IGNORE which skips rows that already exist.
   const entries = await Promise.all(
     ideas.map(async (idea) => ({
       id: await deterministicId(publicationId, idea.title, idea.angle),
@@ -24,28 +24,18 @@ export async function storeIdeas(
     })),
   )
 
-  // Insert one at a time instead of batch() to minimize write-lock duration
-  // and allow per-statement retry on SQLITE_BUSY from concurrent access.
-  for (const { id, topicId, idea } of entries) {
-    await runWithRetry(() =>
-      db
-        .prepare(
-          `INSERT OR IGNORE INTO ideas (id, publication_id, topic_id, title, angle, summary, sources, relevance_score, status)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'new')`,
-        )
-        .bind(
-          id,
-          publicationId,
-          topicId,
-          idea.title,
-          idea.angle,
-          idea.summary,
-          JSON.stringify(idea.sources),
-          idea.relevance_score,
-        )
-        .run(),
-    )
-  }
+  const items: CreateIdeaInput[] = entries.map(({ id, topicId, idea }) => ({
+    id,
+    publicationId,
+    topicId,
+    title: idea.title,
+    angle: idea.angle,
+    summary: idea.summary,
+    sources: JSON.stringify(idea.sources),
+    relevanceScore: idea.relevance_score,
+  }))
+
+  await dal.createIdeas(items)
 
   return { count: ideas.length, ideaIds: entries.map((e) => e.id) }
 }

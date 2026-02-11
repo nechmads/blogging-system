@@ -1,4 +1,5 @@
 import type { Outlet } from '@hotmetal/content-core'
+import type { DataLayerApi } from '@hotmetal/data-layer'
 
 export interface AuditLogEntry {
   postId: string
@@ -9,20 +10,13 @@ export interface AuditLogEntry {
   errorMessage?: string
 }
 
-export async function writeAuditLog(db: D1Database, entry: AuditLogEntry): Promise<void> {
-  const id = crypto.randomUUID()
-  await db
-    .prepare(
-      'INSERT INTO audit_logs (id, post_id, outlet, action, status, result_data, error_message) VALUES (?, ?, ?, ?, ?, ?, ?)'
-    )
-    .bind(
-      id,
-      entry.postId,
-      entry.outlet,
-      entry.action,
-      entry.status,
-      entry.resultData ? JSON.stringify(entry.resultData) : null,
-      entry.errorMessage ?? null,
-    )
-    .run()
+export async function writeAuditLog(dal: DataLayerApi, entry: AuditLogEntry): Promise<void> {
+  await dal.writeAuditLog({
+    postId: entry.postId,
+    outlet: entry.outlet,
+    action: entry.action,
+    status: entry.status,
+    resultData: entry.resultData ? JSON.stringify(entry.resultData) : undefined,
+    errorMessage: entry.errorMessage,
+  })
 }

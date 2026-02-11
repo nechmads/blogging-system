@@ -1,7 +1,5 @@
 import { Hono } from 'hono'
 import type { WriterAgentEnv } from '../env'
-import { TopicManager } from '../lib/topic-manager'
-import { PublicationManager } from '../lib/publication-manager'
 import { writerApiKeyAuth } from '../middleware/api-key-auth'
 import type { TopicPriority } from '@hotmetal/content-core'
 
@@ -15,8 +13,7 @@ topics.use('/api/topics/*', writerApiKeyAuth)
 topics.post('/api/publications/:pubId/topics', async (c) => {
   const pubId = c.req.param('pubId')
 
-  const pubManager = new PublicationManager(c.env.WRITER_DB)
-  const publication = await pubManager.getById(pubId)
+  const publication = await c.env.DAL.getPublicationById(pubId)
   if (!publication) {
     return c.json({ error: 'Publication not found' }, 404)
   }
@@ -36,8 +33,8 @@ topics.post('/api/publications/:pubId/topics', async (c) => {
   }
 
   const id = crypto.randomUUID()
-  const manager = new TopicManager(c.env.WRITER_DB)
-  const topic = await manager.create(id, {
+  const topic = await c.env.DAL.createTopic({
+    id,
     publicationId: pubId,
     name: body.name.trim(),
     description: body.description?.trim(),
@@ -50,16 +47,13 @@ topics.post('/api/publications/:pubId/topics', async (c) => {
 /** List topics for a publication. */
 topics.get('/api/publications/:pubId/topics', async (c) => {
   const pubId = c.req.param('pubId')
-  const manager = new TopicManager(c.env.WRITER_DB)
-  const result = await manager.listByPublication(pubId)
-
+  const result = await c.env.DAL.listTopicsByPublication(pubId)
   return c.json({ data: result })
 })
 
 /** Update a topic. */
 topics.patch('/api/topics/:id', async (c) => {
-  const manager = new TopicManager(c.env.WRITER_DB)
-  const existing = await manager.getById(c.req.param('id'))
+  const existing = await c.env.DAL.getTopicById(c.req.param('id'))
 
   if (!existing) {
     return c.json({ error: 'Topic not found' }, 404)
@@ -76,7 +70,7 @@ topics.patch('/api/topics/:id', async (c) => {
     return c.json({ error: 'priority must be 1, 2, or 3' }, 400)
   }
 
-  const updated = await manager.update(c.req.param('id'), {
+  const updated = await c.env.DAL.updateTopic(c.req.param('id'), {
     name: body.name?.trim(),
     description: body.description,
     priority: body.priority as TopicPriority | undefined,
@@ -88,14 +82,13 @@ topics.patch('/api/topics/:id', async (c) => {
 
 /** Delete a topic. */
 topics.delete('/api/topics/:id', async (c) => {
-  const manager = new TopicManager(c.env.WRITER_DB)
-  const existing = await manager.getById(c.req.param('id'))
+  const existing = await c.env.DAL.getTopicById(c.req.param('id'))
 
   if (!existing) {
     return c.json({ error: 'Topic not found' }, 404)
   }
 
-  await manager.delete(c.req.param('id'))
+  await c.env.DAL.deleteTopic(c.req.param('id'))
   return c.json({ deleted: true })
 })
 

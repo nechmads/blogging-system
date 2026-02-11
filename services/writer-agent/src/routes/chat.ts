@@ -13,11 +13,8 @@ chat.use('/api/sessions/:sessionId/chat', writerApiKeyAuth)
 chat.post('/api/sessions/:sessionId/chat', async (c) => {
   const sessionId = c.req.param('sessionId')
 
-  const row = await c.env.WRITER_DB
-    .prepare('SELECT id FROM sessions WHERE id = ?')
-    .bind(sessionId)
-    .first()
-  if (!row) {
+  const session = await c.env.DAL.getSessionById(sessionId)
+  if (!session) {
     return c.json({ error: 'Session not found' }, 404)
   }
 

@@ -2,7 +2,8 @@ import { Hono } from 'hono'
 import type { PublisherEnv } from '../env'
 import { buildAuthorizeUrl, exchangeCodeForToken, fetchPersonUrn } from '../linkedin/oauth'
 import {
-  LinkedInTokenStore,
+  storeLinkedInToken,
+  hasValidLinkedInToken,
   storeOAuthState,
   validateAndConsumeOAuthState,
 } from '../linkedin/token-store'
@@ -13,7 +14,7 @@ const oauth = new Hono<{ Bindings: PublisherEnv }>()
 oauth.get('/oauth/linkedin', async (c) => {
   const state = crypto.randomUUID()
 
-  await storeOAuthState(c.env.PUBLISHER_DB, state)
+  await storeOAuthState(c.env.DAL, state)
 
   const authorizeUrl = buildAuthorizeUrl(
     c.env.LINKEDIN_CLIENT_ID,
@@ -39,7 +40,7 @@ oauth.get('/oauth/linkedin/callback', async (c) => {
     return c.json({ error: 'Missing code or state parameter' }, 400)
   }
 
-  const validState = await validateAndConsumeOAuthState(c.env.PUBLISHER_DB, state)
+  const validState = await validateAndConsumeOAuthState(c.env.DAL, state)
   if (!validState) {
     return c.json({ error: 'Invalid or expired state parameter' }, 400)
   }
@@ -53,8 +54,7 @@ oauth.get('/oauth/linkedin/callback', async (c) => {
 
   const personUrn = await fetchPersonUrn(tokenResponse.accessToken)
 
-  const tokenStore = new LinkedInTokenStore(c.env.PUBLISHER_DB, c.env.TOKEN_ENCRYPTION_KEY)
-  await tokenStore.storeToken(tokenResponse.accessToken, personUrn, tokenResponse.expiresIn)
+  await storeLinkedInToken(c.env.DAL, tokenResponse.accessToken, personUrn, tokenResponse.expiresIn)
 
   return c.json({
     status: 'connected',
@@ -65,8 +65,7 @@ oauth.get('/oauth/linkedin/callback', async (c) => {
 
 /** Check LinkedIn connection status. */
 oauth.get('/oauth/linkedin/status', async (c) => {
-  const tokenStore = new LinkedInTokenStore(c.env.PUBLISHER_DB, c.env.TOKEN_ENCRYPTION_KEY)
-  const connected = await tokenStore.hasValidToken()
+  const connected = await hasValidLinkedInToken(c.env.DAL)
 
   return c.json({ connected })
 })

@@ -1,9 +1,7 @@
 import { Hono } from 'hono'
 import type { ScoutEnv, ScoutQueueMessage } from './env'
 import { ScoutWorkflow } from './workflow'
-import { runWithRetry } from './steps/d1-retry'
-import { computeNextRun, parseSchedule } from '@hotmetal/shared'
-import { DEFAULT_TIMEZONE } from '@hotmetal/content-core'
+import { computeNextRun } from '@hotmetal/shared'
 
 const app = new Hono<{ Bindings: ScoutEnv }>()
 
@@ -78,39 +76,20 @@ export default {
 
 const QUEUE_BATCH_SIZE = 100
 
-interface ScheduleRow {
-  id: string
-  scout_schedule: string | null
-  timezone: string | null
-}
-
 /**
  * Backfill next_scout_at for publications that have NULL (e.g. after migration).
  */
 async function backfillNullSchedules(env: ScoutEnv): Promise<void> {
-  const result = await runWithRetry(() =>
-    env.WRITER_DB
-      .prepare('SELECT id, scout_schedule, timezone FROM publications WHERE next_scout_at IS NULL')
-      .all<ScheduleRow>(),
-  )
-
-  const pubs = result.results ?? []
+  const pubs = await env.DAL.getPublicationsWithNullSchedule()
   if (pubs.length === 0) return
 
   console.log(`[backfill] Found ${pubs.length} publication(s) with NULL next_scout_at`)
 
   for (const pub of pubs) {
-    const schedule = parseSchedule(pub.scout_schedule)
-    const tz = pub.timezone ?? DEFAULT_TIMEZONE
-    const nextRun = computeNextRun(schedule, tz)
-    console.log(`[backfill] pub=${pub.id} schedule=${JSON.stringify(schedule)} tz=${tz} nextRun=${new Date(nextRun * 1000).toISOString()}`)
+    const nextRun = computeNextRun(pub.scoutSchedule, pub.timezone)
+    console.log(`[backfill] pub=${pub.id} schedule=${JSON.stringify(pub.scoutSchedule)} tz=${pub.timezone} nextRun=${new Date(nextRun * 1000).toISOString()}`)
 
-    await runWithRetry(() =>
-      env.WRITER_DB
-        .prepare('UPDATE publications SET next_scout_at = ? WHERE id = ?')
-        .bind(nextRun, pub.id)
-        .run(),
-    )
+    await env.DAL.updatePublicationNextScoutAt(pub.id, nextRun)
   }
 }
 
@@ -124,14 +103,7 @@ async function enqueueDuePublications(env: ScoutEnv): Promise<number> {
   const now = Math.floor(Date.now() / 1000)
   console.log(`[enqueue] Checking for due publications (now=${new Date(now * 1000).toISOString()})`)
 
-  const result = await runWithRetry(() =>
-    env.WRITER_DB
-      .prepare('SELECT id, scout_schedule, timezone FROM publications WHERE next_scout_at IS NOT NULL AND next_scout_at <= ?')
-      .bind(now)
-      .all<ScheduleRow>(),
-  )
-
-  const pubs = result.results ?? []
+  const pubs = await env.DAL.getDuePublications(now)
   if (pubs.length === 0) {
     console.log('[enqueue] No publications due')
     return 0
@@ -140,19 +112,12 @@ async function enqueueDuePublications(env: ScoutEnv): Promise<number> {
   console.log(`[enqueue] Found ${pubs.length} due publication(s)`)
 
   for (const pub of pubs) {
-    const schedule = parseSchedule(pub.scout_schedule)
-    const tz = pub.timezone ?? DEFAULT_TIMEZONE
-    const nextRun = computeNextRun(schedule, tz)
+    const nextRun = computeNextRun(pub.scoutSchedule, pub.timezone)
 
     console.log(`[enqueue] pub=${pub.id} — advancing next_scout_at to ${new Date(nextRun * 1000).toISOString()}`)
 
     // Optimistic update BEFORE enqueue to prevent double-enqueue
-    await runWithRetry(() =>
-      env.WRITER_DB
-        .prepare('UPDATE publications SET next_scout_at = ? WHERE id = ?')
-        .bind(nextRun, pub.id)
-        .run(),
-    )
+    await env.DAL.updatePublicationNextScoutAt(pub.id, nextRun)
 
     // Enqueue immediately after update
     await env.SCOUT_QUEUE.send({ publicationId: pub.id, triggeredBy: 'cron' })
@@ -167,19 +132,15 @@ async function enqueueDuePublications(env: ScoutEnv): Promise<number> {
  * Does NOT modify next_scout_at.
  */
 async function enqueueAllPublications(env: ScoutEnv): Promise<number> {
-  const publications = await env.WRITER_DB
-    .prepare('SELECT id FROM publications')
-    .all<{ id: string }>()
+  const pubIds = await env.DAL.getAllPublicationIds()
+  if (pubIds.length === 0) return 0
 
-  const pubs = publications.results ?? []
-  if (pubs.length === 0) return 0
-
-  for (let i = 0; i < pubs.length; i += QUEUE_BATCH_SIZE) {
-    const batch = pubs.slice(i, i + QUEUE_BATCH_SIZE)
+  for (let i = 0; i < pubIds.length; i += QUEUE_BATCH_SIZE) {
+    const batch = pubIds.slice(i, i + QUEUE_BATCH_SIZE)
     await env.SCOUT_QUEUE.sendBatch(
-      batch.map((pub) => ({ body: { publicationId: pub.id, triggeredBy: 'manual' as const } })),
+      batch.map((id) => ({ body: { publicationId: id, triggeredBy: 'manual' as const } })),
     )
   }
 
-  return pubs.length
+  return pubIds.length
 }

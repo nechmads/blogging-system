@@ -15,7 +15,7 @@ export type AutoPublishMode = 'draft' | 'publish' | 'full-auto'
 export const AUTO_PUBLISH_MODES: readonly AutoPublishMode[] = ['draft', 'publish', 'full-auto'] as const
 
 /**
- * Publication automation config in WRITER_DB.
+ * Publication automation config stored in the Data Access Layer.
  * Distinct from the CMS Publication record — this holds
  * operational settings (topics, tone, cadence).
  */

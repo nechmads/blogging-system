@@ -1,161 +1,133 @@
 /**
  * Writer Web — backend Worker
  *
- * Only receives requests for paths listed in `run_worker_first` in wrangler.jsonc
- * (/api/*, /agents/*, /health). All other requests (SPA routes, static assets)
- * are handled by the Cloudflare asset pipeline automatically.
- *
- * Proxies API & WebSocket requests to writer-agent, and scout trigger
- * requests directly to content-scout.
+ * Data reads (GET) are served directly via the DAL service binding.
+ * Writes, AI operations, and WebSocket connections proxy to writer-agent.
+ * Scout triggers proxy directly to content-scout.
  */
 
-/** Match `/api/publications/:id/scout` */
-const SCOUT_TRIGGER_RE = /^\/api\/publications\/([^/]+)\/scout$/;
+import { Hono } from 'hono'
 
-export default {
-  async fetch(request: Request, env: Env): Promise<Response> {
-    const url = new URL(request.url);
+import sessions from './api/sessions'
+import publications from './api/publications'
+import topics from './api/topics'
+import ideas from './api/ideas'
+import activity from './api/activity'
 
-    // WebSocket proxy — forward agent connections to writer-agent
-    if (url.pathname.startsWith('/agents/') && request.headers.get('Upgrade') === 'websocket') {
-      return proxyWebSocket(url, env);
-    }
+const app = new Hono<{ Bindings: Env }>()
 
-    // HTTP proxy for agent endpoints (e.g. get-messages for initial message fetch)
-    if (url.pathname.startsWith('/agents/')) {
-      return proxyToWriterAgent(url, request, env);
-    }
+// ─── DAL direct reads ───────────────────────────────────────────────
 
-    // Scout trigger — proxy directly to content-scout service
-    const scoutMatch = SCOUT_TRIGGER_RE.exec(url.pathname);
-    if (scoutMatch && request.method === 'POST') {
-      return proxyScoutTrigger(scoutMatch[1], env);
-    }
+app.route('/api', sessions)
+app.route('/api', publications)
+app.route('/api', topics)
+app.route('/api', ideas)
+app.route('/api', activity)
 
-    // HTTP API proxy — forward REST calls to writer-agent
-    if (url.pathname.startsWith('/api/')) {
-      return proxyToWriterAgent(url, request, env);
-    }
+// ─── Scout trigger (proxied to content-scout) ───────────────────────
 
-    // Health check
-    if (url.pathname === '/health') {
-      return Response.json({ status: 'ok', service: 'writer-web' });
-    }
-
-    // Unmatched Worker route — return 404.
-    // Static assets & SPA fallback are handled automatically by the asset
-    // pipeline via `not_found_handling: "single-page-application"` in wrangler.jsonc.
-    return new Response('Not found', { status: 404 });
-  },
-} satisfies ExportedHandler<Env>;
-
-/** Proxy an HTTP request to the writer-agent service. */
-async function proxyToWriterAgent(url: URL, request: Request, env: Env): Promise<Response> {
-  const target = `${env.WRITER_AGENT_URL}${url.pathname}${url.search}`;
-  const headers = new Headers(request.headers);
-  headers.set('X-API-Key', env.WRITER_API_KEY);
-
-  const res = await fetch(target, {
-    method: request.method,
-    headers,
-    body: request.body,
-  });
-
-  return new Response(res.body, {
-    status: res.status,
-    headers: res.headers,
-  });
-}
-
-/** Proxy a scout trigger request directly to the content-scout service. */
-async function proxyScoutTrigger(publicationId: string, env: Env): Promise<Response> {
-  if (!env.CONTENT_SCOUT_URL || !env.SCOUT_API_KEY) {
-    return Response.json({ error: 'Scout service not configured' }, { status: 503 });
+app.post('/api/publications/:pubId/scout', async (c) => {
+  if (!c.env.CONTENT_SCOUT_URL || !c.env.SCOUT_API_KEY) {
+    return c.json({ error: 'Scout service not configured' }, 503)
   }
 
-  const res = await fetch(`${env.CONTENT_SCOUT_URL}/api/scout/run`, {
+  const res = await fetch(`${c.env.CONTENT_SCOUT_URL}/api/scout/run`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      Authorization: `Bearer ${env.SCOUT_API_KEY}`,
+      Authorization: `Bearer ${c.env.SCOUT_API_KEY}`,
     },
-    body: JSON.stringify({ publicationId }),
-  });
+    body: JSON.stringify({ publicationId: c.req.param('pubId') }),
+  })
 
   if (!res.ok) {
-    console.error(`Scout service error (${res.status}):`, await res.text());
-    return Response.json(
-      { error: 'Content scout failed. Please try again later.' },
-      { status: 502 },
-    );
+    console.error(`Scout service error (${res.status}):`, await res.text())
+    return c.json({ error: 'Content scout failed. Please try again later.' }, 502)
   }
 
-  return new Response(res.body, {
-    status: res.status,
-    headers: res.headers,
-  });
-}
+  return new Response(res.body, { status: res.status, headers: res.headers })
+})
 
-/**
- * Proxy a WebSocket upgrade to the writer-agent service.
- *
- * Creates a WebSocketPair for the client, connects to the upstream agent,
- * and pipes messages bidirectionally.
- */
-async function proxyWebSocket(url: URL, env: Env): Promise<Response> {
-  const target = `${env.WRITER_AGENT_URL}${url.pathname}${url.search}`;
+// ─── WebSocket proxy (agent chat) ───────────────────────────────────
+
+app.get('/agents/*', async (c) => {
+  if (c.req.header('Upgrade') !== 'websocket') {
+    return proxyToWriterAgent(c)
+  }
+
+  const url = new URL(c.req.url)
+  const target = `${c.env.WRITER_AGENT_URL}${url.pathname}${url.search}`
 
   const upstreamResp = await fetch(target, {
     headers: {
       Upgrade: 'websocket',
-      'X-API-Key': env.WRITER_API_KEY,
+      'X-API-Key': c.env.WRITER_API_KEY,
     },
-  });
+  })
 
-  const upstream = upstreamResp.webSocket;
+  const upstream = upstreamResp.webSocket
   if (!upstream) {
-    return new Response('Failed to connect to agent', { status: 502 });
+    return c.text('Failed to connect to agent', 502)
   }
 
-  const pair = new WebSocketPair();
-  const [client, server] = Object.values(pair);
+  const pair = new WebSocketPair()
+  const [client, server] = Object.values(pair)
 
-  server.accept();
-  upstream.accept();
+  server.accept()
+  upstream.accept()
 
-  // Pipe messages bidirectionally
   server.addEventListener('message', (event) => {
-    try {
-      upstream.send(event.data as string | ArrayBuffer);
-    } catch {
-      // upstream closed
-    }
-  });
+    try { upstream.send(event.data as string | ArrayBuffer) } catch { /* closed */ }
+  })
   upstream.addEventListener('message', (event) => {
-    try {
-      server.send(event.data as string | ArrayBuffer);
-    } catch {
-      // client closed
-    }
-  });
+    try { server.send(event.data as string | ArrayBuffer) } catch { /* closed */ }
+  })
 
   server.addEventListener('close', (event) => {
-    try { upstream.close(event.code, event.reason); } catch { /* already closed */ }
-  });
+    try { upstream.close(event.code, event.reason) } catch { /* closed */ }
+  })
   upstream.addEventListener('close', (event) => {
-    try { server.close(event.code, event.reason); } catch { /* already closed */ }
-  });
+    try { server.close(event.code, event.reason) } catch { /* closed */ }
+  })
 
-  // Clean up on error
   server.addEventListener('error', () => {
-    try { upstream.close(1011, 'Client error'); } catch { /* already closed */ }
-  });
+    try { upstream.close(1011, 'Client error') } catch { /* closed */ }
+  })
   upstream.addEventListener('error', () => {
-    try { server.close(1011, 'Upstream error'); } catch { /* already closed */ }
-  });
+    try { server.close(1011, 'Upstream error') } catch { /* closed */ }
+  })
 
-  return new Response(null, {
-    status: 101,
-    webSocket: client,
-  });
+  return new Response(null, { status: 101, webSocket: client })
+})
+
+// ─── Catch-all: proxy writes/AI/DO to writer-agent ─────────────────
+
+app.all('/agents/*', proxyToWriterAgent)
+app.all('/api/*', proxyToWriterAgent)
+
+// ─── Health check ───────────────────────────────────────────────────
+
+app.get('/health', (c) => c.json({ status: 'ok', service: 'writer-web' }))
+
+// ─── Export ─────────────────────────────────────────────────────────
+
+export default app
+
+// ─── Writer-agent proxy helper ──────────────────────────────────────
+
+import type { Context } from 'hono'
+
+async function proxyToWriterAgent(c: Context<{ Bindings: Env }>): Promise<Response> {
+  const url = new URL(c.req.url)
+  const target = `${c.env.WRITER_AGENT_URL}${url.pathname}${url.search}`
+  const headers = new Headers(c.req.raw.headers)
+  headers.set('X-API-Key', c.env.WRITER_API_KEY)
+
+  const res = await fetch(target, {
+    method: c.req.method,
+    headers,
+    body: c.req.raw.body,
+  })
+
+  return new Response(res.body, { status: res.status, headers: res.headers })
 }

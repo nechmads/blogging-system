@@ -1,18 +1,18 @@
 import type { ScoutEnv } from '../env'
-import type { PublicationRow, IdeaRow, IdeaBrief } from '../types'
+import type { Publication, Idea } from '@hotmetal/data-layer'
+import type { IdeaBrief } from '../types'
 import { slugify, getWeekStartTimestamp } from '../utils'
-import { runWithRetry } from './d1-retry'
 
 export async function autoWriteTopIdea(
   env: ScoutEnv,
-  publication: PublicationRow,
+  publication: Publication,
   ideas: IdeaBrief[],
   storedIdeaIds: string[],
 ): Promise<number> {
-  if (publication.auto_publish_mode === 'draft') return 0
+  if (publication.autoPublishMode === 'draft') return 0
 
-  if (publication.auto_publish_mode === 'full-auto') {
-    const shouldWrite = await checkCadence(env.WRITER_DB, publication)
+  if (publication.autoPublishMode === 'full-auto') {
+    const shouldWrite = await checkCadence(env, publication)
     if (!shouldWrite) return 0
   }
 
@@ -28,38 +28,23 @@ export async function autoWriteTopIdea(
   if (!ideaId) return 0
 
   // Fetch the stored idea by primary key
-  const storedIdea = await runWithRetry(() =>
-    env.WRITER_DB
-      .prepare('SELECT * FROM ideas WHERE id = ?')
-      .bind(ideaId)
-      .first<IdeaRow>(),
-  )
-
+  const storedIdea = await env.DAL.getIdeaById(ideaId)
   if (!storedIdea) return 0
 
   await writeAndPublish(env, publication, storedIdea)
   return 1
 }
 
-async function checkCadence(db: D1Database, publication: PublicationRow): Promise<boolean> {
+async function checkCadence(env: ScoutEnv, publication: Publication): Promise<boolean> {
   const weekStart = getWeekStartTimestamp()
-  const result = await runWithRetry(() =>
-    db
-      .prepare(
-        `SELECT COUNT(*) as count FROM sessions
-         WHERE publication_id = ? AND status = 'completed' AND updated_at >= ?`,
-      )
-      .bind(publication.id, weekStart)
-      .first<{ count: number }>(),
-  )
-
-  return (result?.count ?? 0) < publication.cadence_posts_per_week
+  const count = await env.DAL.countCompletedSessionsForWeek(publication.id, weekStart)
+  return count < publication.cadencePostsPerWeek
 }
 
 async function writeAndPublish(
   env: ScoutEnv,
-  publication: PublicationRow,
-  idea: IdeaRow,
+  publication: Publication,
+  idea: Idea,
 ): Promise<void> {
   const baseUrl = env.WRITER_AGENT_URL
   const headers = {
@@ -73,7 +58,7 @@ async function writeAndPublish(
     method: 'POST',
     headers,
     body: JSON.stringify({
-      userId: publication.user_id,
+      userId: publication.userId,
       title: idea.title,
       publicationId: publication.id,
       ideaId: idea.id,
@@ -101,52 +86,42 @@ async function writeAndPublish(
     headers,
     body: JSON.stringify({
       slug: slugify(idea.title),
-      author: publication.default_author,
+      author: publication.defaultAuthor,
     }),
   })
   if (!publishRes.ok) throw new Error(`Publish failed: ${await publishRes.text()}`)
 
   // 5. Update idea status
-  await runWithRetry(() =>
-    env.WRITER_DB
-      .prepare("UPDATE ideas SET status = 'promoted', session_id = ?, updated_at = unixepoch() WHERE id = ?")
-      .bind(session.id, idea.id)
-      .run(),
-  )
+  await env.DAL.promoteIdea(idea.id, session.id)
 }
 
-function buildSeedContext(idea: IdeaRow, publication: PublicationRow): string {
+function buildSeedContext(idea: Idea, publication: Publication): string {
   let context = '## Writing Assignment\n\n'
   context += `**Title:** ${idea.title}\n`
   context += `**Angle:** ${idea.angle}\n\n`
   context += `**Brief:**\n${idea.summary}\n\n`
 
-  if (publication.writing_tone) {
-    context += `**Writing Tone:** ${publication.writing_tone}\n\n`
+  if (publication.writingTone) {
+    context += `**Writing Tone:** ${publication.writingTone}\n\n`
   }
 
   if (idea.sources) {
-    try {
-      const sources = JSON.parse(idea.sources) as Array<{ url: string; title: string; snippet: string }>
-      context += '## Source Material\n\n'
-      for (const source of sources) {
-        context += `### ${source.title}\nURL: ${source.url}\n${source.snippet}\n\n`
-      }
-    } catch {
-      // sources might be malformed, skip
+    context += '## Source Material\n\n'
+    for (const source of idea.sources) {
+      context += `### ${source.title}\nURL: ${source.url}\n${source.snippet}\n\n`
     }
   }
 
   return context
 }
 
-function buildWriteInstruction(idea: IdeaRow, publication: PublicationRow): string {
+function buildWriteInstruction(idea: Idea, publication: Publication): string {
   let instruction = `Please write a complete blog post based on the research context provided. `
   instruction += `The post should be titled "${idea.title}" and take the following angle: ${idea.angle}\n\n`
   instruction += `Key points to cover:\n${idea.summary}\n\n`
 
-  if (publication.writing_tone) {
-    instruction += `Writing style: ${publication.writing_tone}\n\n`
+  if (publication.writingTone) {
+    instruction += `Writing style: ${publication.writingTone}\n\n`
   }
 
   instruction += `Please research the topic using the available tools, then write a thorough, well-sourced blog post. `

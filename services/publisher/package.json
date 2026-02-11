@@ -10,13 +10,11 @@
 		"test": "vitest",
 		"cf-typegen": "wrangler types",
 		"build": "wrangler deploy --dry-run --outdir=dist",
-		"typecheck": "tsc --noEmit",
-		"db:migrate:local": "wrangler d1 migrations apply PUBLISHER_DB --local",
-		"db:migrate:remote": "wrangler d1 migrations apply PUBLISHER_DB --remote",
-		"db:reset:remote": "wrangler d1 execute PUBLISHER_DB --remote --command \"DROP TABLE IF EXISTS audit_logs; DROP TABLE IF EXISTS oauth_state; DROP TABLE IF EXISTS oauth_tokens; DROP TABLE IF EXISTS d1_migrations;\" && pnpm db:migrate:remote"
+		"typecheck": "tsc --noEmit"
 	},
 	"dependencies": {
 		"@hotmetal/content-core": "workspace:*",
+		"@hotmetal/data-layer": "workspace:*",
 		"@hotmetal/shared": "workspace:*",
 		"hono": "^4.10.7"
 	},

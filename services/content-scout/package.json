@@ -10,12 +10,11 @@
 		"test": "vitest",
 		"cf-typegen": "wrangler types",
 		"build": "wrangler deploy --dry-run --outdir=dist",
-		"typecheck": "tsc --noEmit",
-		"db:migrate:local": "wrangler d1 migrations apply WRITER_DB --local --persist-to ../../.wrangler/shared-state",
-		"db:migrate:remote": "wrangler d1 migrations apply WRITER_DB --remote"
+		"typecheck": "tsc --noEmit"
 	},
 	"dependencies": {
 		"@ai-sdk/anthropic": "^3.0.39",
+		"@hotmetal/data-layer": "workspace:*",
 		"@hotmetal/shared": "workspace:*",
 		"ai": "^6.0.77",
 		"hono": "^4.11.8"

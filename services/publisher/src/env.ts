@@ -1,5 +1,7 @@
+import type { DataLayerApi } from '@hotmetal/data-layer'
+
 export interface PublisherEnv {
-  PUBLISHER_DB: D1Database
+  DAL: DataLayerApi
   CMS_URL: string
   CMS_API_KEY: string
   PUBLISHER_API_KEY: string
@@ -7,5 +9,4 @@ export interface PublisherEnv {
   LINKEDIN_CLIENT_ID: string
   LINKEDIN_CLIENT_SECRET: string
   LINKEDIN_REDIRECT_URI: string
-  TOKEN_ENCRYPTION_KEY: string // hex-encoded 256-bit key for AES-GCM
 }

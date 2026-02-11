@@ -11,10 +11,9 @@ export class ScoutWorkflow extends WorkflowEntrypoint<ScoutEnv, ScoutWorkflowPar
   async run(event: WorkflowEvent<ScoutWorkflowParams>, step: WorkflowStep) {
     const { publicationId } = event.payload
 
-    // Step 1: Load publication context from D1
-    // D1 retries are handled inside loadPublicationContext via runWithRetry
+    // Step 1: Load publication context from DAL
     const context = await step.do('load-context', async () => {
-      return await loadPublicationContext(this.env.WRITER_DB, publicationId)
+      return await loadPublicationContext(this.env.DAL, publicationId)
     })
 
     if (context.topics.length === 0) {
@@ -70,16 +69,15 @@ export class ScoutWorkflow extends WorkflowEntrypoint<ScoutEnv, ScoutWorkflowPar
       return { publicationId, ideasGenerated: 0, skipped: 'LLM produced no ideas' }
     }
 
-    // Step 5: Store ideas in D1
-    // D1 retries are handled inside storeIdeas via runWithRetry per-INSERT.
+    // Step 5: Store ideas via DAL
     // Deterministic IDs + INSERT OR IGNORE make this idempotent.
     const stored = await step.do('store-ideas', async () => {
-      return await storeIdeas(this.env.WRITER_DB, publicationId, ideas, context.topics)
+      return await storeIdeas(this.env.DAL, publicationId, ideas, context.topics)
     })
 
     // Step 6: Auto-write (conditional — only for publish/full-auto modes)
     let autoWritten = 0
-    if (context.publication.auto_publish_mode !== 'draft') {
+    if (context.publication.autoPublishMode !== 'draft') {
       autoWritten = await step.do(
         'auto-write',
         { retries: { limit: 1, delay: '10 seconds' }, timeout: '10 minutes' },

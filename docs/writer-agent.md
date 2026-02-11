@@ -11,7 +11,7 @@ The writer agent (`services/writer-agent`) is an AI-powered writing assistant bu
 
 ### Storage
 
-- **D1 (`WRITER_DB`)** — Cross-session metadata (session listing, search)
+- **DAL Service Binding (`DAL`)** — Cross-session metadata (session listing, search) via Data Access Layer
 - **Agent SQLite** — Per-session conversation history, drafts, and research notes (embedded in Durable Object)
 
 ### Key Principle
@@ -24,8 +24,8 @@ One Durable Object instance per writing session (not per user). Session ID = DO 
 # Install dependencies
 pnpm install
 
-# Run D1 migrations
-pnpm writer:migrate:local
+# Run DAL migrations (from services/data-layer)
+cd ../data-layer && pnpm db:migrate:local
 
 # Start the writer agent dev server (port 8789)
 pnpm dev:writer
