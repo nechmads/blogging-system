@@ -11,8 +11,12 @@ publications.use('/api/publications', writerApiKeyAuth)
 
 /** Create a new publication. */
 publications.post('/api/publications', async (c) => {
+  const userId = c.req.header('X-User-Id')
+  if (!userId) {
+    return c.json({ error: 'Missing X-User-Id header' }, 401)
+  }
+
   const body = await c.req.json<{
-    userId?: string
     name?: string
     slug?: string
     description?: string
@@ -51,7 +55,7 @@ publications.post('/api/publications', async (c) => {
   const id = crypto.randomUUID()
   const publication = await c.env.DAL.createPublication({
     id,
-    userId: body.userId ?? 'default',
+    userId,
     name: body.name.trim(),
     slug: body.slug.trim(),
     description: body.description?.trim(),
