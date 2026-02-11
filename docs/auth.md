@@ -124,3 +124,15 @@ The `request()` helper automatically injects the Bearer token on every API call.
 - **Profile updates**: On subsequent requests, if email/name changed in Clerk, update D1
 - **Future**: Clerk `user.created` webhook for proactive sync (not implemented yet)
 - **Data model**: User ID is Clerk's `sub` claim (e.g., `user_2x...`)
+
+## Default User Migration
+
+The database was seeded with `userId = 'default'` during single-user development. On the first real Clerk sign-in, the `ensureUser` middleware automatically migrates all of default's data:
+
+1. `ensureUser` detects the new user ID is not in D1
+2. Calls `DAL.migrateDefaultUser(clerkUserId, email, name)`
+3. DAL atomically updates all FK references (`sessions`, `publications`, `social_connections`) and the `users` PK
+4. Safety: only runs if `'default'` is the sole user in the system (conditional WHERE + count subquery)
+5. Falls back to normal `createUser()` if migration doesn't apply
+
+This is a one-time operation. Once complete, the `'default'` user ID no longer exists and the migration code becomes a no-op.
