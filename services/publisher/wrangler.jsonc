@@ -12,13 +12,11 @@
 		"port": 8788,
 	},
 
-	// D1 Database for publisher state (tokens, audit logs)
-	"d1_databases": [
+	// Data Access Layer (Service Binding to hotmetal-data-layer worker)
+	"services": [
 		{
-			"binding": "PUBLISHER_DB",
-			"database_name": "hotmetal-publisher-db",
-			"database_id": "53b804ac-b7ad-4e81-8c7a-e1647e39987c",
-			"migrations_dir": "./migrations",
+			"binding": "DAL",
+			"service": "hotmetal-data-layer",
 		},
 	],
 	"routes": [
@@ -37,5 +35,5 @@
 	},
 
 	// Secrets (set via `wrangler secret put`):
-	// CMS_API_KEY, LINKEDIN_CLIENT_ID, LINKEDIN_CLIENT_SECRET, TOKEN_ENCRYPTION_KEY
+	// CMS_API_KEY, PUBLISHER_API_KEY, LINKEDIN_CLIENT_ID, LINKEDIN_CLIENT_SECRET
 }

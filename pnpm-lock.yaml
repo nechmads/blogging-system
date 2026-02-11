@@ -253,6 +253,9 @@ importers:
       '@hotmetal/content-core':
         specifier: workspace:*
         version: link:../../packages/content-core
+      '@hotmetal/data-layer':
+        specifier: workspace:*
+        version: link:../data-layer
       '@hotmetal/shared':
         specifier: workspace:*
         version: link:../../packages/shared

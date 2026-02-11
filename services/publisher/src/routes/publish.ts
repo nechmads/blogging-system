@@ -4,7 +4,7 @@ import { CmsApi } from '@hotmetal/shared'
 import { writeAuditLog } from '../lib/audit'
 import { BlogAdapter } from '../adapters/blog-adapter'
 import { LinkedInAdapter } from '../adapters/linkedin-adapter'
-import { LinkedInTokenStore } from '../linkedin/token-store'
+import { getValidLinkedInToken } from '../linkedin/token-store'
 import { publisherApiKeyAuth } from '../middleware/api-key-auth'
 
 const publish = new Hono<{ Bindings: PublisherEnv }>()
@@ -39,7 +39,7 @@ publish.post('/publish/blog', async (c) => {
   try {
     const result = await adapter.publish(post, prepared)
 
-    await writeAuditLog(c.env.PUBLISHER_DB, {
+    await writeAuditLog(c.env.DAL, {
       postId: post.id,
       outlet: 'blog',
       action: 'publish',
@@ -51,7 +51,7 @@ publish.post('/publish/blog', async (c) => {
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Unknown error'
 
-    await writeAuditLog(c.env.PUBLISHER_DB, {
+    await writeAuditLog(c.env.DAL, {
       postId: post.id,
       outlet: 'blog',
       action: 'publish',
@@ -111,7 +111,7 @@ publish.post('/publish/blog/create', async (c) => {
   try {
     const result = await adapter.publish(post, prepared)
 
-    await writeAuditLog(c.env.PUBLISHER_DB, {
+    await writeAuditLog(c.env.DAL, {
       postId: post.id,
       outlet: 'blog',
       action: 'create',
@@ -123,7 +123,7 @@ publish.post('/publish/blog/create', async (c) => {
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Unknown error'
 
-    await writeAuditLog(c.env.PUBLISHER_DB, {
+    await writeAuditLog(c.env.DAL, {
       postId: post.id,
       outlet: 'blog',
       action: 'create',
@@ -143,8 +143,7 @@ publish.post('/publish/linkedin', async (c) => {
     return c.json({ error: 'postId is required' }, 400)
   }
 
-  const tokenStore = new LinkedInTokenStore(c.env.PUBLISHER_DB, c.env.TOKEN_ENCRYPTION_KEY)
-  const token = await tokenStore.getValidToken()
+  const token = await getValidLinkedInToken(c.env.DAL)
 
   if (!token) {
     return c.json({ error: 'LinkedIn not connected. Visit /oauth/linkedin to authorize.' }, 401)
@@ -171,7 +170,7 @@ publish.post('/publish/linkedin', async (c) => {
   try {
     const result = await adapter.publish(post, prepared)
 
-    await writeAuditLog(c.env.PUBLISHER_DB, {
+    await writeAuditLog(c.env.DAL, {
       postId: post.id,
       outlet: 'linkedin',
       action: 'publish',
@@ -188,7 +187,7 @@ publish.post('/publish/linkedin', async (c) => {
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Unknown error'
 
-    await writeAuditLog(c.env.PUBLISHER_DB, {
+    await writeAuditLog(c.env.DAL, {
       postId: post.id,
       outlet: 'linkedin',
       action: 'publish',

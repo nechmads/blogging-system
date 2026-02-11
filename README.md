@@ -90,7 +90,7 @@ AI writing agent with sessions, drafts, real-time chat via WebSocket.
 | secret | `ANTHROPIC_API_KEY` | | Claude API key for AI drafting and SEO generation |
 | secret | `CMS_API_KEY` | | Key for authenticating to the CMS (must match cms-admin's `CMS_API_KEY`) |
 | secret | `ALEXANDER_API_KEY` | | Alexander research API key |
-| binding | `WRITER_DB` | D1: `hotmetal-writer-db` | Sessions, publications, topics, ideas |
+| binding | `DAL` | Service: `hotmetal-data-layer` | Data Access Layer (sessions, publications, topics, ideas) |
 | binding | `WRITER_AGENT` | DO: `WriterAgent` | Durable Object for per-session AI agent state |
 
 ### services/content-scout
@@ -105,7 +105,7 @@ Content discovery pipeline. Runs daily via cron or on-demand via API.
 | secret | `ALEXANDER_API_KEY` | | Alexander research API key |
 | secret | `ANTHROPIC_API_KEY` | | Claude API key for idea generation |
 | secret | `WRITER_AGENT_API_KEY` | | Key for calling writer-agent (must match writer-agent's `WRITER_API_KEY`) |
-| binding | `WRITER_DB` | D1: `hotmetal-writer-db` | Shared database with writer-agent |
+| binding | `DAL` | Service: `hotmetal-data-layer` | Data Access Layer (shared with writer-agent) |
 | binding | `SCOUT_QUEUE` | Queue: `hotmetal-scout-queue` | Fan-out queue (1 message per publication) |
 | binding | `SCOUT_WORKFLOW` | Workflow: `ScoutWorkflow` | Durable 6-step scout pipeline |
 | binding | `SCOUT_CACHE` | KV: `HOTMETAL_SCOUT_CACHE` | Alexander API response cache (24h TTL) |
@@ -122,8 +122,8 @@ Outlet publishing service (blog + LinkedIn).
 | secret | `CMS_API_KEY` | | Key for authenticating to the CMS |
 | secret | `LINKEDIN_CLIENT_ID` | | LinkedIn OAuth app client ID |
 | secret | `LINKEDIN_CLIENT_SECRET` | | LinkedIn OAuth app client secret |
-| secret | `TOKEN_ENCRYPTION_KEY` | | AES-GCM key for encrypting stored OAuth tokens |
-| binding | `PUBLISHER_DB` | D1: `hotmetal-publisher-db` | OAuth tokens, state, audit logs |
+| secret | `PUBLISHER_API_KEY` | | API key for authenticating incoming requests |
+| binding | `DAL` | Service: `hotmetal-data-layer` | Data Access Layer (audit logs, social connections, OAuth state) |
 
 ## Secret Relationships
 
@@ -137,13 +137,13 @@ publisher.CMS_API_KEY          ══  cms-admin.CMS_API_KEY
 writer-agent.CMS_API_KEY       ══  cms-admin.CMS_API_KEY
 ```
 
-## Shared Local D1
+## Data Access Layer
 
-`writer-agent` and `content-scout` share the same D1 database (`hotmetal-writer-db`). Both use `--persist-to ../../.wrangler/shared-state` so they read/write the same local SQLite. Migrations live in `services/writer-agent/migrations/` and are applied to the shared location.
+All database access is centralized in `services/data-layer` (`hotmetal-data-layer`). Services (writer-agent, content-scout, publisher) access data via Cloudflare Service Bindings with typed RPC calls. Migrations live in `services/data-layer/migrations/`.
 
 ```bash
-# Reset the shared D1 (also resets scout):
-pnpm writer:reset:local
+# Apply DAL migrations locally:
+cd services/data-layer && pnpm db:migrate:local
 ```
 
 ## Setting Secrets Locally
