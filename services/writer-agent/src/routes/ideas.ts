@@ -1,8 +1,5 @@
 import { Hono } from 'hono'
 import type { WriterAgentEnv } from '../env'
-import { IdeaManager } from '../lib/idea-manager'
-import { SessionManager } from '../lib/session-manager'
-import { PublicationManager } from '../lib/publication-manager'
 import { writerApiKeyAuth } from '../middleware/api-key-auth'
 import { IDEA_STATUSES, type IdeaStatus } from '@hotmetal/content-core'
 
@@ -16,16 +13,14 @@ ideas.use('/api/ideas/new-count', writerApiKeyAuth)
 
 /** Return the global count of ideas with status 'new'. */
 ideas.get('/api/ideas/new-count', async (c) => {
-  const manager = new IdeaManager(c.env.WRITER_DB)
-  const count = await manager.countByStatus('new')
+  const count = await c.env.DAL.countIdeasByStatus('new')
   return c.json({ count })
 })
 
 /** Return the count of ideas for a publication. */
 ideas.get('/api/publications/:pubId/ideas/count', async (c) => {
   const pubId = c.req.param('pubId')
-  const manager = new IdeaManager(c.env.WRITER_DB)
-  const count = await manager.countByPublication(pubId)
+  const count = await c.env.DAL.countIdeasByPublication(pubId)
   return c.json({ count })
 })
 
@@ -38,8 +33,7 @@ ideas.get('/api/publications/:pubId/ideas', async (c) => {
     return c.json({ error: `Invalid status. Must be one of: ${IDEA_STATUSES.join(', ')}` }, 400)
   }
 
-  const manager = new IdeaManager(c.env.WRITER_DB)
-  const result = await manager.listByPublication(pubId, {
+  const result = await c.env.DAL.listIdeasByPublication(pubId, {
     status: statusParam as IdeaStatus | undefined,
   })
 
@@ -48,8 +42,7 @@ ideas.get('/api/publications/:pubId/ideas', async (c) => {
 
 /** Get a single idea with full detail. */
 ideas.get('/api/ideas/:id', async (c) => {
-  const manager = new IdeaManager(c.env.WRITER_DB)
-  const idea = await manager.getById(c.req.param('id'))
+  const idea = await c.env.DAL.getIdeaById(c.req.param('id'))
 
   if (!idea) {
     return c.json({ error: 'Idea not found' }, 404)
@@ -60,8 +53,7 @@ ideas.get('/api/ideas/:id', async (c) => {
 
 /** Update idea status (reviewed, dismissed). */
 ideas.patch('/api/ideas/:id', async (c) => {
-  const manager = new IdeaManager(c.env.WRITER_DB)
-  const existing = await manager.getById(c.req.param('id'))
+  const existing = await c.env.DAL.getIdeaById(c.req.param('id'))
 
   if (!existing) {
     return c.json({ error: 'Idea not found' }, 404)
@@ -77,14 +69,13 @@ ideas.patch('/api/ideas/:id', async (c) => {
     return c.json({ error: `Invalid status. Must be one of: ${IDEA_STATUSES.join(', ')}` }, 400)
   }
 
-  const updated = await manager.updateStatus(c.req.param('id'), body.status as IdeaStatus)
+  const updated = await c.env.DAL.updateIdeaStatus(c.req.param('id'), body.status as IdeaStatus)
   return c.json(updated)
 })
 
 /** Promote an idea to a writing session. */
 ideas.post('/api/ideas/:id/promote', async (c) => {
-  const ideaManager = new IdeaManager(c.env.WRITER_DB)
-  const idea = await ideaManager.getById(c.req.param('id'))
+  const idea = await c.env.DAL.getIdeaById(c.req.param('id'))
 
   if (!idea) {
     return c.json({ error: 'Idea not found' }, 404)
@@ -99,8 +90,7 @@ ideas.post('/api/ideas/:id/promote', async (c) => {
   }
 
   // Verify publication exists
-  const pubManager = new PublicationManager(c.env.WRITER_DB)
-  const publication = await pubManager.getById(idea.publicationId)
+  const publication = await c.env.DAL.getPublicationById(idea.publicationId)
   if (!publication) {
     return c.json({ error: 'Publication not found for this idea' }, 404)
   }
@@ -108,10 +98,12 @@ ideas.post('/api/ideas/:id/promote', async (c) => {
   // Build seed context from the idea
   const seedContext = buildSeedContext(idea, publication)
 
-  // Create a new writing session with publication context in a single INSERT
+  // Create a new writing session with publication context
   const sessionId = crypto.randomUUID()
-  const sessionManager = new SessionManager(c.env.WRITER_DB)
-  const session = await sessionManager.create(sessionId, publication.userId, idea.title, {
+  const session = await c.env.DAL.createSession({
+    id: sessionId,
+    userId: publication.userId,
+    title: idea.title,
     publicationId: publication.id,
     ideaId: idea.id,
     seedContext,
@@ -119,10 +111,10 @@ ideas.post('/api/ideas/:id/promote', async (c) => {
 
   // Mark idea as promoted — if this fails, clean up the session
   try {
-    await ideaManager.promote(idea.id, sessionId)
+    await c.env.DAL.promoteIdea(idea.id, sessionId)
   } catch (err) {
     // Roll back: archive the orphaned session
-    await sessionManager.update(sessionId, { status: 'archived' }).catch(() => {})
+    await c.env.DAL.updateSession(sessionId, { status: 'archived' }).catch(() => {})
     throw err
   }
 

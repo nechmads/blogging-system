@@ -2,7 +2,6 @@ import { getAgentByName } from 'agents'
 import { Hono } from 'hono'
 import type { WriterAgentEnv } from '../env'
 import type { WriterAgent } from '../agent/writer-agent'
-import { SessionManager } from '../lib/session-manager'
 import { writerApiKeyAuth } from '../middleware/api-key-auth'
 import { createImagePrompt } from '../lib/writing'
 
@@ -47,8 +46,7 @@ images.post('/api/sessions/:sessionId/generate-image-prompt', async (c) => {
 images.post('/api/sessions/:sessionId/generate-images', async (c) => {
   const sessionId = c.req.param('sessionId')
 
-  const manager = new SessionManager(c.env.WRITER_DB)
-  const session = await manager.getById(sessionId)
+  const session = await c.env.DAL.getSessionById(sessionId)
   if (!session) {
     return c.json({ error: 'Session not found' }, 404)
   }
@@ -116,8 +114,7 @@ images.post('/api/sessions/:sessionId/select-image', async (c) => {
     return c.json({ error: 'imageUrl must reference an image from this session' }, 400)
   }
 
-  const manager = new SessionManager(c.env.WRITER_DB)
-  const updated = await manager.update(sessionId, { featuredImageUrl: body.imageUrl.trim() })
+  const updated = await c.env.DAL.updateSession(sessionId, { featuredImageUrl: body.imageUrl.trim() })
   if (!updated) {
     return c.json({ error: 'Session not found' }, 404)
   }

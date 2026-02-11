@@ -3,7 +3,6 @@ import { Hono } from 'hono'
 import type { ContentfulStatusCode } from 'hono/utils/http-status'
 import type { WriterAgentEnv } from '../env'
 import type { WriterAgent } from '../agent/writer-agent'
-import { SessionManager } from '../lib/session-manager'
 import { writerApiKeyAuth } from '../middleware/api-key-auth'
 
 const publish = new Hono<{ Bindings: WriterAgentEnv }>()
@@ -29,8 +28,7 @@ publish.post('/api/sessions/:sessionId/publish', async (c) => {
   const sessionId = c.req.param('sessionId')
 
   // Verify session exists
-  const manager = new SessionManager(c.env.WRITER_DB)
-  const session = await manager.getById(sessionId)
+  const session = await c.env.DAL.getSessionById(sessionId)
   if (!session) {
     return c.json({ error: 'Session not found' }, 404)
   }
@@ -50,11 +48,11 @@ publish.post('/api/sessions/:sessionId/publish', async (c) => {
 
   const data = await res.json()
 
-  // If publish succeeded, update session status in D1
+  // If publish succeeded, update session status via DAL
   if (res.ok && (data as { success?: boolean }).success) {
     const result = data as { postId: string }
     try {
-      await manager.update(sessionId, {
+      await c.env.DAL.updateSession(sessionId, {
         status: 'completed',
         cmsPostId: result.postId,
       })

@@ -1,6 +1,6 @@
 import { Hono } from 'hono'
 import type { WriterAgentEnv } from '../env'
-import { SessionManager, type SessionStatus } from '../lib/session-manager'
+import type { SessionStatus } from '@hotmetal/data-layer'
 import { writerApiKeyAuth } from '../middleware/api-key-auth'
 
 const VALID_STATUSES: SessionStatus[] = ['active', 'completed', 'archived']
@@ -29,8 +29,10 @@ sessions.post('/api/sessions', async (c) => {
   }
 
   const sessionId = crypto.randomUUID()
-  const manager = new SessionManager(c.env.WRITER_DB)
-  const session = await manager.create(sessionId, body.userId, body.title, {
+  const session = await c.env.DAL.createSession({
+    id: sessionId,
+    userId: body.userId,
+    title: body.title,
     publicationId: body.publicationId,
     ideaId: body.ideaId,
     seedContext: body.seedContext,
@@ -48,8 +50,7 @@ sessions.get('/api/sessions', async (c) => {
     return c.json({ error: `Invalid status. Must be one of: ${VALID_STATUSES.join(', ')}` }, 400)
   }
 
-  const manager = new SessionManager(c.env.WRITER_DB)
-  const result = await manager.list({
+  const result = await c.env.DAL.listSessions({
     userId: userId || undefined,
     status: statusParam as SessionStatus | undefined,
   })
@@ -59,8 +60,7 @@ sessions.get('/api/sessions', async (c) => {
 
 /** Get a single session by ID. */
 sessions.get('/api/sessions/:id', async (c) => {
-  const manager = new SessionManager(c.env.WRITER_DB)
-  const session = await manager.getById(c.req.param('id'))
+  const session = await c.env.DAL.getSessionById(c.req.param('id'))
 
   if (!session) {
     return c.json({ error: 'Session not found' }, 404)
@@ -71,8 +71,7 @@ sessions.get('/api/sessions/:id', async (c) => {
 
 /** Update session metadata. */
 sessions.patch('/api/sessions/:id', async (c) => {
-  const manager = new SessionManager(c.env.WRITER_DB)
-  const existing = await manager.getById(c.req.param('id'))
+  const existing = await c.env.DAL.getSessionById(c.req.param('id'))
 
   if (!existing) {
     return c.json({ error: 'Session not found' }, 404)
@@ -87,7 +86,7 @@ sessions.patch('/api/sessions/:id', async (c) => {
     return c.json({ error: `Invalid status. Must be one of: ${VALID_STATUSES.join(', ')}` }, 400)
   }
 
-  const updated = await manager.update(c.req.param('id'), {
+  const updated = await c.env.DAL.updateSession(c.req.param('id'), {
     title: body.title,
     status: body.status as SessionStatus | undefined,
   })

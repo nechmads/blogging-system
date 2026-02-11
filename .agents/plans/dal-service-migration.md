@@ -1,7 +1,7 @@
 # DAL Service Migration Plan
 
 **Owner:** Shahar
-**Status:** Phases 0-2 done, Phase 3 next
+**Status:** Phases 0-3 done, Phase 4 next
 **Last updated:** 2026-02-11
 
 ---

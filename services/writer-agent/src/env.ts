@@ -1,7 +1,8 @@
 import type { WriterAgent } from './agent/writer-agent'
+import type { DataLayerApi } from '@hotmetal/data-layer'
 
 export interface WriterAgentEnv {
-  WRITER_DB: D1Database
+  DAL: DataLayerApi
   WRITER_AGENT: DurableObjectNamespace<WriterAgent>
   AI: Ai
   IMAGE_BUCKET: R2Bucket

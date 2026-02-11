@@ -9,6 +9,7 @@ import { buildSystemPrompt } from '../prompts/system-prompt'
 import { createToolSet } from '../tools'
 import { cleanupMessages } from './message-utils'
 import { CmsApi } from '@hotmetal/shared'
+import type { Citation } from '@hotmetal/content-core'
 import { marked } from 'marked'
 import { createHook, createSeoMeta, type DraftInput } from '../lib/writing'
 
@@ -39,25 +40,22 @@ export class WriterAgent extends AIChatAgent<WriterAgentEnv, WriterAgentState> {
   async onStart() {
     initAgentSqlite(this.sql.bind(this))
 
-    // Hydrate state from D1 session metadata if this is a fresh start
+    // Hydrate state from session metadata via DAL if this is a fresh start
     if (!this.state.sessionId) {
       const sessionId = this.name
-      const row = await this.env.WRITER_DB
-        .prepare('SELECT id, user_id, title, status, current_draft_version, cms_post_id, publication_id, seed_context, featured_image_url FROM sessions WHERE id = ?')
-        .bind(sessionId)
-        .first<{ id: string; user_id: string; title: string | null; current_draft_version: number; cms_post_id: string | null; publication_id: string | null; seed_context: string | null; featured_image_url: string | null }>()
+      const session = await this.env.DAL.getSessionById(sessionId)
 
-      if (row) {
+      if (session) {
         this.setState({
           ...this.state,
-          sessionId: row.id,
-          userId: row.user_id,
-          title: row.title,
-          currentDraftVersion: row.current_draft_version ?? 0,
-          cmsPostId: row.cms_post_id,
-          publicationId: row.publication_id,
-          seedContext: row.seed_context,
-          featuredImageUrl: row.featured_image_url,
+          sessionId: session.id,
+          userId: session.userId,
+          title: session.title,
+          currentDraftVersion: session.currentDraftVersion ?? 0,
+          cmsPostId: session.cmsPostId,
+          publicationId: session.publicationId,
+          seedContext: session.seedContext,
+          featuredImageUrl: session.featuredImageUrl,
         })
       }
     }
@@ -336,9 +334,9 @@ export class WriterAgent extends AIChatAgent<WriterAgentEnv, WriterAgentState> {
     this.setWritingPhase('publishing')
 
     try {
-      let parsedCitations: unknown
+      let parsedCitations: Citation[] | undefined
       try {
-        parsedCitations = draft.citations ? JSON.parse(draft.citations) : undefined
+        parsedCitations = draft.citations ? JSON.parse(draft.citations) as Citation[] : undefined
       } catch {
         console.warn(`Invalid citations JSON for draft v${draft.version}, skipping`)
         parsedCitations = undefined
@@ -349,23 +347,17 @@ export class WriterAgent extends AIChatAgent<WriterAgentEnv, WriterAgentState> {
       // Resolve CMS publication ID from writer-agent publication
       let cmsPublicationId: string | undefined
       if (this.state.publicationId) {
-        const pubRow = await this.env.WRITER_DB
-          .prepare('SELECT cms_publication_id, name, slug FROM publications WHERE id = ?')
-          .bind(this.state.publicationId)
-          .first<{ cms_publication_id: string | null; name: string; slug: string }>()
+        const pub = await this.env.DAL.getPublicationById(this.state.publicationId)
 
-        if (pubRow?.cms_publication_id) {
-          cmsPublicationId = pubRow.cms_publication_id
-        } else if (pubRow) {
+        if (pub?.cmsPublicationId) {
+          cmsPublicationId = pub.cmsPublicationId
+        } else if (pub) {
           // CMS publication wasn't created earlier — try now
           try {
             const cmsApi2 = new CmsApi(this.env.CMS_URL, this.env.CMS_API_KEY)
-            const cmsPub = await cmsApi2.createPublication({ title: pubRow.name, slug: pubRow.slug })
+            const cmsPub = await cmsApi2.createPublication({ title: pub.name, slug: pub.slug })
             cmsPublicationId = cmsPub.id
-            await this.env.WRITER_DB
-              .prepare('UPDATE publications SET cms_publication_id = ? WHERE id = ?')
-              .bind(cmsPub.id, this.state.publicationId)
-              .run()
+            await this.env.DAL.updatePublication(this.state.publicationId, { cmsPublicationId: cmsPub.id })
           } catch (err) {
             console.error('Failed to create CMS publication during publish:', err)
           }
@@ -386,7 +378,7 @@ export class WriterAgent extends AIChatAgent<WriterAgentEnv, WriterAgentState> {
         tags: body.tags?.trim() || undefined,
         excerpt: body.excerpt?.trim() || undefined,
         hook,
-        citations: parsedCitations ? JSON.stringify(parsedCitations) : undefined,
+        citations: parsedCitations,
         featuredImage: this.state.featuredImageUrl || undefined,
         publishedAt: new Date().toISOString(),
         publicationId: cmsPublicationId,

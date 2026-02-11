@@ -36,6 +36,102 @@ import type {
 export { type Env } from './env'
 export * from './types'
 
+import type {
+	User,
+	Session,
+	Publication,
+	Topic,
+	Idea,
+	ActivityEntry,
+	SocialConnection,
+	PublicationOutlet,
+	PublicationToken,
+	PublicationTokenWithRawToken,
+	ScoutSchedule,
+} from './types'
+
+/**
+ * Lightweight interface describing the DAL RPC surface.
+ * Consumers should use `Service<DataLayerApi>` (or just `DataLayerApi`)
+ * in their env types instead of importing the full DataLayer class,
+ * which avoids TS2589 deep-instantiation errors.
+ */
+export interface DataLayerApi {
+	// Users
+	getUserById(id: string): Promise<User | null>
+	getUserByEmail(email: string): Promise<User | null>
+	createUser(data: CreateUserInput): Promise<User>
+	updateUser(id: string, data: UpdateUserInput): Promise<User | null>
+	listUsers(): Promise<User[]>
+
+	// Sessions
+	createSession(data: CreateSessionInput): Promise<Session>
+	getSessionById(id: string): Promise<Session | null>
+	listSessions(filters?: ListSessionsFilters): Promise<Session[]>
+	updateSession(id: string, data: UpdateSessionInput): Promise<Session | null>
+	countCompletedSessionsForWeek(pubId: string, weekStart: number): Promise<number>
+
+	// Publications
+	createPublication(data: CreatePublicationInput): Promise<Publication>
+	getPublicationById(id: string): Promise<Publication | null>
+	listPublicationsByUser(userId: string): Promise<Publication[]>
+	listAllPublications(): Promise<Publication[]>
+	updatePublication(id: string, data: UpdatePublicationInput): Promise<Publication | null>
+	deletePublication(id: string): Promise<void>
+	getDuePublications(now: number): Promise<Array<{ id: string; scoutSchedule: ScoutSchedule; timezone: string }>>
+	getPublicationsWithNullSchedule(): Promise<Array<{ id: string; scoutSchedule: ScoutSchedule; timezone: string }>>
+	updatePublicationNextScoutAt(id: string, nextRun: number): Promise<void>
+	getAllPublicationIds(): Promise<string[]>
+
+	// Topics
+	createTopic(data: CreateTopicInput): Promise<Topic>
+	getTopicById(id: string): Promise<Topic | null>
+	listTopicsByPublication(pubId: string): Promise<Topic[]>
+	updateTopic(id: string, data: UpdateTopicInput): Promise<Topic | null>
+	deleteTopic(id: string): Promise<void>
+
+	// Ideas
+	createIdea(data: CreateIdeaInput): Promise<Idea>
+	createIdeas(items: CreateIdeaInput[]): Promise<number>
+	getIdeaById(id: string): Promise<Idea | null>
+	listIdeasByPublication(pubId: string, filters?: ListIdeasFilters): Promise<Idea[]>
+	updateIdeaStatus(id: string, status: IdeaStatus): Promise<Idea | null>
+	promoteIdea(id: string, sessionId: string): Promise<Idea | null>
+	countIdeasByPublication(pubId: string): Promise<number>
+	countIdeasByStatus(status: IdeaStatus): Promise<number>
+	getRecentIdeasByPublication(pubId: string, sinceDays?: number): Promise<Idea[]>
+
+	// Activity
+	getRecentActivity(cutoffDays?: number): Promise<ActivityEntry[]>
+
+	// Audit Logs
+	writeAuditLog(entry: AuditLogInput): Promise<void>
+
+	// OAuth State
+	storeOAuthState(state: string, provider: string, ttlSeconds?: number): Promise<void>
+	validateAndConsumeOAuthState(state: string, provider: string): Promise<boolean>
+
+	// Social Connections
+	createSocialConnection(data: CreateSocialConnectionInput): Promise<SocialConnection>
+	getSocialConnectionsByUser(userId: string): Promise<SocialConnection[]>
+	getSocialConnectionById(id: string): Promise<SocialConnection | null>
+	getSocialConnectionWithDecryptedTokens(id: string): Promise<SocialConnection | null>
+	updateSocialConnectionTokens(id: string, tokens: TokenUpdate): Promise<void>
+	deleteSocialConnection(id: string): Promise<void>
+	hasValidSocialConnection(userId: string, provider: string): Promise<boolean>
+
+	// Publication Outlets
+	createPublicationOutlet(data: CreatePublicationOutletInput): Promise<PublicationOutlet>
+	listOutletsByPublication(pubId: string): Promise<PublicationOutlet[]>
+	deletePublicationOutlet(id: string): Promise<void>
+
+	// Publication Tokens
+	createPublicationToken(pubId: string, label?: string): Promise<PublicationTokenWithRawToken>
+	validatePublicationToken(rawToken: string): Promise<string | null>
+	revokePublicationToken(id: string): Promise<void>
+	listPublicationTokens(pubId: string): Promise<PublicationToken[]>
+}
+
 /**
  * Data Access Layer — owns the consolidated D1 database and exposes
  * typed RPC methods via Cloudflare Service Bindings.
@@ -43,6 +139,9 @@ export * from './types'
  * Other services (writer-agent, content-scout, publisher) call these
  * methods instead of accessing D1 directly.
  */
+// Compile-time check: DataLayer must satisfy DataLayerApi
+const _typeCheck: DataLayerApi = {} as DataLayer
+
 export class DataLayer extends WorkerEntrypoint<Env> {
 	// ─── Users ─────────────────────────────────────────────────────────
 	getUserById(id: string) { return users.getUserById(this.env.DB, id) }

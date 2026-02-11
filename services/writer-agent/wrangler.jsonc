@@ -30,13 +30,11 @@
 		},
 	],
 
-	// D1 Database for cross-session metadata (listing, search)
-	"d1_databases": [
+	// Service Binding to the Data Access Layer (replaces direct D1 access)
+	"services": [
 		{
-			"binding": "WRITER_DB",
-			"database_name": "hotmetal-writer-db",
-			"database_id": "5fc8f7a4-e05f-47ce-b638-f78a90057f43",
-			"migrations_dir": "./migrations",
+			"binding": "DAL",
+			"service": "hotmetal-data-layer",
 		},
 	],
 
