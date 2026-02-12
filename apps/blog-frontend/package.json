@@ -1,5 +1,5 @@
 {
-  "name": "@hotmetal/web-frontend",
+  "name": "@hotmetal/blog-frontend",
   "type": "module",
   "version": "0.0.1",
   "engines": {

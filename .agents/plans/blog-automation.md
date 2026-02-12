@@ -285,7 +285,7 @@ The promote endpoint:
 
 #### Task 7: Create sidebar navigation component
 
-Create `apps/writer-web/src/components/layout/Sidebar.tsx`:
+Create `apps/web/src/components/layout/Sidebar.tsx`:
 
 - Vertical nav with icons + labels: Ideas, Writing, Schedule
 - Active state highlighting (amber accent)
@@ -294,7 +294,7 @@ Create `apps/writer-web/src/components/layout/Sidebar.tsx`:
 
 #### Task 8: Create layout wrapper
 
-Create `apps/writer-web/src/components/layout/AppLayout.tsx`:
+Create `apps/web/src/components/layout/AppLayout.tsx`:
 
 - Sidebar on the left (fixed width, e.g., 200px)
 - Main content area on the right
@@ -302,7 +302,7 @@ Create `apps/writer-web/src/components/layout/AppLayout.tsx`:
 
 #### Task 9: Update routing
 
-Update `apps/writer-web/src/app.tsx` using react-router's **declarative mode** (already in use):
+Update `apps/web/src/app.tsx` using react-router's **declarative mode** (already in use):
 
 ```
 /                           → redirect to /ideas (or /writing)
@@ -324,7 +324,7 @@ Update the existing `SessionsPage` and `WorkspacePage` to work within the new la
 
 #### Task 10: Add frontend API functions
 
-Add to `apps/writer-web/src/lib/api.ts`:
+Add to `apps/web/src/lib/api.ts`:
 
 - `fetchPublications()`, `createPublication(data)`, `updatePublication(id, data)`, `deletePublication(id)`
 - `fetchTopics(pubId)`, `createTopic(pubId, data)`, `updateTopic(id, data)`, `deleteTopic(id)`
@@ -334,13 +334,13 @@ Add corresponding types to `types.ts`.
 
 #### Task 11: Schedule/Settings page
 
-Create `apps/writer-web/src/pages/SchedulePage.tsx`:
+Create `apps/web/src/pages/SchedulePage.tsx`:
 
 - If no publications exist: onboarding flow to create first publication
 - Publication list with cards showing name, topic count, auto-publish mode
 - Click → PublicationSettingsPage
 
-Create `apps/writer-web/src/pages/PublicationSettingsPage.tsx`:
+Create `apps/web/src/pages/PublicationSettingsPage.tsx`:
 
 - Publication name, description (what the publication covers), default author
 - Writing tone textarea (voice/style for AI-generated content)
@@ -449,7 +449,7 @@ For publications with `auto_publish_mode` = `publish` or `full-auto`, step 6 of 
 
 #### Task 17: Ideas page
 
-Create `apps/writer-web/src/pages/IdeasPage.tsx`:
+Create `apps/web/src/pages/IdeasPage.tsx`:
 
 - Filterable by status: All, New, Reviewed, Dismissed
 - Publication selector (if multiple publications)
@@ -459,7 +459,7 @@ Create `apps/writer-web/src/pages/IdeasPage.tsx`:
 
 #### Task 18: Idea detail view
 
-Create `apps/writer-web/src/pages/IdeaDetailPage.tsx`:
+Create `apps/web/src/pages/IdeaDetailPage.tsx`:
 
 - Full idea brief: title, angle, summary
 - Source articles list with links and snippets
@@ -511,10 +511,10 @@ The "Run Scout Now" button in publication settings:
 2. The content-scout worker runs the discovery pipeline for that publication
 3. Shows a loading state, then navigates to Ideas page to see results
 
-This requires the writer-web to be able to call the content-scout's API. Options:
+This requires the web to be able to call the content-scout's API. Options:
 
 - Route through the writer-agent proxy (simplest)
-- Direct call to content-scout (needs another proxy entry in writer-web's server.ts)
+- Direct call to content-scout (needs another proxy entry in web's server.ts)
 
 Recommended: Add a `/api/publications/:id/scout` endpoint on the writer-agent that internally calls the content-scout. This keeps the frontend's API surface unified.
 
@@ -563,24 +563,24 @@ When a session has `seed_context`:
 | `services/content-scout/src/steps/dedupe.ts`            | LLM-based story dedup against recent ideas                            |
 | `services/content-scout/src/steps/generate-ideas.ts`    | LLM idea generation from filtered stories                             |
 | `services/content-scout/src/steps/auto-write.ts`        | Auto-write/publish pipeline via writer-agent                          |
-| `apps/writer-web/src/components/layout/Sidebar.tsx`     | Left navigation sidebar                                               |
-| `apps/writer-web/src/components/layout/AppLayout.tsx`   | Layout wrapper with sidebar                                           |
-| `apps/writer-web/src/pages/IdeasPage.tsx`               | Ideas feed page                                                       |
-| `apps/writer-web/src/pages/IdeaDetailPage.tsx`          | Idea detail/promote page                                              |
-| `apps/writer-web/src/pages/SchedulePage.tsx`            | Schedule & publication list                                           |
-| `apps/writer-web/src/pages/PublicationSettingsPage.tsx` | Publication config + topics                                           |
+| `apps/web/src/components/layout/Sidebar.tsx`     | Left navigation sidebar                                               |
+| `apps/web/src/components/layout/AppLayout.tsx`   | Layout wrapper with sidebar                                           |
+| `apps/web/src/pages/IdeasPage.tsx`               | Ideas feed page                                                       |
+| `apps/web/src/pages/IdeaDetailPage.tsx`          | Idea detail/promote page                                              |
+| `apps/web/src/pages/SchedulePage.tsx`            | Schedule & publication list                                           |
+| `apps/web/src/pages/PublicationSettingsPage.tsx` | Publication config + topics                                           |
 
 ### Modified Files
 
 | File                                                                   | Changes                                                     |
 | ---------------------------------------------------------------------- | ----------------------------------------------------------- |
 | `packages/content-core/src/types/`                                     | Add User, PublicationConfig, Topic, Idea types              |
-| `apps/writer-web/src/app.tsx`                                          | New routing structure with sidebar layout                   |
-| `apps/writer-web/src/lib/api.ts`                                       | New API functions for publications, topics, ideas           |
-| `apps/writer-web/src/lib/types.ts`                                     | New frontend types                                          |
-| `apps/writer-web/src/pages/SessionsPage.tsx`                           | Adapt to work within sidebar layout, add publication filter |
-| `apps/writer-web/src/pages/WorkspacePage.tsx`                          | Minor: adapt header for sidebar layout                      |
-| `apps/writer-web/src/components/layout/Header.tsx`                     | Simplify — sidebar handles main nav                         |
+| `apps/web/src/app.tsx`                                          | New routing structure with sidebar layout                   |
+| `apps/web/src/lib/api.ts`                                       | New API functions for publications, topics, ideas           |
+| `apps/web/src/lib/types.ts`                                     | New frontend types                                          |
+| `apps/web/src/pages/SessionsPage.tsx`                           | Adapt to work within sidebar layout, add publication filter |
+| `apps/web/src/pages/WorkspacePage.tsx`                          | Minor: adapt header for sidebar layout                      |
+| `apps/web/src/components/layout/Header.tsx`                     | Simplify — sidebar handles main nav                         |
 | `services/writer-agent/src/index.ts`                                   | Register new routes                                         |
 | `services/writer-agent/src/routes/index.ts`                            | Export new routes                                           |
 | `services/writer-agent/src/routes/sessions.ts`                         | Add publication_id to session creation                      |
@@ -596,7 +596,7 @@ When a session has `seed_context`:
 After each phase:
 
 1. `pnpm --filter @hotmetal/writer-agent typecheck` — zero errors
-2. `pnpm --filter @hotmetal/writer-web typecheck` — zero errors
+2. `pnpm --filter @hotmetal/web typecheck` — zero errors
 3. `pnpm --filter @hotmetal/content-scout typecheck` — zero errors (after Phase 5)
 4. All services build successfully
 

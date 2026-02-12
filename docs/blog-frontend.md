@@ -14,7 +14,7 @@ The blog frontend is an Astro 6 SSR application deployed on Cloudflare Pages. It
 ## File Structure
 
 ```
-apps/web-frontend/src/
+apps/blog-frontend/src/
   styles/
     global.css              — Tailwind v4 @theme, animations, prose styles
   lib/
@@ -76,7 +76,7 @@ Features:
 ## Running Locally
 
 ```bash
-# From the web-frontend directory
+# From the blog-frontend directory
 pnpm dev          # Start dev server
 pnpm build        # Production build
 pnpm typecheck    # Run Astro type checker

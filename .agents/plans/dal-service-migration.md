@@ -18,7 +18,7 @@ Extract all D1 database access from writer-agent, content-scout, and publisher i
 | **content-scout** | Shares WRITER_DB directly, 12 queries | Calls DAL via Service Binding (fixes SQLITE_BUSY) |
 | **publisher** | Owns PUBLISHER_DB, ~10 queries | Publishing logic only, calls DAL via Service Binding |
 | **DAL (new)** | N/A | Owns consolidated D1, exposes RPC interface |
-| **writer-web** | Pure proxy (no DB) | No change (stays a proxy) |
+| **web** | Pure proxy (no DB) | No change (stays a proxy) |
 | **cms-admin** | Owns CMS DB (SonicJS) | No change (keeps its own DB) |
 
 ### What Stays the Same

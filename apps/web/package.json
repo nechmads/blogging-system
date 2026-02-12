@@ -1,5 +1,5 @@
 {
-  "name": "@hotmetal/writer-web",
+  "name": "@hotmetal/web",
   "version": "0.0.0",
   "description": "Writer agent frontend — chat-based AI writing assistant",
   "type": "module",

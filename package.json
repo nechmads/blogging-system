@@ -20,14 +20,14 @@
     "deploy:writer": "pnpm --filter @hotmetal/writer-agent run deploy",
     "deploy:scout": "pnpm --filter @hotmetal/content-scout run deploy",
     "deploy:publisher": "pnpm --filter @hotmetal/publisher run deploy",
-    "deploy:web": "pnpm --filter @hotmetal/writer-web run deploy",
+    "deploy:web": "pnpm --filter @hotmetal/web run deploy",
     "deploy:all": "pnpm deploy:cms && pnpm deploy:dal && pnpm deploy:writer && pnpm deploy:scout && pnpm deploy:publisher && pnpm deploy:web",
     "dev:cms": "pnpm --filter @hotmetal/cms-admin dev",
     "dev:dal": "pnpm --filter @hotmetal/data-layer dev",
-    "dev:web": "pnpm --filter @hotmetal/web-frontend dev",
+    "dev:blog": "pnpm --filter @hotmetal/blog-frontend dev",
     "dev:writer": "pnpm --filter @hotmetal/writer-agent dev",
     "dev:publisher": "pnpm --filter @hotmetal/publisher dev",
-    "dev:writer-web": "pnpm --filter @hotmetal/writer-web dev",
+    "dev:web": "pnpm --filter @hotmetal/web dev",
     "dev:scout": "pnpm --filter @hotmetal/content-scout dev"
   },
   "engines": {

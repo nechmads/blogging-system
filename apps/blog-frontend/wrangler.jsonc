@@ -1,5 +1,5 @@
 {
-  "name": "hotmetal-web-frontend",
+  "name": "hotmetal-blog-frontend",
   "compatibility_date": "2026-02-07",
   "compatibility_flags": ["nodejs_compat"],
   "observability": {

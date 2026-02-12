@@ -1,12 +1,12 @@
-# Writer Web Frontend
+# Web Frontend
 
-The writer-web app (`apps/writer-web`) is a React SPA that provides a chat-based UI for the AI writing assistant. It runs as a Cloudflare Worker that proxies API and WebSocket requests to the writer-agent service.
+The web app (`apps/web`) is a React SPA that provides a chat-based UI for the AI writing assistant. It runs as a Cloudflare Worker that proxies API and WebSocket requests to the writer-agent service.
 
 ## Architecture
 
 ```
-Browser ──HTTP──► writer-web Worker (proxy) ──► writer-agent Worker (REST API)
-Browser ──WS────► writer-web Worker (proxy) ──► writer-agent Durable Object (streaming)
+Browser ──HTTP──► web Worker (proxy) ──► writer-agent Worker (REST API)
+Browser ──WS────► web Worker (proxy) ──► writer-agent Durable Object (streaming)
 ```
 
 - **Server** (`src/server.ts`): Thin proxy that forwards `/api/*` HTTP requests and `/agents/*` WebSocket connections to the writer-agent service, injecting the `X-API-Key` header. Serves static assets via Vite plugin.
@@ -75,7 +75,7 @@ Chat is handled entirely via WebSocket (not HTTP).
 
 ## Design Tokens
 
-Matches the blog's visual identity from `apps/web-frontend`:
+Matches the blog's visual identity from `apps/blog-frontend`:
 - **Font**: Inter
 - **Accent**: `#d97706` (amber-600) — buttons, links, active states
 - **Prose styles**: Consistent heading sizes, blockquote borders, code blocks
@@ -97,8 +97,8 @@ Reuses components from the agents-starter template:
 # Start writer-agent (required backend)
 pnpm dev:writer
 
-# Start writer-web dev server
-pnpm dev:writer-web
+# Start web dev server
+pnpm dev:web
 
 # Open http://localhost:5173
 ```

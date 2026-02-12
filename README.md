@@ -7,8 +7,8 @@ A blogging platform built as a pnpm monorepo on Cloudflare Workers/Pages.
 ```
 apps/
   cms-admin/        SonicJS CMS (port 8787)
-  web-frontend/     Astro 6 blog frontend (port 4321)
-  writer-web/       React SPA + BFF proxy (port 5173)
+  blog-frontend/    Astro 6 blog frontend (port 4321)
+  web/              React SPA + BFF proxy (port 5173)
 
 services/
   writer-agent/     AI writing agent — sessions, drafts, chat (port 8789)
@@ -35,13 +35,13 @@ Each service runs independently via `pnpm dev`. Start the ones you need:
 cd apps/cms-admin && pnpm dev
 
 # Terminal 2 — Blog frontend
-cd apps/web-frontend && pnpm dev
+cd apps/blog-frontend && pnpm dev
 
 # Terminal 3 — Writer Agent
 cd services/writer-agent && pnpm dev
 
-# Terminal 4 — Writer Web (UI)
-cd apps/writer-web && pnpm dev
+# Terminal 4 — Web (UI)
+cd apps/web && pnpm dev
 
 # Terminal 5 — Content Scout (only needed for automation)
 cd services/content-scout && pnpm dev
@@ -63,11 +63,11 @@ SonicJS-based CMS admin panel.
 | binding | `DB` | D1: `hotmetal-cms-db` | SonicJS content database |
 | binding | `MEDIA_BUCKET` | R2: `hotmetal-cms-bucket` | Media file storage |
 
-### apps/web-frontend
+### apps/blog-frontend
 
 Astro 6 blog frontend. No secrets or custom vars needed.
 
-### apps/writer-web
+### apps/web
 
 React SPA with a thin Cloudflare Worker backend that proxies API requests.
 
@@ -101,7 +101,7 @@ Content discovery pipeline. Runs daily via cron or on-demand via API.
 |------|------|---------------|-------------|
 | var | `ALEXANDER_API_URL` | `https://alexanderai.farfarawaylabs.com` | Alexander research API base URL |
 | var | `WRITER_AGENT_URL` | `https://hotmetal-writer-agent...` | Writer agent URL (for auto-write step) |
-| secret | `API_KEY` | | Authenticates incoming requests (from writer-web or Postman) |
+| secret | `API_KEY` | | Authenticates incoming requests (from web or Postman) |
 | secret | `ALEXANDER_API_KEY` | | Alexander research API key |
 | secret | `ANTHROPIC_API_KEY` | | Claude API key for idea generation |
 | secret | `WRITER_AGENT_API_KEY` | | Key for calling writer-agent (must match writer-agent's `WRITER_API_KEY`) |
@@ -130,8 +130,8 @@ Outlet publishing service (blog + LinkedIn).
 Some secrets must match across services:
 
 ```
-writer-web.WRITER_API_KEY      ══  writer-agent.WRITER_API_KEY
-writer-web.SCOUT_API_KEY       ══  content-scout.API_KEY
+web.WRITER_API_KEY      ══  writer-agent.WRITER_API_KEY
+web.SCOUT_API_KEY       ══  content-scout.API_KEY
 content-scout.WRITER_AGENT_API_KEY  ══  writer-agent.WRITER_API_KEY
 publisher.CMS_API_KEY          ══  cms-admin.CMS_API_KEY
 writer-agent.CMS_API_KEY       ══  cms-admin.CMS_API_KEY

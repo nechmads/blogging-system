@@ -33,7 +33,7 @@
 
 - [x] **Writer Agent — Non-Streaming Chat Endpoint** — Added `POST /api/v1/sessions/:id/chat` for synchronous (non-streaming) AI conversation. Uses `generateText` instead of `streamText`, same tools/prompt/state transitions. Includes session existence validation, JSON parse error handling, and extracted shared `prepareLlmCall()` helper to reduce duplication between streaming and non-streaming paths. Updated docs and Postman collection.
 
-- [x] **Writer Web Frontend — Chat-Based Writing Workspace** — Built the writer-web frontend (`apps/writer-web`) as a React SPA with two screens:
+- [x] **Writer Web Frontend — Chat-Based Writing Workspace** — Built the writer-web frontend (`apps/web`) as a React SPA with two screens:
   - **Sessions page** (`/`): Session list with create/archive, empty state, loading state, confirmation modals
   - **Workspace page** (`/session/:id`): Two-panel layout with ChatPanel (left) + DraftPanel (right)
   - Resizable divider (drag + keyboard, 30-70% clamp, localStorage persistence)

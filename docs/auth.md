@@ -2,7 +2,7 @@
 
 ## Overview
 
-Hot Metal uses [Clerk](https://clerk.com) for user authentication. The writer-web backend (Cloudflare Worker) validates Clerk JWTs using JWKS, and the React frontend uses `@clerk/clerk-react` for the auth UI and session management.
+Hot Metal uses [Clerk](https://clerk.com) for user authentication. The web backend (Cloudflare Worker) validates Clerk JWTs using JWKS, and the React frontend uses `@clerk/clerk-react` for the auth UI and session management.
 
 ## Architecture
 
@@ -10,7 +10,7 @@ Hot Metal uses [Clerk](https://clerk.com) for user authentication. The writer-we
 Browser (Clerk JWT)
   |
   v
-Writer-Web Backend (Hono on CF Worker)
+Web Backend (Hono on CF Worker)
   |-- clerkAuth middleware: validates JWT via JWKS (jose library)
   |-- ensureUser middleware: syncs user to D1 on first login
   |-- Extracts userId, passes as X-User-Id header to downstream
@@ -20,7 +20,7 @@ Writer-Web Backend (Hono on CF Worker)
   |---> Publisher (API key + X-User-Id header)
 ```
 
-## Backend Auth (writer-web Worker)
+## Backend Auth (web Worker)
 
 ### Middleware Stack
 
@@ -46,7 +46,7 @@ Writer-Web Backend (Hono on CF Worker)
 
 ### Downstream Services
 
-The writer-web proxy:
+The web proxy:
 - Sets `X-API-Key` for service-to-service auth
 - Sets `X-User-Id` with the authenticated user's Clerk ID
 - Strips the `Authorization` header (don't leak end-user JWT to internal services)

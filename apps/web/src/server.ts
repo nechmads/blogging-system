@@ -29,7 +29,7 @@ const app = new Hono<AppEnv>()
 
 // ─── Health check (public, before auth middleware) ──────────────────
 
-app.get('/health', (c) => c.json({ status: 'ok', service: 'writer-web' }))
+app.get('/health', (c) => c.json({ status: 'ok', service: 'hotmetal-web' }))
 
 // ─── Auth: Clerk JWT + user sync on all protected routes ────────────
 

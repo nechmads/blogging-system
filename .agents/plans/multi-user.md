@@ -31,7 +31,7 @@ Hot Metal is currently single-user. All data flows through `userId = 'default'`.
 
 ### 2.2 Auth Gateway: Writer-Web Backend
 
-**Decision:** Clerk JWT validation happens in the writer-web backend worker, NOT in individual services.
+**Decision:** Clerk JWT validation happens in the web backend worker, NOT in individual services.
 **Why:**
 - Writer-web already has a backend worker (serves SPA + proxies WebSocket)
 - Centralizes auth in one place — the BFF (backend-for-frontend)
@@ -91,14 +91,14 @@ User
 **Decision:** Landing page (public) + Dashboard (authenticated, current UX).
 **Why:**
 - Need a public-facing page for marketing, waitlist signup
-- Current writer-web UX becomes the authenticated dashboard
+- Current web UX becomes the authenticated dashboard
 - Clerk provides waitlist UI components
 - Onboarding: after signup, user lands in dashboard, first action is creating a publication (details TBD)
 
 **Pages:**
 - `/` — Public landing page (marketing, waitlist signup via Clerk)
 - `/sign-in`, `/sign-up` — Clerk-hosted or embedded auth pages
-- `/dashboard/*` — Authenticated area (current writer-web UX)
+- `/dashboard/*` — Authenticated area (current web UX)
 
 ### 2.6 Blog Frontend: API + RSS for Now
 
@@ -379,7 +379,7 @@ Before implementing multi-user, the Data Access Layer (DAL) service must be crea
 
 ### Multi-User Phases (after DAL is in place)
 
-1. **Clerk integration** — SDK setup, JWT validation middleware in writer-web backend, user sync webhook (lands on writer-agent which calls DAL)
+1. **Clerk integration** — SDK setup, JWT validation middleware in web backend, user sync webhook (lands on writer-agent which calls DAL)
 2. **Frontend auth** — Landing page, sign-in/sign-up, protected dashboard routes, replace hardcoded userId
 3. **API authorization** — Add userId context (from JWT) to all proxied requests, enforce publication ownership checks in route handlers
 4. **Social connections model** — Tables already created by DAL migration 0006. Build connection management UI, LinkedIn OAuth flow updates
@@ -392,7 +392,7 @@ Before implementing multi-user, the Data Access Layer (DAL) service must be crea
 ## 6. Open Questions
 
 - [ ] Exact Clerk plan/tier needed (waitlist feature availability)
-- [x] ~~Landing page design — separate route in writer-web or separate deployment?~~ → Route inside writer-web (`/` public, `/dashboard/*` protected)
+- [x] ~~Landing page design — separate route in web or separate deployment?~~ → Route inside web (`/` public, `/dashboard/*` protected)
 - [ ] Publication creation onboarding flow — wizard? minimal form? (deferred — for now, just show the dashboard)
 - [ ] Should the content API support GraphQL or just REST?
 - [ ] Rate limiting strategy for content API (per-token limits?)

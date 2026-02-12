@@ -15,7 +15,7 @@ Last updated: 2026-02-07
   - Run from `/Users/nechmads/Projects/blogging-system/apps`
   - This is interactive and may invoke Wrangler setup prompts
 
-2. `apps/web-frontend`
+2. `apps/blog-frontend`
 - Framework: Astro 6
 - Cloudflare deployment: `@astrojs/cloudflare` adapter
 - Output mode: `server`

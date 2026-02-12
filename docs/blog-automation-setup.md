@@ -5,12 +5,12 @@
 The blog automation system has 3 services working together:
 
 ```
-writer-web (port 5173) --> writer-agent (port 8789)     REST API + AI agent
+web (port 5173) --> writer-agent (port 8789)     REST API + AI agent
                        \-> content-scout (port 8790)     Scout pipeline
       UI proxy (BFF)
 ```
 
-- **writer-web** — React SPA + thin CF Worker proxy (BFF). Routes `/api/*` requests to writer-agent and `/api/publications/:id/scout` directly to content-scout.
+- **web** — React SPA + thin CF Worker proxy (BFF). Routes `/api/*` requests to writer-agent and `/api/publications/:id/scout` directly to content-scout.
 - **writer-agent** — Main backend. Manages publications, topics, ideas, sessions, drafts.
 - **content-scout** — Durable pipeline worker. Cron + Queue + Workflow. Discovers trending stories, generates ideas via LLM, stores to D1, and optionally auto-writes.
 
@@ -72,12 +72,12 @@ npx wrangler secret put ANTHROPIC_API_KEY --local      # Claude API for idea gen
 npx wrangler secret put WRITER_AGENT_API_KEY --local   # Key to call writer-agent (for auto-write)
 ```
 
-> **Important**: `API_KEY` on content-scout must match `SCOUT_API_KEY` on writer-web (writer-web sends it as a Bearer token). `WRITER_AGENT_API_KEY` on content-scout must match `WRITER_API_KEY` on writer-agent (content-scout uses it to call writer-agent for auto-write).
+> **Important**: `API_KEY` on content-scout must match `SCOUT_API_KEY` on web (web sends it as a Bearer token). `WRITER_AGENT_API_KEY` on content-scout must match `WRITER_API_KEY` on writer-agent (content-scout uses it to call writer-agent for auto-write).
 
-### writer-web secrets
+### web secrets
 
 ```bash
-cd apps/writer-web
+cd apps/web
 
 npx wrangler secret put WRITER_API_KEY --local   # Same as writer-agent's WRITER_API_KEY
 npx wrangler secret put SCOUT_API_KEY --local    # Must match API_KEY on content-scout
@@ -105,7 +105,7 @@ pnpm dev
 
 **Tab 3 — Writer Web (port 5173)**
 ```bash
-cd apps/writer-web
+cd apps/web
 pnpm dev
 ```
 
@@ -124,7 +124,7 @@ curl http://localhost:8790/health
 
 # Writer Web
 curl http://localhost:5173/health
-# Expected: {"status":"ok","service":"writer-web"}
+# Expected: {"status":"ok","service":"hotmetal-web"}
 ```
 
 ---
@@ -312,16 +312,16 @@ For production, you'll need to:
    npx wrangler secret put WRITER_AGENT_API_KEY
    ```
 
-3. **Set production secrets on writer-web** (the new one):
+3. **Set production secrets on web** (the new one):
    ```bash
-   cd apps/writer-web
+   cd apps/web
    npx wrangler secret put SCOUT_API_KEY
    ```
 
-4. **Update writer-web production vars** in wrangler.jsonc:
+4. **Update web production vars** in wrangler.jsonc:
    - Change `CONTENT_SCOUT_URL` from `http://localhost:8790` to `https://hotmetal-content-scout.shahar-nechmad.workers.dev`
 
-5. **Redeploy writer-web**:
+5. **Redeploy web**:
    ```bash
    npx wrangler deploy
    ```
