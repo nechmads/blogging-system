@@ -51,6 +51,7 @@ export interface Session {
 	ideaId: string | null
 	seedContext: string | null
 	featuredImageUrl: string | null
+	styleId: string | null
 	createdAt: number
 	updatedAt: number
 }
@@ -62,6 +63,7 @@ export interface CreateSessionInput {
 	publicationId?: string
 	ideaId?: string
 	seedContext?: string
+	styleId?: string
 }
 
 export interface UpdateSessionInput {
@@ -73,6 +75,7 @@ export interface UpdateSessionInput {
 	ideaId?: string | null
 	seedContext?: string | null
 	featuredImageUrl?: string | null
+	styleId?: string | null
 }
 
 export interface ListSessionsFilters {
@@ -96,6 +99,7 @@ export interface Publication {
 	scoutSchedule: ScoutSchedule
 	timezone: string
 	nextScoutAt: number | null
+	styleId: string | null
 	createdAt: number
 	updatedAt: number
 }
@@ -112,6 +116,7 @@ export interface CreatePublicationInput {
 	cadencePostsPerWeek?: number
 	scoutSchedule?: ScoutSchedule
 	timezone?: string
+	styleId?: string
 }
 
 export interface UpdatePublicationInput {
@@ -126,6 +131,7 @@ export interface UpdatePublicationInput {
 	scoutSchedule?: ScoutSchedule
 	timezone?: string
 	nextScoutAt?: number | null
+	styleId?: string | null
 }
 
 // ─── Topics ──────────────────────────────────────────────────────────
@@ -268,6 +274,42 @@ export interface CreatePublicationOutletInput {
 	connectionId: string
 	autoPublish?: boolean
 	settings?: string
+}
+
+// ─── Writing Styles ─────────────────────────────────────────────────
+
+export interface WritingStyle {
+	id: string
+	userId: string | null
+	name: string
+	description: string | null
+	systemPrompt: string
+	toneGuide: string | null
+	sourceUrl: string | null
+	sampleText: string | null
+	isPrebuilt: boolean
+	createdAt: number
+	updatedAt: number
+}
+
+export interface CreateWritingStyleInput {
+	id: string
+	userId: string
+	name: string
+	description?: string
+	systemPrompt: string
+	toneGuide?: string
+	sourceUrl?: string
+	sampleText?: string
+}
+
+export interface UpdateWritingStyleInput {
+	name?: string
+	description?: string | null
+	systemPrompt?: string
+	toneGuide?: string | null
+	sourceUrl?: string | null
+	sampleText?: string | null
 }
 
 // ─── Publication Tokens ──────────────────────────────────────────────

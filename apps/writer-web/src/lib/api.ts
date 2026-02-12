@@ -1,7 +1,7 @@
 import type {
   Session, Draft, DraftContent, SeoSuggestion, PublishInput, PublishResult,
   PublicationConfig, Topic, Idea, IdeaStatus, AutoPublishMode, ActivityItem,
-  ScoutSchedule, GeneratedImage,
+  ScoutSchedule, GeneratedImage, WritingStyle, AnalyzeUrlResponse,
 } from './types'
 
 const JSON_HEADERS = { 'Content-Type': 'application/json' }
@@ -53,11 +53,11 @@ export async function fetchSessions(): Promise<Session[]> {
   return result.data.filter((s) => s.status !== 'archived')
 }
 
-export async function createSession(title?: string): Promise<Session> {
+export async function createSession(opts?: { title?: string; publicationId?: string; styleId?: string }): Promise<Session> {
   return request<Session>('/api/sessions', {
     method: 'POST',
     headers: JSON_HEADERS,
-    body: JSON.stringify({ title }),
+    body: JSON.stringify(opts ?? {}),
   })
 }
 
@@ -184,6 +184,7 @@ export async function updatePublication(
     cadencePostsPerWeek: number
     scoutSchedule: ScoutSchedule
     timezone: string
+    styleId: string | null
   }>,
 ): Promise<PublicationConfig> {
   return request<PublicationConfig>(`/api/publications/${id}`, {
@@ -270,6 +271,68 @@ export async function promoteIdea(id: string): Promise<Session> {
 
 export async function triggerScout(pubId: string): Promise<{ queued: boolean }> {
   return request<{ queued: boolean }>(`/api/publications/${pubId}/scout`, {
+    method: 'POST',
+  })
+}
+
+// --- Writing Styles ---
+
+export async function fetchStyles(): Promise<WritingStyle[]> {
+  const result = await request<{ data: WritingStyle[] }>('/api/styles')
+  return result.data
+}
+
+export async function fetchStyle(id: string): Promise<WritingStyle> {
+  return request<WritingStyle>(`/api/styles/${id}`)
+}
+
+export async function createStyle(data: {
+  name: string
+  systemPrompt: string
+  description?: string
+  toneGuide?: string
+  sourceUrl?: string
+  sampleText?: string
+}): Promise<WritingStyle> {
+  return request<WritingStyle>('/api/styles', {
+    method: 'POST',
+    headers: JSON_HEADERS,
+    body: JSON.stringify(data),
+  })
+}
+
+export async function updateStyle(
+  id: string,
+  data: Partial<{
+    name: string
+    description: string | null
+    systemPrompt: string
+    toneGuide: string | null
+    sourceUrl: string | null
+    sampleText: string | null
+  }>,
+): Promise<WritingStyle> {
+  return request<WritingStyle>(`/api/styles/${id}`, {
+    method: 'PATCH',
+    headers: JSON_HEADERS,
+    body: JSON.stringify(data),
+  })
+}
+
+export async function deleteStyle(id: string): Promise<void> {
+  await request(`/api/styles/${id}`, { method: 'DELETE' })
+}
+
+export async function analyzeStyleUrl(url: string): Promise<AnalyzeUrlResponse> {
+  return request<AnalyzeUrlResponse>('/api/styles/analyze-url', {
+    method: 'POST',
+    headers: JSON_HEADERS,
+    body: JSON.stringify({ url }),
+  })
+}
+
+export async function duplicateStyle(id: string): Promise<WritingStyle> {
+  return request<WritingStyle>(`/api/styles/${id}/duplicate`, {
     method: 'POST',
   })
 }

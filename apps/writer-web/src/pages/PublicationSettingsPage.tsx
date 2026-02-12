@@ -21,9 +21,10 @@ import {
   deleteTopic,
   triggerScout,
   fetchIdeasCount,
+  fetchStyles,
 } from '@/lib/api'
 import { startScoutPolling } from '@/stores/scout-store'
-import type { PublicationConfig, Topic, AutoPublishMode, ScoutSchedule, ScheduleType } from '@/lib/types'
+import type { PublicationConfig, Topic, AutoPublishMode, ScoutSchedule, ScheduleType, WritingStyle } from '@/lib/types'
 
 const MODE_OPTIONS: { value: AutoPublishMode; label: string; description: string }[] = [
   { value: 'draft', label: 'Draft', description: 'Scout finds ideas. You decide what to write.' },
@@ -125,6 +126,8 @@ export function PublicationSettingsPage() {
   const [writingTone, setWritingTone] = useState('')
   const [autoPublishMode, setAutoPublishMode] = useState<AutoPublishMode>('draft')
   const [cadencePostsPerWeek, setCadencePostsPerWeek] = useState(3)
+  const [styleId, setStyleId] = useState<string | null>(null)
+  const [availableStyles, setAvailableStyles] = useState<WritingStyle[]>([])
 
   // Schedule form state
   const [timezone, setTimezone] = useState(() => Intl.DateTimeFormat().resolvedOptions().timeZone)
@@ -153,9 +156,13 @@ export function PublicationSettingsPage() {
     if (!id) return
     try {
       setError(null)
-      const data = await fetchPublication(id)
+      const [data, stylesData] = await Promise.all([
+        fetchPublication(id),
+        fetchStyles(),
+      ])
       setPublication(data)
       setTopics(data.topics ?? [])
+      setAvailableStyles(stylesData)
       // Populate form
       setName(data.name)
       setDescription(data.description ?? '')
@@ -163,6 +170,7 @@ export function PublicationSettingsPage() {
       setWritingTone(data.writingTone ?? '')
       setAutoPublishMode(data.autoPublishMode)
       setCadencePostsPerWeek(data.cadencePostsPerWeek)
+      setStyleId(data.styleId ?? null)
       // Schedule fields
       if (data.timezone) setTimezone(data.timezone)
       setNextScoutAt(data.nextScoutAt)
@@ -203,6 +211,7 @@ export function PublicationSettingsPage() {
         cadencePostsPerWeek,
         scoutSchedule,
         timezone,
+        styleId,
       })
       setPublication(updated)
       setNextScoutAt(updated.nextScoutAt)
@@ -398,6 +407,32 @@ export function PublicationSettingsPage() {
             placeholder='e.g., "Skeptical tech analyst. Conversational but data-driven."'
             className="w-full rounded-lg border border-[var(--color-border-default)] bg-[var(--color-bg-primary)] px-3 py-2 text-sm focus:border-[var(--color-accent)] focus:outline-none focus:ring-1 focus:ring-[var(--color-accent)]"
           />
+        </div>
+
+        <div>
+          <label className="mb-1 block text-sm font-medium">Writing Style</label>
+          <select
+            value={styleId ?? ''}
+            onChange={(e) => setStyleId(e.target.value || null)}
+            className="w-full rounded-lg border border-[var(--color-border-default)] bg-[var(--color-bg-primary)] px-3 py-2 text-sm focus:border-[var(--color-accent)] focus:outline-none focus:ring-1 focus:ring-[var(--color-accent)]"
+          >
+            <option value="">None (use default)</option>
+            {availableStyles.map((s) => (
+              <option key={s.id} value={s.id}>
+                {s.name}{s.isPrebuilt ? ' (built-in)' : ''}
+              </option>
+            ))}
+          </select>
+          <p className="mt-1 text-xs text-[var(--color-text-muted)]">
+            Controls the AI writer's tone and voice.{' '}
+            <button
+              type="button"
+              onClick={() => navigate('/styles')}
+              className="text-[var(--color-accent)] hover:underline"
+            >
+              Manage Styles
+            </button>
+          </p>
         </div>
       </section>
 
