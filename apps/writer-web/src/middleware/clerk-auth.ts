@@ -85,6 +85,7 @@ export const clerkAuth = createMiddleware<AuthEnv>(async (c, next) => {
 		const { payload } = await jwtVerify(token, jwks, {
 			issuer,
 			algorithms: ['RS256'],
+			clockTolerance: 10,
 		})
 
 		if (!payload.sub) {

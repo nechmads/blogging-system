@@ -7,41 +7,27 @@
  */
 
 import { SignedIn, SignedOut, RedirectToSignIn, useAuth } from '@clerk/clerk-react'
-import { useEffect, useRef, useState, type ReactNode } from 'react'
-import { setAuthToken } from '@/lib/api'
-import { TOKEN_REFRESH_INTERVAL_MS } from '@/lib/auth-config'
+import { useEffect, useState, type ReactNode } from 'react'
+import { setTokenProvider } from '@/lib/api'
 
 function TokenSync({ children }: { children: ReactNode }) {
   const { getToken, isSignedIn } = useAuth()
   const [ready, setReady] = useState(false)
-  const getTokenRef = useRef(getToken)
-  getTokenRef.current = getToken
 
   useEffect(() => {
     if (!isSignedIn) {
-      setAuthToken(null)
+      setTokenProvider(null)
       setReady(true)
       return
     }
 
-    const refreshToken = () => {
-      getTokenRef.current()
-        .then((token) => {
-          setAuthToken(token)
-          setReady(true)
-        })
-        .catch((err) => {
-          console.error('Failed to refresh auth token:', err)
-          setAuthToken(null)
-          setReady(true)
-        })
-    }
+    // Register Clerk's getToken as the provider — each API call
+    // will invoke it to get a fresh (or cached-by-Clerk) JWT.
+    setTokenProvider(() => getToken())
+    setReady(true)
 
-    refreshToken()
-
-    const interval = setInterval(refreshToken, TOKEN_REFRESH_INTERVAL_MS)
-    return () => clearInterval(interval)
-  }, [isSignedIn])
+    return () => setTokenProvider(null)
+  }, [isSignedIn, getToken])
 
   if (!ready) return null
   return <>{children}</>
