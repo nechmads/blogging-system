@@ -9,7 +9,7 @@ declare namespace Cloudflare {
 		ALEXANDER_API_KEY: string;
 		// Clerk auth
 		CLERK_PUBLISHABLE_KEY: string;
-		CLERK_SECRET_KEY: string;
+		CLERK_ISSUER: string;
 	}
 }
 interface Env extends Cloudflare.Env {}
