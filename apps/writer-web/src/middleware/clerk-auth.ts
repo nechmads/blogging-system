@@ -33,7 +33,10 @@ type AuthEnv = {
  */
 const promoteQueryToken = createMiddleware(async (c, next) => {
 	if (!c.req.header('Authorization') && c.req.query('token')) {
-		c.req.raw.headers.set('Authorization', `Bearer ${c.req.query('token')}`)
+		// Request headers are immutable in Workers — clone with the extra header
+		const headers = new Headers(c.req.raw.headers)
+		headers.set('Authorization', `Bearer ${c.req.query('token')}`)
+		c.req.raw = new Request(c.req.raw, { headers })
 	}
 	await next()
 })
