@@ -17,6 +17,7 @@ interface SessionRow {
 	idea_id: string | null
 	seed_context: string | null
 	featured_image_url: string | null
+	style_id: string | null
 	created_at: number
 	updated_at: number
 }
@@ -33,6 +34,7 @@ function mapRow(row: SessionRow): Session {
 		ideaId: row.idea_id,
 		seedContext: row.seed_context,
 		featuredImageUrl: row.featured_image_url,
+		styleId: row.style_id ?? null,
 		createdAt: row.created_at,
 		updatedAt: row.updated_at,
 	}
@@ -45,8 +47,8 @@ export async function createSession(db: D1Database, data: CreateSessionInput): P
 	await db
 		.prepare(
 			`INSERT INTO sessions (id, user_id, title, status, current_draft_version,
-			 publication_id, idea_id, seed_context, created_at, updated_at)
-			 VALUES (?, ?, ?, 'active', 0, ?, ?, ?, ?, ?)`
+			 publication_id, idea_id, seed_context, style_id, created_at, updated_at)
+			 VALUES (?, ?, ?, 'active', 0, ?, ?, ?, ?, ?, ?)`
 		)
 		.bind(
 			data.id,
@@ -55,6 +57,7 @@ export async function createSession(db: D1Database, data: CreateSessionInput): P
 			data.publicationId ?? null,
 			data.ideaId ?? null,
 			data.seedContext ?? null,
+			data.styleId ?? null,
 			now,
 			now
 		)
@@ -71,6 +74,7 @@ export async function createSession(db: D1Database, data: CreateSessionInput): P
 		ideaId: data.ideaId ?? null,
 		seedContext: data.seedContext ?? null,
 		featuredImageUrl: null,
+		styleId: data.styleId ?? null,
 		createdAt: now,
 		updatedAt: now,
 	}
@@ -149,6 +153,10 @@ export async function updateSession(
 	if (data.featuredImageUrl !== undefined) {
 		sets.push('featured_image_url = ?')
 		bindings.push(data.featuredImageUrl)
+	}
+	if (data.styleId !== undefined) {
+		sets.push('style_id = ?')
+		bindings.push(data.styleId)
 	}
 
 	if (sets.length === 0) return getSessionById(db, id)

@@ -12,6 +12,7 @@ export interface WriterAgentState {
   publicationId: string | null
   seedContext: string | null
   featuredImageUrl: string | null
+  styleId: string | null
 }
 
 export const INITIAL_STATE: WriterAgentState = {
@@ -26,4 +27,5 @@ export const INITIAL_STATE: WriterAgentState = {
   publicationId: null,
   seedContext: null,
   featuredImageUrl: null,
+  styleId: null,
 }

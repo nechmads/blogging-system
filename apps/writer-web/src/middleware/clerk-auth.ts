@@ -1,11 +1,12 @@
 /**
  * Clerk JWT verification middleware for Hono on Cloudflare Workers.
  *
- * Validates the Bearer token from the Authorization header using Clerk's
- * JWKS endpoint. On success, attaches `userId`, `userEmail`, and `userName`
- * to the Hono context variables for downstream handlers.
+ * Validates the Bearer token using Clerk's JWKS endpoint via `jose`.
+ * This is lighter than @clerk/backend — it only verifies the JWT signature
+ * locally using cached public keys, with no outbound API calls per request.
  *
- * Uses `jose` (edge-compatible) instead of `@clerk/backend` which requires Node.js APIs.
+ * On success, attaches `userId`, `userEmail`, and `userName` to the
+ * Hono context variables for downstream handlers.
  *
  * Token sources:
  * 1. `Authorization: Bearer <token>` header (standard API calls)
@@ -85,6 +86,7 @@ export const clerkAuth = createMiddleware<AuthEnv>(async (c, next) => {
 		const { payload } = await jwtVerify(token, jwks, {
 			issuer,
 			algorithms: ['RS256'],
+			clockTolerance: 10,
 		})
 
 		if (!payload.sub) {

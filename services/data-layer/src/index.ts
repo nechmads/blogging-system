@@ -12,6 +12,7 @@ import * as oauthState from './domains/oauth-state'
 import * as socialConnections from './domains/social-connections'
 import * as publicationOutlets from './domains/publication-outlets'
 import * as publicationTokens from './domains/publication-tokens'
+import * as writingStyles from './domains/writing-styles'
 
 import type {
 	CreateUserInput,
@@ -30,6 +31,8 @@ import type {
 	CreateSocialConnectionInput,
 	TokenUpdate,
 	CreatePublicationOutletInput,
+	CreateWritingStyleInput,
+	UpdateWritingStyleInput,
 } from './types'
 
 // Re-export types for consumers
@@ -48,6 +51,7 @@ import type {
 	PublicationToken,
 	PublicationTokenWithRawToken,
 	ScoutSchedule,
+	WritingStyle,
 } from './types'
 
 /**
@@ -130,6 +134,14 @@ export interface DataLayerApi {
 	validatePublicationToken(rawToken: string): Promise<string | null>
 	revokePublicationToken(id: string): Promise<void>
 	listPublicationTokens(pubId: string): Promise<PublicationToken[]>
+
+	// Writing Styles
+	createWritingStyle(data: CreateWritingStyleInput): Promise<WritingStyle>
+	getWritingStyleById(id: string): Promise<WritingStyle | null>
+	listWritingStylesByUser(userId: string): Promise<WritingStyle[]>
+	listPrebuiltStyles(): Promise<WritingStyle[]>
+	updateWritingStyle(id: string, data: UpdateWritingStyleInput): Promise<WritingStyle | null>
+	deleteWritingStyle(id: string): Promise<void>
 }
 
 /**
@@ -222,6 +234,14 @@ export class DataLayer extends WorkerEntrypoint<Env> {
 	validatePublicationToken(rawToken: string) { return publicationTokens.validatePublicationToken(this.env.DB, rawToken) }
 	revokePublicationToken(id: string) { return publicationTokens.revokePublicationToken(this.env.DB, id) }
 	listPublicationTokens(pubId: string) { return publicationTokens.listPublicationTokens(this.env.DB, pubId) }
+
+	// ─── Writing Styles ────────────────────────────────────────────────
+	createWritingStyle(data: CreateWritingStyleInput) { return writingStyles.createWritingStyle(this.env.DB, data) }
+	getWritingStyleById(id: string) { return writingStyles.getWritingStyleById(this.env.DB, id) }
+	listWritingStylesByUser(userId: string) { return writingStyles.listWritingStylesByUser(this.env.DB, userId) }
+	listPrebuiltStyles() { return writingStyles.listPrebuiltStyles(this.env.DB) }
+	updateWritingStyle(id: string, data: UpdateWritingStyleInput) { return writingStyles.updateWritingStyle(this.env.DB, id, data) }
+	deleteWritingStyle(id: string) { return writingStyles.deleteWritingStyle(this.env.DB, id) }
 }
 
 // Default HTTP handler — health check only

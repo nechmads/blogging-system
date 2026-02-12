@@ -37,7 +37,7 @@ export function SessionsPage() {
     if (creating) return
     setCreating(true)
     try {
-      const session = await createSession(newTitle.trim() || undefined)
+      const session = await createSession({ title: newTitle.trim() || undefined })
       setShowCreateModal(false)
       setNewTitle('')
       navigate(`/writing/${session.id}`)

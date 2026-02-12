@@ -106,6 +106,33 @@ export interface QuestionResponse {
   metadata?: Record<string, unknown>
 }
 
+export interface ToneGuideParams {
+  url?: string
+  rss_feed?: string
+  max_posts?: number
+  model?: string
+}
+
+export interface ToneGuideVoice {
+  overall_tone: string
+  personality_traits: string[]
+  vocabulary_level: string
+  sentence_style: string
+  perspective: string
+}
+
+export interface ToneGuideResponse {
+  success: boolean
+  tone_guide: {
+    system_prompt: string
+    voice: ToneGuideVoice
+    dos: string[]
+    donts: string[]
+    sample_rewrite?: string
+  }
+  metadata?: Record<string, unknown>
+}
+
 // --- Client ---
 
 export class AlexanderApiError extends Error {
@@ -165,5 +192,9 @@ export class AlexanderApi {
 
   async askQuestion(params: QuestionParams): Promise<QuestionResponse> {
     return this.request('POST', '/questions', params)
+  }
+
+  async toneGuide(params: ToneGuideParams): Promise<ToneGuideResponse> {
+    return this.request('POST', '/writing/tone-guide', params, 300_000)
   }
 }

@@ -56,6 +56,7 @@ export class WriterAgent extends AIChatAgent<WriterAgentEnv, WriterAgentState> {
           publicationId: session.publicationId,
           seedContext: session.seedContext,
           featuredImageUrl: session.featuredImageUrl,
+          styleId: session.styleId,
         })
       }
     }
@@ -104,7 +105,7 @@ export class WriterAgent extends AIChatAgent<WriterAgentEnv, WriterAgentState> {
     return super.onMessage(connection, message)
   }
 
-  private prepareLlmCall() {
+  private async prepareLlmCall() {
     const newPhase = this.state.writingPhase === 'idle' ? 'interviewing' : this.state.writingPhase
     this.setState({
       ...this.state,
@@ -113,11 +114,27 @@ export class WriterAgent extends AIChatAgent<WriterAgentEnv, WriterAgentState> {
       writingPhase: newPhase,
     })
 
+    // Resolve custom style: session > publication > default
+    let customStylePrompt: string | undefined
+    const styleId = this.state.styleId
+    if (styleId) {
+      const style = await this.env.DAL.getWritingStyleById(styleId)
+      if (style) customStylePrompt = style.systemPrompt
+    }
+    if (!customStylePrompt && this.state.publicationId) {
+      const pub = await this.env.DAL.getPublicationById(this.state.publicationId)
+      if (pub?.styleId) {
+        const style = await this.env.DAL.getWritingStyleById(pub.styleId)
+        if (style) customStylePrompt = style.systemPrompt
+      }
+    }
+
     const systemPrompt = buildSystemPrompt({
-      phase: this.state.writingPhase,
+      phase: newPhase,
       sessionTitle: this.state.title,
       currentDraftVersion: this.state.currentDraftVersion,
       seedContext: this.state.seedContext,
+      customStylePrompt,
     })
 
     const tools = createToolSet(this)
@@ -129,7 +146,7 @@ export class WriterAgent extends AIChatAgent<WriterAgentEnv, WriterAgentState> {
     onFinish: StreamTextOnFinishCallback<ToolSet>,
     options?: { abortSignal?: AbortSignal },
   ) {
-    const { systemPrompt, tools } = this.prepareLlmCall()
+    const { systemPrompt, tools } = await this.prepareLlmCall()
     const cleaned = cleanupMessages(this.messages)
 
     const stream = createUIMessageStream({
@@ -207,7 +224,7 @@ export class WriterAgent extends AIChatAgent<WriterAgentEnv, WriterAgentState> {
   }
 
   async handleChat(userMessage: string): Promise<Response> {
-    const { systemPrompt, tools } = this.prepareLlmCall()
+    const { systemPrompt, tools } = await this.prepareLlmCall()
 
     const userMsg = {
       id: crypto.randomUUID(),

@@ -1,34 +1,47 @@
 import type {
   Session, Draft, DraftContent, SeoSuggestion, PublishInput, PublishResult,
   PublicationConfig, Topic, Idea, IdeaStatus, AutoPublishMode, ActivityItem,
-  ScoutSchedule, GeneratedImage,
+  ScoutSchedule, GeneratedImage, WritingStyle, AnalyzeUrlResponse,
 } from './types'
 
 const JSON_HEADERS = { 'Content-Type': 'application/json' }
 
 /**
- * Set by the auth layer once Clerk provides a session token.
- * All API requests include this as a Bearer token.
+ * Token provider function set by the auth layer.
+ * Called on every API request to get a fresh Clerk session token,
+ * avoiding stale tokens from a cached module variable.
  */
-let authToken: string | null = null
+let tokenProvider: (() => Promise<string | null>) | null = null
 
-export function setAuthToken(token: string | null) {
-  authToken = token
+/**
+ * Register Clerk's getToken function as the token provider.
+ * Called once by TokenSync when auth initializes.
+ */
+export function setTokenProvider(provider: (() => Promise<string | null>) | null) {
+  tokenProvider = provider
 }
 
+/** @deprecated Use setTokenProvider instead. Kept for backward compatibility. */
+export function setAuthToken(_token: string | null) {
+  // No-op: token is now fetched fresh per-request via tokenProvider
+}
+
+/** @deprecated Token is now fetched fresh per-request. */
 export function getAuthToken(): string | null {
-  return authToken
+  return null
 }
 
-function authHeaders(): Record<string, string> {
-  if (!authToken) return {}
-  return { Authorization: `Bearer ${authToken}` }
+async function getAuthHeaders(): Promise<Record<string, string>> {
+  if (!tokenProvider) return {}
+  const token = await tokenProvider()
+  if (!token) return {}
+  return { Authorization: `Bearer ${token}` }
 }
 
 async function request<T>(url: string, init?: RequestInit): Promise<T> {
   const headers = new Headers(init?.headers)
-  // Merge auth header
-  const auth = authHeaders()
+  // Merge fresh auth header
+  const auth = await getAuthHeaders()
   for (const [k, v] of Object.entries(auth)) {
     if (!headers.has(k)) headers.set(k, v)
   }
@@ -53,11 +66,11 @@ export async function fetchSessions(): Promise<Session[]> {
   return result.data.filter((s) => s.status !== 'archived')
 }
 
-export async function createSession(title?: string): Promise<Session> {
+export async function createSession(opts?: { title?: string; publicationId?: string; styleId?: string }): Promise<Session> {
   return request<Session>('/api/sessions', {
     method: 'POST',
     headers: JSON_HEADERS,
-    body: JSON.stringify({ title }),
+    body: JSON.stringify(opts ?? {}),
   })
 }
 
@@ -184,6 +197,7 @@ export async function updatePublication(
     cadencePostsPerWeek: number
     scoutSchedule: ScoutSchedule
     timezone: string
+    styleId: string | null
   }>,
 ): Promise<PublicationConfig> {
   return request<PublicationConfig>(`/api/publications/${id}`, {
@@ -270,6 +284,68 @@ export async function promoteIdea(id: string): Promise<Session> {
 
 export async function triggerScout(pubId: string): Promise<{ queued: boolean }> {
   return request<{ queued: boolean }>(`/api/publications/${pubId}/scout`, {
+    method: 'POST',
+  })
+}
+
+// --- Writing Styles ---
+
+export async function fetchStyles(): Promise<WritingStyle[]> {
+  const result = await request<{ data: WritingStyle[] }>('/api/styles')
+  return result.data
+}
+
+export async function fetchStyle(id: string): Promise<WritingStyle> {
+  return request<WritingStyle>(`/api/styles/${id}`)
+}
+
+export async function createStyle(data: {
+  name: string
+  systemPrompt: string
+  description?: string
+  toneGuide?: string
+  sourceUrl?: string
+  sampleText?: string
+}): Promise<WritingStyle> {
+  return request<WritingStyle>('/api/styles', {
+    method: 'POST',
+    headers: JSON_HEADERS,
+    body: JSON.stringify(data),
+  })
+}
+
+export async function updateStyle(
+  id: string,
+  data: Partial<{
+    name: string
+    description: string | null
+    systemPrompt: string
+    toneGuide: string | null
+    sourceUrl: string | null
+    sampleText: string | null
+  }>,
+): Promise<WritingStyle> {
+  return request<WritingStyle>(`/api/styles/${id}`, {
+    method: 'PATCH',
+    headers: JSON_HEADERS,
+    body: JSON.stringify(data),
+  })
+}
+
+export async function deleteStyle(id: string): Promise<void> {
+  await request(`/api/styles/${id}`, { method: 'DELETE' })
+}
+
+export async function analyzeStyleUrl(url: string): Promise<AnalyzeUrlResponse> {
+  return request<AnalyzeUrlResponse>('/api/styles/analyze-url', {
+    method: 'POST',
+    headers: JSON_HEADERS,
+    body: JSON.stringify({ url }),
+  })
+}
+
+export async function duplicateStyle(id: string): Promise<WritingStyle> {
+  return request<WritingStyle>(`/api/styles/${id}/duplicate`, {
     method: 'POST',
   })
 }

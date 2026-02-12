@@ -26,6 +26,7 @@ sessions.post('/api/sessions', async (c) => {
     publicationId?: string
     ideaId?: string
     seedContext?: string
+    styleId?: string
   }>()
 
   const sessionId = crypto.randomUUID()
@@ -36,6 +37,7 @@ sessions.post('/api/sessions', async (c) => {
     publicationId: body.publicationId,
     ideaId: body.ideaId,
     seedContext: body.seedContext,
+    styleId: body.styleId,
   })
 
   return c.json(session, 201)

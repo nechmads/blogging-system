@@ -9,6 +9,7 @@ export interface Session {
   ideaId: string | null
   seedContext: string | null
   featuredImageUrl: string | null
+  styleId: string | null
   createdAt: number
   updatedAt: number
 }
@@ -92,6 +93,7 @@ export interface PublicationConfig {
   scoutSchedule: ScoutSchedule
   timezone: string
   nextScoutAt: number | null
+  styleId: string | null
   createdAt: number
   updatedAt: number
   topics?: Topic[]
@@ -130,6 +132,40 @@ export interface Idea {
   relevanceScore: number | null
   createdAt: number
   updatedAt: number
+}
+
+// --- Writing Styles ---
+
+export interface WritingStyle {
+  id: string
+  userId: string | null
+  name: string
+  description: string | null
+  systemPrompt: string
+  toneGuide: string | null
+  sourceUrl: string | null
+  sampleText: string | null
+  isPrebuilt: boolean
+  createdAt: number
+  updatedAt: number
+}
+
+export interface AnalyzeUrlResponse {
+  success: boolean
+  tone_guide: {
+    system_prompt: string
+    voice: {
+      overall_tone: string
+      personality_traits: string[]
+      vocabulary_level: string
+      sentence_style: string
+      perspective: string
+    }
+    dos: string[]
+    donts: string[]
+    sample_rewrite?: string
+  }
+  metadata?: Record<string, unknown>
 }
 
 // --- Activity (content calendar) ---

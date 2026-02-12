@@ -97,16 +97,23 @@ export interface SystemPromptOptions {
   sessionTitle?: string | null
   currentDraftVersion?: number
   seedContext?: string | null
+  customStylePrompt?: string
 }
 
 export function buildSystemPrompt(options: SystemPromptOptions): string {
-  const { phase, styleProfile = defaultStyleProfile, sessionTitle, currentDraftVersion, seedContext } = options
+  const { phase, styleProfile = defaultStyleProfile, sessionTitle, currentDraftVersion, seedContext, customStylePrompt } = options
 
   const parts = [BASE_IDENTITY]
 
-  // Style profile
+  // Style: custom prompt takes precedence over structured profile
   parts.push('')
-  parts.push(styleProfileToPrompt(styleProfile))
+  if (customStylePrompt) {
+    parts.push('## Writing Style Instructions')
+    parts.push('')
+    parts.push(customStylePrompt)
+  } else {
+    parts.push(styleProfileToPrompt(styleProfile))
+  }
 
   // Phase instructions
   parts.push('')

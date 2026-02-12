@@ -17,6 +17,7 @@ interface PublicationRow {
 	scout_schedule: string
 	timezone: string
 	next_scout_at: number | null
+	style_id: string | null
 	created_at: number
 	updated_at: number
 }
@@ -36,6 +37,7 @@ function mapRow(row: PublicationRow): Publication {
 		scoutSchedule: parseSchedule(row.scout_schedule),
 		timezone: row.timezone ?? DEFAULT_TIMEZONE,
 		nextScoutAt: row.next_scout_at,
+		styleId: row.style_id ?? null,
 		createdAt: row.created_at,
 		updatedAt: row.updated_at,
 	}
@@ -54,8 +56,8 @@ export async function createPublication(
 		.prepare(
 			`INSERT INTO publications (id, user_id, name, slug, description, writing_tone,
 			 default_author, auto_publish_mode, cadence_posts_per_week, scout_schedule,
-			 timezone, next_scout_at, created_at, updated_at)
-			 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+			 timezone, next_scout_at, style_id, created_at, updated_at)
+			 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
 		)
 		.bind(
 			data.id,
@@ -70,6 +72,7 @@ export async function createPublication(
 			JSON.stringify(schedule),
 			tz,
 			nextScoutAt,
+			data.styleId ?? null,
 			now,
 			now
 		)
@@ -89,6 +92,7 @@ export async function createPublication(
 		scoutSchedule: schedule,
 		timezone: tz,
 		nextScoutAt,
+		styleId: data.styleId ?? null,
 		createdAt: now,
 		updatedAt: now,
 	}
@@ -168,6 +172,10 @@ export async function updatePublication(
 	if (data.nextScoutAt !== undefined) {
 		sets.push('next_scout_at = ?')
 		bindings.push(data.nextScoutAt)
+	}
+	if (data.styleId !== undefined) {
+		sets.push('style_id = ?')
+		bindings.push(data.styleId)
 	}
 
 	if (sets.length === 0) return getPublicationById(db, id)

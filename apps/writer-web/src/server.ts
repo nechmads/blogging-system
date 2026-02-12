@@ -18,6 +18,7 @@ import publications from './api/publications'
 import topics from './api/topics'
 import ideas from './api/ideas'
 import activity from './api/activity'
+import styles from './api/styles'
 
 export type AppEnv = {
   Bindings: Env
@@ -42,6 +43,7 @@ app.route('/api', publications)
 app.route('/api', topics)
 app.route('/api', ideas)
 app.route('/api', activity)
+app.route('/api', styles)
 
 // ─── Scout trigger (proxied to content-scout) ───────────────────────
 

@@ -11,6 +11,7 @@ import { IdeasPage } from '@/pages/IdeasPage'
 import { IdeaDetailPage } from '@/pages/IdeaDetailPage'
 import { SchedulePage } from '@/pages/SchedulePage'
 import { PublicationSettingsPage } from '@/pages/PublicationSettingsPage'
+import { StylesPage } from '@/pages/StylesPage'
 
 export default function App() {
   return (
@@ -36,6 +37,7 @@ export default function App() {
           <Route path="/writing/:id" element={<WorkspacePage />} />
           <Route path="/schedule" element={<SchedulePage />} />
           <Route path="/schedule/publication/:id" element={<PublicationSettingsPage />} />
+          <Route path="/styles" element={<StylesPage />} />
         </Route>
 
         {/* Catch-all: redirect to landing */}
