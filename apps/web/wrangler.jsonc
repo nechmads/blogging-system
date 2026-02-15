@@ -8,6 +8,14 @@
     "enabled": true,
   },
 
+  "routes": [
+    {
+      "pattern": "hotmetalapp.com",
+      "zone_name": "hotmetalapp.com",
+      "custom_domain": true,
+    },
+  ],
+
   "dev": {
     "port": 5173,
   },

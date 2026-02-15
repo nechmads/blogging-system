@@ -21,6 +21,7 @@
     "deploy:scout": "pnpm --filter @hotmetal/content-scout run deploy",
     "deploy:publisher": "pnpm --filter @hotmetal/publisher run deploy",
     "deploy:web": "pnpm --filter @hotmetal/web run deploy",
+    "deploy:pub-web": "pnpm --filter @hotmetal/publications-web run deploy",
     "deploy:all": "pnpm deploy:cms && pnpm deploy:dal && pnpm deploy:scout && pnpm deploy:publisher && pnpm deploy:web",
     "dev:cms": "pnpm --filter @hotmetal/cms-admin dev",
     "dev:dal": "pnpm --filter @hotmetal/data-layer dev",
