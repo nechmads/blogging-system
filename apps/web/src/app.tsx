@@ -7,6 +7,8 @@ import { SignUpPage } from '@/pages/SignUpPage'
 import { WaitlistPage } from '@/pages/WaitlistPage'
 import { FaqPage } from '@/pages/FaqPage'
 import { AboutPage } from '@/pages/AboutPage'
+import { PrivacyPage } from '@/pages/PrivacyPage'
+import { TermsPage } from '@/pages/TermsPage'
 import { DashboardPage } from '@/pages/DashboardPage'
 import { SessionsPage } from '@/pages/SessionsPage'
 import { WorkspacePage } from '@/pages/WorkspacePage'
@@ -29,6 +31,8 @@ export default function App() {
         <Route path="/waitlist/*" element={<WaitlistPage />} />
         <Route path="/faq/*" element={<FaqPage />} />
         <Route path="/about/*" element={<AboutPage />} />
+        <Route path="/privacy/*" element={<PrivacyPage />} />
+        <Route path="/terms/*" element={<TermsPage />} />
 
         {/* Protected routes — require Clerk auth */}
         <Route

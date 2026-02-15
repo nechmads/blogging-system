@@ -283,8 +283,20 @@ function LandingContent() {
           Hot Metal
         </span>
         <span className="mx-2">·</span>
+        <Link to="/about" className="hover:underline">
+          About
+        </Link>
+        <span className="mx-2">·</span>
         <Link to="/faq" className="hover:underline">
           FAQ
+        </Link>
+        <span className="mx-2">·</span>
+        <Link to="/privacy" className="hover:underline">
+          Privacy
+        </Link>
+        <span className="mx-2">·</span>
+        <Link to="/terms" className="hover:underline">
+          Terms
         </Link>
         <span className="mx-2">·</span>
         <Link to="/waitlist" className="hover:underline">
