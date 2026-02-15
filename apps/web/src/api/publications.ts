@@ -168,6 +168,25 @@ publications.patch('/publications/:id', async (c) => {
   return c.json(updated)
 })
 
+/** List published posts for a publication (from CMS). */
+publications.get('/publications/:id/posts', async (c) => {
+  const pub = await verifyPublicationOwnership(c, c.req.param('id'))
+  if (!pub) return c.json({ error: 'Publication not found' }, 404)
+
+  if (!pub.cmsPublicationId) {
+    return c.json({ data: [] })
+  }
+
+  const cmsApi = new CmsApi(c.env.CMS_URL, c.env.CMS_API_KEY)
+  const result = await cmsApi.listPosts({
+    publicationId: pub.cmsPublicationId,
+    status: 'published',
+    limit: 50,
+  })
+
+  return c.json({ data: result.data })
+})
+
 /** Delete a publication and its topics/ideas. */
 publications.delete('/publications/:id', async (c) => {
   const pub = await verifyPublicationOwnership(c, c.req.param('id'))

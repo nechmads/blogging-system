@@ -37,7 +37,8 @@
 	// Environment variables (non-secret)
 	"vars": {
 		"CMS_URL": "https://cms.hotmetalapp.com",
-		"BLOG_BASE_URL": "https://cms.hotmetalapp.com/",
+		"BLOG_BASE_URL": "https://cms.hotmetalapp.com",
+		"PUBLICATIONS_BASE_DOMAIN": "hotmetalapp.com",
 		"LINKEDIN_REDIRECT_URI": "https://publisher.hotmetalapp.com/oauth/linkedin/callback",
 		"TWITTER_REDIRECT_URI": "https://publisher.hotmetalapp.com/oauth/twitter/callback",
 		"WEB_APP_URL": "https://hotmetalapp.com",

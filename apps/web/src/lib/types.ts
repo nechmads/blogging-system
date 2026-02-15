@@ -46,7 +46,7 @@ export interface PublishInput {
   tags?: string
   excerpt?: string
   hook?: string
-  publicationIds?: string[]
+  publicationId?: string
   publishToLinkedIn?: boolean
   publishToTwitter?: boolean
   tweetText?: string
@@ -59,9 +59,16 @@ export interface PublishResultEntry {
   publicationId: string
 }
 
+export interface SocialShareResult {
+  platform: 'linkedin' | 'twitter'
+  success: boolean
+  error?: string
+}
+
 export interface PublishResult {
   success: boolean
   results: PublishResultEntry[]
+  socialResults?: SocialShareResult[]
 }
 
 // --- Automation types ---

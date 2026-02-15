@@ -14,7 +14,7 @@ export class BlogAdapter implements OutletAdapter {
     return {
       outlet: 'blog',
       content: post.content,
-      externalUrl: `${this.blogBaseUrl}/posts/${post.slug}`,
+      externalUrl: `${this.blogBaseUrl}/${post.slug}`,
     }
   }
 
@@ -30,7 +30,7 @@ export class BlogAdapter implements OutletAdapter {
 
   async publish(post: Post, prepared: PreparedRendition): Promise<PublishResult> {
     const now = new Date().toISOString()
-    const blogUrl = prepared.externalUrl ?? `${this.blogBaseUrl}/posts/${post.slug}`
+    const blogUrl = prepared.externalUrl ?? `${this.blogBaseUrl}/${post.slug}`
     const previousStatus = post.status
 
     // Update the post status to published

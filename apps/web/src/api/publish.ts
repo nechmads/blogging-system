@@ -4,6 +4,93 @@ import type { ContentfulStatusCode } from 'hono/utils/http-status'
 import type { AppEnv } from '../server'
 import type { WriterAgent } from '../agent/writer-agent'
 
+interface SocialShareResult {
+  platform: 'linkedin' | 'twitter'
+  success: boolean
+  error?: string
+}
+
+async function dispatchSocialShares(
+  env: Env,
+  opts: {
+    postId: string
+    userId: string
+    publicationId?: string
+    publishToLinkedIn: boolean
+    publishToTwitter: boolean
+    tweetText?: string
+  },
+): Promise<SocialShareResult[]> {
+  const results: Promise<SocialShareResult>[] = []
+
+  if (opts.publishToLinkedIn) {
+    results.push(
+      (async (): Promise<SocialShareResult> => {
+        try {
+          const res = await env.PUBLISHER.fetch(
+            new Request('https://publisher/publish/linkedin', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'X-API-Key': env.PUBLISHER_API_KEY,
+              },
+              body: JSON.stringify({
+                postId: opts.postId,
+                userId: opts.userId,
+                publicationId: opts.publicationId,
+              }),
+            }),
+          )
+          if (!res.ok) {
+            const errBody = await res.text().catch(() => '')
+            console.error(`LinkedIn publish failed (${res.status}): ${errBody}`)
+            return { platform: 'linkedin', success: false, error: 'Failed to share on LinkedIn' }
+          }
+          return { platform: 'linkedin', success: true }
+        } catch (err) {
+          console.error('LinkedIn publish failed:', err)
+          return { platform: 'linkedin', success: false, error: 'Failed to share on LinkedIn' }
+        }
+      })(),
+    )
+  }
+
+  if (opts.publishToTwitter) {
+    results.push(
+      (async (): Promise<SocialShareResult> => {
+        try {
+          const res = await env.PUBLISHER.fetch(
+            new Request('https://publisher/publish/twitter', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'X-API-Key': env.PUBLISHER_API_KEY,
+              },
+              body: JSON.stringify({
+                postId: opts.postId,
+                userId: opts.userId,
+                tweetText: opts.tweetText || undefined,
+                publicationId: opts.publicationId,
+              }),
+            }),
+          )
+          if (!res.ok) {
+            const errBody = await res.text().catch(() => '')
+            console.error(`Twitter publish failed (${res.status}): ${errBody}`)
+            return { platform: 'twitter', success: false, error: 'Failed to post on X' }
+          }
+          return { platform: 'twitter', success: true }
+        } catch (err) {
+          console.error('Twitter publish failed:', err)
+          return { platform: 'twitter', success: false, error: 'Failed to post on X' }
+        }
+      })(),
+    )
+  }
+
+  return Promise.all(results)
+}
+
 const publish = new Hono<AppEnv>()
 
 /** Generate SEO excerpt and tags for the current draft. */
@@ -62,17 +149,21 @@ publish.post('/sessions/:sessionId/publish', async (c) => {
   }
 
   // Parse body to extract social sharing flags before forwarding to agent
-  const body = await c.req.json<{ publishToLinkedIn?: boolean; publishToTwitter?: boolean; tweetText?: string; [key: string]: unknown }>()
+  const body = await c.req.json<{ publishToLinkedIn?: boolean; publishToTwitter?: boolean; tweetText?: string; publicationId?: string; [key: string]: unknown }>()
   const publishToLinkedIn = body.publishToLinkedIn ?? false
   const publishToTwitter = body.publishToTwitter ?? false
   const tweetText = typeof body.tweetText === 'string' ? body.tweetText : undefined
+  const publicationId = typeof body.publicationId === 'string' ? body.publicationId : undefined
 
-  if (tweetText && tweetText.length > 280) {
-    return c.json({ error: 'Tweet text exceeds 280 characters' }, 400)
+  // Validate tweet length including the blog URL that will be appended (space + t.co 23-char link)
+  if (tweetText) {
+    const effectiveLength = tweetText.length + 1 + 23
+    if (effectiveLength > 280) {
+      return c.json({ error: 'Tweet text exceeds 280 characters (including link)' }, 400)
+    }
   }
 
-  const publicationIds = Array.isArray(body.publicationIds) ? body.publicationIds as string[] : []
-  const socialOnly = publicationIds.length === 0
+  const socialOnly = !publicationId
 
   // Social-only re-publish: skip blog publish, use existing cmsPostId
   if (socialOnly) {
@@ -84,58 +175,16 @@ publish.post('/sessions/:sessionId/publish', async (c) => {
       return c.json({ error: 'No published post to share. Publish to a publication first.' }, 400)
     }
 
-    // Fire social shares using the existing post
-    if (publishToLinkedIn) {
-      c.executionCtx.waitUntil(
-        (async () => {
-          try {
-            const linkedinRes = await c.env.PUBLISHER.fetch(
-              new Request('https://publisher/publish/linkedin', {
-                method: 'POST',
-                headers: {
-                  'Content-Type': 'application/json',
-                  'X-API-Key': c.env.PUBLISHER_API_KEY,
-                },
-                body: JSON.stringify({ postId: existingPostId, userId }),
-              }),
-            )
-            if (!linkedinRes.ok) {
-              const errBody = await linkedinRes.text().catch(() => '')
-              console.error(`LinkedIn publish failed (${linkedinRes.status}): ${errBody}`)
-            }
-          } catch (err) {
-            console.error('LinkedIn publish failed:', err)
-          }
-        })(),
-      )
-    }
+    const socialResults = await dispatchSocialShares(c.env, {
+      postId: existingPostId,
+      userId,
+      publicationId: session.publicationId || undefined,
+      publishToLinkedIn,
+      publishToTwitter,
+      tweetText,
+    })
 
-    if (publishToTwitter) {
-      c.executionCtx.waitUntil(
-        (async () => {
-          try {
-            const twitterRes = await c.env.PUBLISHER.fetch(
-              new Request('https://publisher/publish/twitter', {
-                method: 'POST',
-                headers: {
-                  'Content-Type': 'application/json',
-                  'X-API-Key': c.env.PUBLISHER_API_KEY,
-                },
-                body: JSON.stringify({ postId: existingPostId, userId, tweetText: tweetText || undefined }),
-              }),
-            )
-            if (!twitterRes.ok) {
-              const errBody = await twitterRes.text().catch(() => '')
-              console.error(`Twitter publish failed (${twitterRes.status}): ${errBody}`)
-            }
-          } catch (err) {
-            console.error('Twitter publish failed:', err)
-          }
-        })(),
-      )
-    }
-
-    return c.json({ success: true, results: [], socialOnly: true })
+    return c.json({ success: true, results: [], socialResults })
   }
 
   const agent = await getAgentByName<Env, WriterAgent>(c.env.WRITER_AGENT, sessionId)
@@ -143,11 +192,13 @@ publish.post('/sessions/:sessionId/publish', async (c) => {
   const url = new URL(c.req.url)
   url.pathname = '/publish'
 
+  const agentBody = { ...body, publicationId }
+
   const res = await agent.fetch(
     new Request(url.toString(), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body),
+      body: JSON.stringify(agentBody),
     }),
   )
 
@@ -156,102 +207,53 @@ publish.post('/sessions/:sessionId/publish', async (c) => {
   // If publish succeeded, update session status via DAL
   if (res.ok && (data as { success?: boolean }).success) {
     const result = data as { results?: { postId: string; publicationId: string }[] }
-    const firstPostId = result.results?.[0]?.postId
-    if (firstPostId) {
+    const publishedResult = result.results?.[0]
+    if (publishedResult) {
       try {
         await c.env.DAL.updateSession(sessionId, {
           status: 'completed',
-          cmsPostId: firstPostId,
+          cmsPostId: publishedResult.postId,
+          publicationId: publishedResult.publicationId,
         })
       } catch (err) {
         console.error(`Failed to update session ${sessionId} after successful publish:`, err)
       }
-    }
 
-    // Regenerate RSS/Atom feeds for each publication (fire-and-forget)
-    if (result.results?.length) {
-      const pubIds = [...new Set(result.results.map((r) => r.publicationId))]
-      for (const pubId of pubIds) {
-        c.executionCtx.waitUntil(
-          (async () => {
-            try {
-              const pub = await c.env.DAL.getPublicationById(pubId)
-              if (!pub?.slug) return
-              const feedRes = await c.env.PUBLISHER.fetch(
-                new Request(`https://publisher/internal/feeds/regenerate/${pub.slug}`, {
-                  method: 'POST',
-                  headers: { 'X-API-Key': c.env.PUBLISHER_API_KEY },
-                }),
-              )
-              if (!feedRes.ok) {
-                const errBody = await feedRes.text().catch(() => '')
-                console.error(`Feed regeneration returned ${feedRes.status} for "${pub.slug}": ${errBody}`)
-              }
-            } catch (err) {
-              console.error(`Feed regeneration failed for publication ${pubId}:`, err)
+      // Regenerate RSS/Atom feed (fire-and-forget — not user-facing)
+      c.executionCtx.waitUntil(
+        (async () => {
+          try {
+            const pub = await c.env.DAL.getPublicationById(publishedResult.publicationId)
+            if (!pub?.slug) return
+            const feedRes = await c.env.PUBLISHER.fetch(
+              new Request(`https://publisher/internal/feeds/regenerate/${pub.slug}`, {
+                method: 'POST',
+                headers: { 'X-API-Key': c.env.PUBLISHER_API_KEY },
+              }),
+            )
+            if (!feedRes.ok) {
+              const errBody = await feedRes.text().catch(() => '')
+              console.error(`Feed regeneration returned ${feedRes.status} for "${pub.slug}": ${errBody}`)
             }
-          })(),
-        )
+          } catch (err) {
+            console.error(`Feed regeneration failed for publication ${publishedResult.publicationId}:`, err)
+          }
+        })(),
+      )
+
+      // Social sharing — awaited so we can report results to the user
+      if (publishToLinkedIn || publishToTwitter) {
+        const socialResults = await dispatchSocialShares(c.env, {
+          postId: publishedResult.postId,
+          userId,
+          publicationId: publishedResult.publicationId,
+          publishToLinkedIn,
+          publishToTwitter,
+          tweetText,
+        })
+        const enriched = { ...(data as Record<string, unknown>), socialResults }
+        return c.json(enriched, res.status as ContentfulStatusCode)
       }
-    }
-
-    // Publish to LinkedIn (fire-and-forget) if requested
-    if (publishToLinkedIn && firstPostId) {
-      c.executionCtx.waitUntil(
-        (async () => {
-          try {
-            const linkedinRes = await c.env.PUBLISHER.fetch(
-              new Request('https://publisher/publish/linkedin', {
-                method: 'POST',
-                headers: {
-                  'Content-Type': 'application/json',
-                  'X-API-Key': c.env.PUBLISHER_API_KEY,
-                },
-                body: JSON.stringify({
-                  postId: firstPostId,
-                  userId,
-                }),
-              }),
-            )
-            if (!linkedinRes.ok) {
-              const errBody = await linkedinRes.text().catch(() => '')
-              console.error(`LinkedIn publish failed (${linkedinRes.status}): ${errBody}`)
-            }
-          } catch (err) {
-            console.error('LinkedIn publish failed:', err)
-          }
-        })(),
-      )
-    }
-
-    // Publish to Twitter / X (fire-and-forget) if requested
-    if (publishToTwitter && firstPostId) {
-      c.executionCtx.waitUntil(
-        (async () => {
-          try {
-            const twitterRes = await c.env.PUBLISHER.fetch(
-              new Request('https://publisher/publish/twitter', {
-                method: 'POST',
-                headers: {
-                  'Content-Type': 'application/json',
-                  'X-API-Key': c.env.PUBLISHER_API_KEY,
-                },
-                body: JSON.stringify({
-                  postId: firstPostId,
-                  userId,
-                  tweetText: tweetText || undefined,
-                }),
-              }),
-            )
-            if (!twitterRes.ok) {
-              const errBody = await twitterRes.text().catch(() => '')
-              console.error(`Twitter publish failed (${twitterRes.status}): ${errBody}`)
-            }
-          } catch (err) {
-            console.error('Twitter publish failed:', err)
-          }
-        })(),
-      )
     }
   }
 

@@ -1,5 +1,6 @@
 import { Hono } from 'hono'
 import type { PublisherEnv } from '../env'
+import type { DataLayerApi } from '@hotmetal/data-layer'
 import { CmsApi } from '@hotmetal/shared'
 import { writeAuditLog } from '../lib/audit'
 import { BlogAdapter } from '../adapters/blog-adapter'
@@ -8,6 +9,33 @@ import { TwitterAdapter } from '../adapters/twitter-adapter'
 import { getValidLinkedInToken } from '../linkedin/token-store'
 import { getValidTwitterToken } from '../twitter/token-store'
 import { publisherApiKeyAuth } from '../middleware/api-key-auth'
+
+/**
+ * Resolve the base URL for a publication (e.g. "https://my-blog.hotmetalapp.com").
+ * Falls back to BLOG_BASE_URL if the publication can't be resolved.
+ */
+async function resolvePublicationBaseUrl(
+  dal: DataLayerApi,
+  publicationId: string | undefined,
+  fallbackUrl: string,
+  baseDomain: string,
+): Promise<string> {
+  if (!publicationId) return fallbackUrl
+
+  try {
+    const pub = await dal.getPublicationById(publicationId)
+    if (!pub) return fallbackUrl
+
+    if (pub.customDomain) {
+      return `https://${pub.customDomain}`
+    }
+
+    return `https://${pub.slug}.${baseDomain}`
+  } catch (err) {
+    console.error(`Failed to resolve publication ${publicationId}, using fallback:`, err)
+    return fallbackUrl
+  }
+}
 
 const publish = new Hono<{ Bindings: PublisherEnv }>()
 
@@ -139,7 +167,7 @@ publish.post('/publish/blog/create', async (c) => {
 
 /** Publish a post to LinkedIn. */
 publish.post('/publish/linkedin', async (c) => {
-  const body = await c.req.json<{ postId?: string; userId?: string; shareType?: string }>()
+  const body = await c.req.json<{ postId?: string; userId?: string; shareType?: string; publicationId?: string }>()
 
   if (!body.postId || typeof body.postId !== 'string') {
     return c.json({ error: 'postId is required' }, 400)
@@ -155,8 +183,15 @@ publish.post('/publish/linkedin', async (c) => {
     return c.json({ error: 'LinkedIn not connected. Connect your account in Settings.' }, 401)
   }
 
+  const blogBaseUrl = await resolvePublicationBaseUrl(
+    c.env.DAL,
+    body.publicationId,
+    c.env.BLOG_BASE_URL,
+    c.env.PUBLICATIONS_BASE_DOMAIN,
+  )
+
   const cmsApi = new CmsApi(c.env.CMS_URL, c.env.CMS_API_KEY)
-  const adapter = new LinkedInAdapter(cmsApi, token.accessToken, token.personUrn, c.env.BLOG_BASE_URL)
+  const adapter = new LinkedInAdapter(cmsApi, token.accessToken, token.personUrn, blogBaseUrl)
 
   const post = await cmsApi.getPost(body.postId)
 
@@ -207,7 +242,7 @@ publish.post('/publish/linkedin', async (c) => {
 
 /** Publish a post to Twitter / X. */
 publish.post('/publish/twitter', async (c) => {
-  const body = await c.req.json<{ postId?: string; userId?: string; tweetText?: string }>()
+  const body = await c.req.json<{ postId?: string; userId?: string; tweetText?: string; publicationId?: string }>()
 
   if (!body.postId || typeof body.postId !== 'string') {
     return c.json({ error: 'postId is required' }, 400)
@@ -228,16 +263,24 @@ publish.post('/publish/twitter', async (c) => {
     return c.json({ error: 'X not connected. Connect your account in Settings.' }, 401)
   }
 
+  const blogBaseUrl = await resolvePublicationBaseUrl(
+    c.env.DAL,
+    body.publicationId,
+    c.env.BLOG_BASE_URL,
+    c.env.PUBLICATIONS_BASE_DOMAIN,
+  )
+
   const cmsApi = new CmsApi(c.env.CMS_URL, c.env.CMS_API_KEY)
-  const adapter = new TwitterAdapter(cmsApi, token.accessToken, c.env.BLOG_BASE_URL)
+  const adapter = new TwitterAdapter(cmsApi, token.accessToken, blogBaseUrl)
 
   const post = await cmsApi.getPost(body.postId)
 
   const prepared = adapter.prepareRendition(post)
 
-  // Override with user-customized tweet text if provided
+  // Override with user-customized tweet text if provided, preserving the blog URL
   if (body.tweetText && typeof body.tweetText === 'string') {
-    prepared.content = body.tweetText
+    const blogUrl = prepared.metadata?.blogUrl as string | undefined
+    prepared.content = blogUrl ? `${body.tweetText} ${blogUrl}` : body.tweetText
   }
 
   const validation = adapter.validate(prepared)

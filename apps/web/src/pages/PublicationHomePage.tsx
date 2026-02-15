@@ -6,16 +6,16 @@ import { Loader } from '@/components/loader/Loader'
 import { IDEA_STATUS_COLORS } from '@/lib/constants'
 import { formatRelativeTime } from '@/lib/format'
 import { toast } from 'sonner'
-import { fetchPublication, fetchSessionsByPublication, fetchIdeas, fetchIdeasCount, triggerScout } from '@/lib/api'
+import { fetchPublication, fetchPublishedPosts, fetchIdeas, fetchIdeasCount, triggerScout } from '@/lib/api'
 import { startScoutPolling } from '@/stores/scout-store'
-import type { PublicationConfig, Session, Idea, Topic } from '@/lib/types'
+import type { PublicationConfig, Idea, Topic } from '@/lib/types'
 
 export function PublicationHomePage() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
   const [publication, setPublication] = useState<PublicationConfig | null>(null)
   const [topics, setTopics] = useState<Topic[]>([])
-  const [sessions, setSessions] = useState<Session[]>([])
+  const [posts, setPosts] = useState<{ id: string; title: string; slug: string; createdAt: string; author: string }[]>([])
   const [ideas, setIdeas] = useState<Idea[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -25,14 +25,14 @@ export function PublicationHomePage() {
     if (!id) return
     try {
       setError(null)
-      const [pub, completedSessions, pubIdeas] = await Promise.all([
+      const [pub, publishedPosts, pubIdeas] = await Promise.all([
         fetchPublication(id),
-        fetchSessionsByPublication(id, 'completed').catch(() => [] as Session[]),
+        fetchPublishedPosts(id).catch(() => [] as { id: string; title: string; slug: string; createdAt: string; author: string }[]),
         fetchIdeas(id).catch(() => [] as Idea[]),
       ])
       setPublication(pub)
       setTopics(pub.topics ?? [])
-      setSessions(completedSessions.slice(0, 5))
+      setPosts(publishedPosts.slice(0, 5))
       setIdeas(pubIdeas.slice(0, 5))
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load')
@@ -115,34 +115,28 @@ export function PublicationHomePage() {
         <SectionHeader
           title="Published Posts"
           linkTo={`/writing`}
-          showLink={sessions.length > 0}
+          showLink={posts.length > 0}
         />
-        {sessions.length === 0 ? (
+        {posts.length === 0 ? (
           <p className="mt-3 text-sm text-[var(--color-text-muted)]">
             No published posts yet
           </p>
         ) : (
           <div className="mt-3 space-y-1">
-            {sessions.map((session) => (
-              <Link
-                key={session.id}
-                to={`/writing/${session.id}`}
+            {posts.map((post) => (
+              <div
+                key={post.id}
                 className="flex items-center gap-3 rounded-lg px-3 py-2.5 transition-colors hover:bg-[var(--color-bg-card)]"
               >
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-sm font-medium">
-                    {session.title || 'Untitled post'}
+                    {post.title || 'Untitled post'}
                   </p>
                   <p className="mt-0.5 text-xs text-[var(--color-text-muted)]">
-                    {formatRelativeTime(session.updatedAt)}
+                    {formatRelativeTime(Number(post.createdAt))}
                   </p>
                 </div>
-                {session.currentDraftVersion > 0 && (
-                  <span className="shrink-0 rounded-full bg-[var(--color-accent-light)] px-2 py-0.5 text-xs font-medium text-[var(--color-accent)]">
-                    v{session.currentDraftVersion}
-                  </span>
-                )}
-              </Link>
+              </div>
             ))}
           </div>
         )}

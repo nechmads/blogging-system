@@ -7,6 +7,7 @@ export interface PublisherEnv {
   CMS_API_KEY: string
   PUBLISHER_API_KEY: string
   BLOG_BASE_URL: string
+  PUBLICATIONS_BASE_DOMAIN: string
   LINKEDIN_CLIENT_ID: string
   LINKEDIN_CLIENT_SECRET: string
   LINKEDIN_REDIRECT_URI: string

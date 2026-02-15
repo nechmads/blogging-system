@@ -16,7 +16,7 @@ export class TwitterAdapter implements OutletAdapter {
   ) {}
 
   prepareRendition(post: Post): PreparedRendition {
-    const blogUrl = `${this.blogBaseUrl}/posts/${post.slug}`
+    const blogUrl = `${this.blogBaseUrl}/${post.slug}`
     const content = formatForTwitter(post.title, post.hook, { blogUrl })
 
     return {

@@ -17,7 +17,7 @@ export class LinkedInAdapter implements OutletAdapter {
   ) {}
 
   prepareRendition(post: Post): PreparedRendition {
-    const blogUrl = `${this.blogBaseUrl}/posts/${post.slug}`
+    const blogUrl = `${this.blogBaseUrl}/${post.slug}`
     const content = formatForLinkedIn(post.title, post.content, post.hook, {
       includeFooter: true,
       blogUrl,
@@ -51,7 +51,7 @@ export class LinkedInAdapter implements OutletAdapter {
   async publish(post: Post, prepared: PreparedRendition): Promise<PublishResult> {
     const now = new Date().toISOString()
     const shareType = (prepared.metadata?.shareType as string | undefined) ?? 'article'
-    const blogUrl = (prepared.metadata?.blogUrl as string) ?? `${this.blogBaseUrl}/posts/${post.slug}`
+    const blogUrl = (prepared.metadata?.blogUrl as string) ?? `${this.blogBaseUrl}/${post.slug}`
     const isTextOnly = shareType === 'text'
 
     const client = new LinkedInApiClient(this.accessToken)

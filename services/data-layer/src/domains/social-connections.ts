@@ -220,12 +220,13 @@ export async function hasValidSocialConnection(
 	userId: string,
 	provider: string
 ): Promise<boolean> {
-	const now = Math.floor(Date.now() / 1000)
+	// Check if a connection exists — don't filter by token_expires_at because
+	// providers with refresh tokens (e.g. Twitter) auto-refresh at publish time.
 	const row = await db
 		.prepare(
-			'SELECT id FROM social_connections WHERE user_id = ? AND provider = ? AND (token_expires_at IS NULL OR token_expires_at > ?) LIMIT 1'
+			'SELECT id FROM social_connections WHERE user_id = ? AND provider = ? LIMIT 1'
 		)
-		.bind(userId, provider, now)
+		.bind(userId, provider)
 		.first()
 	return row !== null
 }

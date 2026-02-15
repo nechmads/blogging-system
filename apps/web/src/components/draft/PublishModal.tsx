@@ -141,7 +141,7 @@ function SocialCard({ icon, label, connected, selected, onToggle, accentColor, a
 
 export function PublishModal({ isOpen, onClose, sessionId, draftTitle, featuredImageUrl, sessionPublicationId, onPublished, isRepublish }: PublishModalProps) {
   const [slug, setSlug] = useState('')
-  const [author, setAuthor] = useState('Shahar')
+  const [author, setAuthor] = useState('')
   const [tags, setTags] = useState('')
   const [excerpt, setExcerpt] = useState('')
   const [hook, setHook] = useState('')
@@ -153,7 +153,7 @@ export function PublishModal({ isOpen, onClose, sessionId, draftTitle, featuredI
 
   // Publications state
   const [publications, setPublications] = useState<PublicationConfig[]>([])
-  const [selectedPubIds, setSelectedPubIds] = useState<Set<string>>(new Set())
+  const [selectedPubId, setSelectedPubId] = useState<string | null>(null)
   const [blogSelected, setBlogSelected] = useState(false)
   const [loadingPubs, setLoadingPubs] = useState(false)
 
@@ -180,7 +180,7 @@ export function PublishModal({ isOpen, onClose, sessionId, draftTitle, featuredI
       setExcerpt('')
       setTags('')
       setSlug('')
-      setSelectedPubIds(new Set())
+      setSelectedPubId(null)
       setBlogSelected(false)
       setLinkedinSelected(false)
       setTwitterSelected(false)
@@ -202,15 +202,13 @@ export function PublishModal({ isOpen, onClose, sessionId, draftTitle, featuredI
       .then((pubs) => {
         if (cancelled) return
         setPublications(pubs)
-        // Auto-select publications on first publish; leave unchecked on re-publish
+        // Auto-select publication on first publish; leave unchecked on re-publish
         if (pubs.length > 0 && !isRepublish) {
           setBlogSelected(true)
           if (sessionPublicationId && pubs.some((p) => p.id === sessionPublicationId)) {
-            setSelectedPubIds(new Set([sessionPublicationId]))
-          } else if (pubs.length === 1) {
-            setSelectedPubIds(new Set([pubs[0].id]))
+            setSelectedPubId(sessionPublicationId)
           } else {
-            setSelectedPubIds(new Set(pubs.map((p) => p.id)))
+            setSelectedPubId(pubs[0].id)
           }
         }
       })
@@ -242,6 +240,13 @@ export function PublishModal({ isOpen, onClose, sessionId, draftTitle, featuredI
 
     return () => { cancelled = true }
   }, [isOpen, sessionId, draftTitle, sessionPublicationId, isRepublish])
+
+  // Set author from selected publication's defaultAuthor
+  useEffect(() => {
+    if (!selectedPubId) return
+    const pub = publications.find((p) => p.id === selectedPubId)
+    if (pub?.defaultAuthor) setAuthor(pub.defaultAuthor)
+  }, [selectedPubId, publications])
 
   // Fire AI tweet generation when X is toggled ON (and user hasn't edited)
   const fireTweetGeneration = useCallback((hookText?: string) => {
@@ -286,17 +291,8 @@ export function PublishModal({ isOpen, onClose, sessionId, draftTitle, featuredI
   const effectiveTweetLength = tweetText.trim() ? tweetLength + 1 + TCO_URL_LENGTH : 0 // space + t.co link
   const tweetOverLimit = twitterSelected && effectiveTweetLength > 280
 
-  const togglePublication = (id: string) => {
-    setSelectedPubIds((prev) => {
-      const next = new Set(prev)
-      if (next.has(id)) next.delete(id)
-      else next.add(id)
-      return next
-    })
-  }
-
-  const hasAnyDestination = selectedPubIds.size > 0 || twitterSelected || linkedinSelected
-  const needsSlug = selectedPubIds.size > 0
+  const hasAnyDestination = selectedPubId !== null || twitterSelected || linkedinSelected
+  const needsSlug = selectedPubId !== null
 
   const handlePublish = async () => {
     if (publishing || !hasAnyDestination) return
@@ -311,19 +307,26 @@ export function PublishModal({ isOpen, onClose, sessionId, draftTitle, featuredI
         tags: tags.trim() || undefined,
         excerpt: excerpt.trim() || undefined,
         hook: hook.trim() || undefined,
-        publicationIds: selectedPubIds.size > 0 ? [...selectedPubIds] : undefined,
+        publicationId: selectedPubId || undefined,
         publishToLinkedIn: linkedinSelected || undefined,
         publishToTwitter: twitterSelected || undefined,
         tweetText: twitterSelected && tweetText.trim() ? tweetText.trim() : undefined,
       })
 
-      // Build success message before resetting toggles
+      // Build success message from actual results
       const parts: string[] = []
-      if (selectedPubIds.size > 0) {
-        parts.push(`Published to ${selectedPubIds.size} publication${selectedPubIds.size !== 1 ? 's' : ''}`)
+      if (selectedPubId) {
+        parts.push('Published successfully')
       }
-      if (linkedinSelected) parts.push('LinkedIn share is being processed')
-      if (twitterSelected) parts.push('Tweet is being posted')
+      if (result.socialResults) {
+        for (const sr of result.socialResults) {
+          if (sr.platform === 'linkedin') {
+            parts.push(sr.success ? 'Shared on LinkedIn' : (sr.error || 'LinkedIn share failed'))
+          } else if (sr.platform === 'twitter') {
+            parts.push(sr.success ? 'Posted on X' : (sr.error || 'X post failed'))
+          }
+        }
+      }
       setLastPublishMessage(parts.join('. ') + '.')
       setPublished(true)
       // Reset social toggles so user can pick new destinations for re-publish
@@ -350,7 +353,7 @@ export function PublishModal({ isOpen, onClose, sessionId, draftTitle, featuredI
           {/* Fixed header */}
           <div className="border-b border-[#e5e7eb] px-5 py-4 dark:border-[#374151]">
             <h3 className="text-lg font-semibold">
-              {published || isRepublish ? 'Publish Again' : 'Publish Draft'}
+              {isRepublish ? 'Share' : published ? 'Publish Again' : 'Publish Draft'}
             </h3>
           </div>
 
@@ -362,13 +365,13 @@ export function PublishModal({ isOpen, onClose, sessionId, draftTitle, featuredI
                 <div className="flex items-center gap-2.5 rounded-lg border border-green-200 bg-green-50 px-3 py-2.5 dark:border-green-800 dark:bg-green-900/20">
                   <CheckCircleIcon size={18} weight="fill" className="shrink-0 text-green-500" />
                   <p className="text-xs text-green-700 dark:text-green-400">
-                    {lastPublishMessage} Select additional destinations below to publish again.
+                    {lastPublishMessage}{!isRepublish && ' Select additional destinations below to publish again.'}
                   </p>
                 </div>
               )}
 
-              {/* Publications card */}
-              <SocialCard
+              {/* Publications card — hidden on re-publish (social-only) */}
+              {!isRepublish && <SocialCard
                 icon={<GlobeIcon size={16} className="text-[#d97706]" />}
                 label="Publications"
                 connected={!loadingPubs && publications.length > 0}
@@ -376,20 +379,19 @@ export function PublishModal({ isOpen, onClose, sessionId, draftTitle, featuredI
                 onToggle={(checked) => {
                   setBlogSelected(checked)
                   if (!checked) {
-                    setSelectedPubIds(new Set())
-                  } else if (selectedPubIds.size === 0) {
-                    // Auto-select session pub or single pub
+                    setSelectedPubId(null)
+                  } else if (!selectedPubId) {
                     if (sessionPublicationId && publications.some((p) => p.id === sessionPublicationId)) {
-                      setSelectedPubIds(new Set([sessionPublicationId]))
-                    } else if (publications.length === 1) {
-                      setSelectedPubIds(new Set([publications[0].id]))
+                      setSelectedPubId(sessionPublicationId)
+                    } else if (publications.length > 0) {
+                      setSelectedPubId(publications[0].id)
                     }
                   }
                 }}
                 accentColor="accent-[#d97706]"
                 accentBorder="border-[#d97706]"
                 accentBg="bg-[#d97706]/5"
-                collapsedSummary={selectedPubIds.size > 0 ? `${selectedPubIds.size} selected` : undefined}
+                collapsedSummary={selectedPubId ? publications.find((p) => p.id === selectedPubId)?.name : undefined}
                 disabledText={loadingPubs ? 'Loading...' : 'Create one first'}
               >
                 <div className="space-y-3">
@@ -400,22 +402,23 @@ export function PublishModal({ isOpen, onClose, sessionId, draftTitle, featuredI
                     </div>
                   ) : (
                     <>
-                      {/* Publication checkboxes */}
+                      {/* Publication selection */}
                       <div className="space-y-1.5">
                         {publications.map((pub) => (
                           <label
                             key={pub.id}
                             className={`flex cursor-pointer items-center gap-2.5 rounded-lg border px-3 py-2 transition-colors ${
-                              selectedPubIds.has(pub.id)
+                              selectedPubId === pub.id
                                 ? 'border-[#d97706] bg-[#d97706]/5'
                                 : 'border-[#e5e7eb] hover:border-[#d97706]/30 dark:border-[#374151]'
                             }`}
                           >
                             <input
-                              type="checkbox"
-                              checked={selectedPubIds.has(pub.id)}
-                              onChange={() => togglePublication(pub.id)}
-                              className="h-3.5 w-3.5 rounded border-[#d1d5db] accent-[#d97706]"
+                              type="radio"
+                              name="publication"
+                              checked={selectedPubId === pub.id}
+                              onChange={() => setSelectedPubId(pub.id)}
+                              className="h-3.5 w-3.5 border-[#d1d5db] accent-[#d97706]"
                             />
                             <span className="text-sm font-medium text-[#0a0a0a] dark:text-[#fafafa]">
                               {pub.name}
@@ -522,7 +525,7 @@ export function PublishModal({ isOpen, onClose, sessionId, draftTitle, featuredI
                     </>
                   )}
                 </div>
-              </SocialCard>
+              </SocialCard>}
 
               {/* X (Twitter) card */}
               <SocialCard
@@ -623,10 +626,12 @@ export function PublishModal({ isOpen, onClose, sessionId, draftTitle, featuredI
                   <Loader size={14} />
                   Publishing...
                 </>
-              ) : published || isRepublish ? (
+              ) : isRepublish ? (
+                'Share'
+              ) : published ? (
                 'Publish Again'
               ) : (
-                `Publish${selectedPubIds.size > 1 ? ` to ${selectedPubIds.size} publications` : ''}`
+                'Publish'
               )}
             </button>
           </div>

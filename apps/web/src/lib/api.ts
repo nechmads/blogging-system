@@ -106,6 +106,11 @@ export async function fetchSessionsByPublication(pubId: string, status?: Session
   return result.data
 }
 
+export async function fetchPublishedPosts(pubId: string): Promise<{ id: string; title: string; slug: string; createdAt: string; author: string }[]> {
+  const result = await request<{ data: { id: string; title: string; slug: string; createdAt: string; author: string }[] }>(`/api/publications/${pubId}/posts`)
+  return result.data
+}
+
 export async function fetchDrafts(sessionId: string): Promise<Draft[]> {
   const result = await request<{ data: Draft[] }>(
     `/api/sessions/${sessionId}/drafts`

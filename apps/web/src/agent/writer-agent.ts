@@ -366,7 +366,7 @@ export class WriterAgent extends AIChatAgent<Env, WriterAgentState> {
       return Response.json({ error: 'A publish operation is already in progress.' }, { status: 429 })
     }
 
-    let body: { slug: string; author?: string; tags?: string; excerpt?: string; hook?: string; publicationIds?: string[] }
+    let body: { slug: string; author?: string; tags?: string; excerpt?: string; hook?: string; publicationId?: string }
     try {
       body = await request.json() as typeof body
     } catch {
@@ -386,21 +386,20 @@ export class WriterAgent extends AIChatAgent<Env, WriterAgentState> {
       )
     }
 
-    // Determine which publications to publish to
-    // If publicationIds provided (from UI), use those; otherwise fall back to session's publication
-    const targetPubIds = body.publicationIds?.length
-      ? body.publicationIds
-      : this.state.publicationId
-        ? [this.state.publicationId]
-        : []
-
-    if (targetPubIds.length === 0) {
-      return Response.json({ error: 'No publications selected' }, { status: 400 })
+    const pubId = body.publicationId || this.state.publicationId
+    if (!pubId) {
+      return Response.json({ error: 'No publication selected' }, { status: 400 })
     }
 
     this.setWritingPhase('publishing')
 
     try {
+      const pub = await this.env.DAL.getPublicationById(pubId)
+      if (!pub || pub.userId !== this.state.userId) {
+        this.setWritingPhase('revising')
+        return Response.json({ error: 'Publication not found' }, { status: 404 })
+      }
+
       let parsedCitations: Citation[] | undefined
       try {
         parsedCitations = draft.citations ? JSON.parse(draft.citations) as Citation[] : undefined
@@ -412,66 +411,35 @@ export class WriterAgent extends AIChatAgent<Env, WriterAgentState> {
       const hook = body.hook?.trim() || undefined
       const htmlContent = await marked.parse(draft.content)
       const cmsApi = new CmsApi(this.env.CMS_URL, this.env.CMS_API_KEY)
+      const cmsPublicationId = await this.resolveCmsPublicationId(pub)
 
-      const results: { postId: string; slug: string; title: string; publicationId: string }[] = []
-      const errors: { publicationId: string; error: string }[] = []
+      const post = await cmsApi.createPost({
+        title: draft.title || 'Untitled',
+        slug,
+        content: htmlContent,
+        status: 'published',
+        author: body.author?.trim() || pub.defaultAuthor,
+        tags: body.tags?.trim() || undefined,
+        excerpt: body.excerpt?.trim() || undefined,
+        hook,
+        citations: parsedCitations,
+        featuredImage: this.state.featuredImageUrl || undefined,
+        publishedAt: new Date().toISOString(),
+        publicationId: cmsPublicationId,
+      })
 
-      for (const pubId of targetPubIds) {
-        // Verify ownership — skip publications that don't belong to this user
-        const pub = await this.env.DAL.getPublicationById(pubId)
-        if (!pub || pub.userId !== this.state.userId) {
-          errors.push({ publicationId: pubId, error: 'Publication not found' })
-          continue
-        }
-
-        try {
-          const cmsPublicationId = await this.resolveCmsPublicationId(pub)
-
-          const post = await cmsApi.createPost({
-            title: draft.title || 'Untitled',
-            slug,
-            content: htmlContent,
-            status: 'published',
-            author: body.author?.trim() || pub.defaultAuthor,
-            tags: body.tags?.trim() || undefined,
-            excerpt: body.excerpt?.trim() || undefined,
-            hook,
-            citations: parsedCitations,
-            featuredImage: this.state.featuredImageUrl || undefined,
-            publishedAt: new Date().toISOString(),
-            publicationId: cmsPublicationId,
-          })
-
-          results.push({
-            postId: post.id,
-            slug: post.slug,
-            title: post.title,
-            publicationId: pubId,
-          })
-        } catch (err) {
-          const message = err instanceof Error ? err.message : 'Unknown error'
-          console.error(`Failed to publish to publication ${pubId}:`, message)
-          errors.push({ publicationId: pubId, error: message })
-        }
-      }
-
-      if (results.length === 0) {
-        // All publications failed
-        this.setWritingPhase('revising')
-        const firstError = errors[0]?.error || 'Unknown CMS error'
-        return Response.json({ error: `Failed to publish: ${firstError}` }, { status: 502 })
-      }
-
-      // At least one publication succeeded — finalize the draft
-      this.finalizeDraft(results[0].postId)
+      this.finalizeDraft(post.id)
 
       return Response.json({
         success: true,
-        results,
-        ...(errors.length > 0 ? { errors } : {}),
+        results: [{
+          postId: post.id,
+          slug: post.slug,
+          title: post.title,
+          publicationId: pubId,
+        }],
       })
     } catch (err) {
-      // Unexpected error (e.g., HTML conversion failed) — revert phase
       this.setWritingPhase('revising')
       const message = err instanceof Error ? err.message : 'Unknown CMS error'
       return Response.json({ error: `Failed to publish: ${message}` }, { status: 502 })
