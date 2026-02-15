@@ -1,11 +1,11 @@
 # Privacy Policy and Terms of Service Pages
 
 **Date Added:** February 15, 2026  
-**Commit:** 2fef305
+**Commit:** 2fef305 (initial), 663f796 (authentication update)
 
 ## Overview
 
-Added comprehensive Privacy Policy and Terms of Service pages to the Hot Metal web application to ensure legal compliance and set clear expectations for users.
+Added comprehensive Privacy Policy and Terms of Service pages to the Hot Metal web application to ensure legal compliance and set clear expectations for users. Updated to include third-party authentication provisions.
 
 ## New Pages
 
@@ -13,10 +13,17 @@ Added comprehensive Privacy Policy and Terms of Service pages to the Hot Metal w
 **File:** `apps/web/src/pages/PrivacyPage.tsx`
 
 A comprehensive privacy policy covering:
-- **Information Collection**: Account info, connected accounts (LinkedIn, X), automatically collected data
+- **Information Collection**: 
+  - Account info (name, email, password)
+  - **Third-Party Authentication** (NEW): Google Sign-In, Microsoft, GitHub, Apple via Clerk
+  - Publishing connections (LinkedIn, X/Twitter)
+  - Automatically collected data
 - **Usage of Information**: Service provision, AI content processing, analytics
 - **AI and Content Processing**: How AI models process user content, third-party providers, opt-out options
-- **Information Sharing**: Third-party platforms, service providers, legal requirements
+- **Information Sharing**: 
+  - Third-party platforms
+  - Service providers (including **Clerk for authentication**)
+  - Legal requirements
 - **Data Security**: Encryption, security measures, infrastructure
 - **Data Retention**: Retention periods, deletion requests
 - **User Rights**: Access, correction, deletion, portability, opt-out
@@ -32,8 +39,14 @@ A comprehensive privacy policy covering:
 Comprehensive terms covering:
 - **Agreement to Terms**: Binding agreement, modification rights
 - **Eligibility**: Age requirements, legal capacity
-- **Account Registration**: Security, responsibilities
-- **Third-Party Accounts**: LinkedIn and X connection terms, responsibilities
+- **Account Registration and Security**: 
+  - **3.1 Account Creation** (NEW): Email/password or third-party authentication
+  - **3.2 Third-Party Authentication** (NEW): Google Sign-In, OAuth provider terms
+  - **3.3 Account Security**: Password security, unauthorized access
+- **Publishing and Social Media Connections** (renamed from "Third-Party Account Connections"):
+  - Connecting LinkedIn and X accounts for publishing
+  - User responsibilities
+  - Platform change disclaimers
 - **User Content**: Ownership, licensing, restrictions, removal rights
 - **AI-Generated Content**: Disclaimer, user responsibility for verification
 - **Acceptable Use**: Prohibited activities
@@ -68,33 +81,55 @@ Comprehensive terms covering:
 ### Content Highlights
 
 #### Privacy-Specific Sections
-1. **Connected Account Information**:
-   - LinkedIn: Profile information, posting permissions
-   - X (Twitter): Account handle, posting permissions
-   - Users can disconnect at any time
+1. **Information Collection**:
+   - **Account Creation**: Email/password or third-party authentication
+   - **Third-Party Authentication** (Google Sign-In, Microsoft, GitHub, Apple):
+     - Name, email, profile picture received from providers
+     - No access to third-party passwords
+     - Subject to provider's privacy policies
+   - **Publishing Connections** (LinkedIn, X/Twitter):
+     - Profile information, posting permissions
+     - Users can disconnect at any time
 
 2. **AI and Content Processing**:
    - Transparency about AI provider usage
    - No training on user content without opt-in
    - User retains content rights
 
-3. **Regional Compliance**:
+3. **Service Providers**:
+   - **Clerk**: Authentication service facilitating Google Sign-In and other OAuth providers
+   - Cloudflare: Infrastructure
+   - Payment processors, AI services, analytics
+
+4. **Regional Compliance**:
    - CCPA (California Privacy Rights)
    - GDPR (European Privacy Rights)
    - Specific rights and contact information
 
 #### Terms-Specific Sections
-1. **Third-Party Account Connections**:
-   - Clear authorization requirements
+1. **Account Registration and Security**:
+   - **Account Creation Options**:
+     - Direct email/password registration
+     - Third-party authentication (Google, Microsoft, Apple, GitHub)
+   - **Third-Party Authentication Terms**:
+     - Authorization to access basic profile info
+     - Subject to provider's terms and privacy policies
+     - No password access by Hot Metal
+     - User responsible for third-party account security
+     - Can unlink accounts at any time
+
+2. **Publishing and Social Media Connections**:
+   - Clear authorization requirements for LinkedIn and X
    - User responsibility for posted content
    - Platform change disclaimers
+   - Distinction from authentication connections
 
-2. **AI-Generated Content**:
+3. **AI-Generated Content**:
    - "As is" disclaimers
    - User verification requirements
    - Accuracy disclaimers
 
-3. **Subscription Terms**:
+4. **Subscription Terms**:
    - Billing cycle information
    - Cancellation policies
    - Free trial terms
@@ -150,6 +185,19 @@ Hot Metal · About · FAQ · Privacy · Terms · Waitlist
 - ✅ Links working in all footers
 - ✅ Responsive design verified
 
+## Authentication Technology
+
+- **Service**: Clerk (https://clerk.com)
+- **Supported Providers**: 
+  - Email/Password (direct)
+  - Google Sign-In
+  - Microsoft
+  - GitHub
+  - Apple
+  - Other OAuth providers as configured
+- **Data Received**: Name, email, profile picture (varies by provider)
+- **Security**: Passwords never stored by Hot Metal when using third-party auth
+
 ## Future Considerations
 
 1. **Content Updates**: Review and update policies as features evolve
@@ -157,6 +205,8 @@ Hot Metal · About · FAQ · Privacy · Terms · Waitlist
 3. **Translations**: Add multi-language support if expanding internationally
 4. **Version History**: Consider maintaining changelog of policy updates
 5. **User Notification**: Email notification system for policy changes
+6. **Sign-Up Flow**: Consider requiring explicit acceptance of Terms during registration
+7. **Authentication Providers**: Update documentation if additional OAuth providers are added
 
 ## Usage
 
