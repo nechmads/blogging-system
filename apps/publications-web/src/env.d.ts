@@ -10,5 +10,6 @@ declare namespace Cloudflare {
     CMS_API_KEY: string
     DEV_PUBLICATION_SLUG?: string
     CACHE_PURGE_API_KEY?: string
+    IMAGE_BUCKET: R2Bucket
   }
 }

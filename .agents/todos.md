@@ -131,5 +131,7 @@
   - Cache: `s-maxage=3600, stale-while-revalidate=86400` on all pages, cache-purge endpoint with timing-safe API key auth
   - Security: social link URL validation (https only), accentColor hex validation, slug validation on all inputs, dev-header gated behind localhost
   - Cloudflare Workers: `import { env } from 'cloudflare:workers'` (Astro v6 pattern), DAL service binding, wildcard route
+- [x] **Image URL Fix** — Fixed double `/images/` path prefix in R2 keys and absolute localhost URLs stored in CMS. R2 keys now use `sessions/{sessionId}/{id}.png`. Production uses `IMAGE_BASE_URL` (R2 custom domain `images.hotmetalapp.com`), dev uses relative paths. Added image proxy route to publications-web (`/api/images/[...path]`) for dev. Added `decodeURIComponent` path traversal protection and strict `startsWith` URL validation on select-image endpoint.
+- [x] **Dev Stack for Publications Frontend** — Added `dev:stack-pub` command and `@cloudflare/vite-plugin` integration in `astro.config.mjs` for running publications-web with auxiliary workers (DAL, content-scout, publisher) using shared persistent state.
 - [ ] Writer Agent — Phase 2: Voice input (transcription in `input-processor.ts`)
 - [ ] Writer Agent — Phase 2: D1 session sync (synchronize DO state back to D1 for listing accuracy)

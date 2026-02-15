@@ -12,6 +12,12 @@
       "entrypoint": "DataLayer"
     }
   ],
+  "r2_buckets": [
+    {
+      "binding": "IMAGE_BUCKET",
+      "bucket_name": "hotmetal-cms-bucket"
+    }
+  ],
   "vars": {
     "CMS_URL": "https://cms.hotmetalapp.com",
     "CMS_API_KEY": ""
