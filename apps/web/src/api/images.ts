@@ -73,12 +73,12 @@ images.post('/sessions/:sessionId/generate-images', async (c) => {
     const results = await Promise.all(imagePromises)
 
     // Store each image in R2 and return URLs
-    const imageBaseUrl = c.env.IMAGE_BASE_URL
+    const imageBaseUrl = c.env.IMAGE_BASE_URL?.trim().replace(/\/$/, '') || ''
     const origin = new URL(c.req.url).origin
     const imageEntries = await Promise.all(
       results.map(async (result) => {
         const id = crypto.randomUUID()
-        const key = `sessions/${sessionId}/${id}.png`
+        const key = `sessions/${sessionId}/${id}.jpg`
 
         // Flux returns { image: string } where image is base64-encoded JPEG
         const base64 = (result as { image: string }).image
