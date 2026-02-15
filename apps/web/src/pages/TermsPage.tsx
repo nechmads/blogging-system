@@ -66,9 +66,54 @@ export function TermsPage() {
               <h2 className="mb-3 text-2xl font-bold text-[var(--color-text-primary)]">
                 3. Account Registration and Security
               </h2>
+
+              <h3 className="mb-2 mt-4 text-lg font-semibold text-[var(--color-text-primary)]">
+                3.1 Account Creation
+              </h3>
               <p className="leading-relaxed text-[var(--color-text-muted)]">
-                To use certain features of the Service, you must create an account. When you create an
-                account, you agree to:
+                To use certain features of the Service, you must create an account. You may create an
+                account by:
+              </p>
+              <ul className="mt-2 list-disc space-y-1 pl-6 text-[var(--color-text-muted)]">
+                <li>Providing an email address and password directly to Hot Metal, or</li>
+                <li>
+                  Using a third-party authentication provider (such as Google, Microsoft, Apple, or
+                  GitHub) through our authentication service partner, Clerk
+                </li>
+              </ul>
+
+              <h3 className="mb-2 mt-4 text-lg font-semibold text-[var(--color-text-primary)]">
+                3.2 Third-Party Authentication
+              </h3>
+              <p className="leading-relaxed text-[var(--color-text-muted)]">
+                If you sign in using a third-party provider (such as Google Sign-In):
+              </p>
+              <ul className="mt-2 list-disc space-y-1 pl-6 text-[var(--color-text-muted)]">
+                <li>
+                  You authorize us to access certain information from your third-party account as
+                  permitted by that provider (typically your name, email address, and profile picture)
+                </li>
+                <li>
+                  Your use of third-party authentication is subject to that provider's terms of service
+                  and privacy policy
+                </li>
+                <li>
+                  We do not receive or store your password for third-party accounts
+                </li>
+                <li>
+                  You are responsible for maintaining the security of your third-party account
+                </li>
+                <li>
+                  You can unlink your third-party account from Hot Metal at any time, though this may
+                  limit your ability to access certain features
+                </li>
+              </ul>
+
+              <h3 className="mb-2 mt-4 text-lg font-semibold text-[var(--color-text-primary)]">
+                3.3 Account Security
+              </h3>
+              <p className="leading-relaxed text-[var(--color-text-muted)]">
+                When you create an account, you agree to:
               </p>
               <ul className="mt-2 list-disc space-y-1 pl-6 text-[var(--color-text-muted)]">
                 <li>Provide accurate, current, and complete information</li>
@@ -88,11 +133,11 @@ export function TermsPage() {
 
             <section className="mb-8">
               <h2 className="mb-3 text-2xl font-bold text-[var(--color-text-primary)]">
-                4. Third-Party Account Connections
+                4. Publishing and Social Media Connections
               </h2>
 
               <h3 className="mb-2 mt-4 text-lg font-semibold text-[var(--color-text-primary)]">
-                4.1 Connecting Accounts
+                4.1 Connecting Publishing Accounts
               </h3>
               <p className="leading-relaxed text-[var(--color-text-muted)]">
                 Hot Metal allows you to connect third-party accounts, including LinkedIn and X (formerly

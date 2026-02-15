@@ -59,10 +59,35 @@ export function PrivacyPage() {
               </ul>
 
               <h3 className="mb-2 mt-4 text-lg font-semibold text-[var(--color-text-primary)]">
-                2.2 Connected Account Information
+                2.2 Third-Party Authentication Information
               </h3>
               <p className="leading-relaxed text-[var(--color-text-muted)]">
-                When you connect third-party accounts to Hot Metal, we collect:
+                Hot Metal uses Clerk for authentication services. When you sign up or sign in using a
+                third-party identity provider, we receive certain information from that provider:
+              </p>
+              <ul className="mt-2 list-disc space-y-1 pl-6 text-[var(--color-text-muted)]">
+                <li>
+                  <strong>Google Sign-In:</strong> When you sign in with Google, we receive your name,
+                  email address, and profile picture from your Google account. We do not have access to
+                  your Google password.
+                </li>
+                <li>
+                  <strong>Other OAuth Providers:</strong> If you use other sign-in methods (such as
+                  Microsoft, GitHub, or Apple), we receive similar basic profile information as permitted
+                  by that provider.
+                </li>
+              </ul>
+              <p className="mt-3 leading-relaxed text-[var(--color-text-muted)]">
+                This information is used solely to create and manage your Hot Metal account. Your use of
+                third-party authentication is also subject to the privacy policies of those providers
+                (Google, Microsoft, etc.).
+              </p>
+
+              <h3 className="mb-2 mt-4 text-lg font-semibold text-[var(--color-text-primary)]">
+                2.3 Publishing and Social Connection Information
+              </h3>
+              <p className="leading-relaxed text-[var(--color-text-muted)]">
+                When you connect third-party accounts to Hot Metal for publishing purposes, we collect:
               </p>
               <ul className="mt-2 list-disc space-y-1 pl-6 text-[var(--color-text-muted)]">
                 <li>
@@ -80,7 +105,7 @@ export function PrivacyPage() {
               </p>
 
               <h3 className="mb-2 mt-4 text-lg font-semibold text-[var(--color-text-primary)]">
-                2.3 Automatically Collected Information
+                2.4 Automatically Collected Information
               </h3>
               <p className="leading-relaxed text-[var(--color-text-muted)]">
                 We automatically collect certain information when you use our service:
@@ -165,14 +190,18 @@ export function PrivacyPage() {
               </p>
               <ul className="mt-2 list-disc space-y-1 pl-6 text-[var(--color-text-muted)]">
                 <li>Cloud infrastructure providers (Cloudflare)</li>
-                <li>Authentication services (Clerk)</li>
+                <li>
+                  Authentication services (Clerk, which facilitates sign-in via Google, Microsoft, and
+                  other identity providers)
+                </li>
                 <li>Payment processors</li>
                 <li>AI and natural language processing services</li>
                 <li>Analytics and monitoring services</li>
               </ul>
               <p className="mt-3 leading-relaxed text-[var(--color-text-muted)]">
                 These providers are contractually obligated to protect your information and use it only
-                for the services they provide to us.
+                for the services they provide to us. When you use third-party authentication (like Google
+                Sign-In), you are also subject to that provider's terms of service and privacy policy.
               </p>
 
               <h3 className="mb-2 mt-4 text-lg font-semibold text-[var(--color-text-primary)]">
