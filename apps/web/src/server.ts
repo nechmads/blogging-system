@@ -6,6 +6,7 @@
  * Route structure:
  * - /health           — public health check
  * - /api/images/*     — public image serving from R2
+ * - /webhooks/*       — Clerk webhook receiver (Svix-verified, no auth)
  * - /internal/*       — service-to-service routes (content-scout auto-write)
  * - /api/*            — Clerk-authenticated user routes
  * - /agents/*         — WebSocket/HTTP agent connections (per-session chat token)
@@ -32,6 +33,7 @@ import publish from './api/publish'
 import images from './api/images'
 import connections from './api/connections'
 import internal from './api/internal'
+import webhooks from './api/webhooks'
 
 // Re-export the WriterAgent DO class for wrangler registration
 export { WriterAgent } from './agent/writer-agent'
@@ -68,6 +70,9 @@ app.get('/api/images/*', async (c) => {
     },
   })
 })
+
+// ─── Clerk webhooks (public — verified via Svix signature) ──────────
+app.route('/webhooks', webhooks)
 
 // ─── Internal service-to-service routes (content-scout auto-write) ──
 app.use('/internal/*', internalAuth)

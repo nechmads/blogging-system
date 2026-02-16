@@ -29,6 +29,12 @@ declare namespace Cloudflare {
 		PUBLISHER_API_KEY: string;
 		// Service-to-service auth (content-scout auto-write)
 		INTERNAL_API_KEY: string;
+		// Clerk webhook verification (Svix signing secret)
+		CLERK_WEBHOOK_SECRET: string;
+		// Resend email API
+		RESEND_API_KEY: string;
+		// Email to receive waitlist notifications
+		NOTIFICATION_EMAIL: string;
 	}
 }
 interface Env extends Cloudflare.Env {}

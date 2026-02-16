@@ -98,7 +98,7 @@ export function PublicationHomePage() {
               rel="noopener noreferrer"
               className="text-xs text-[var(--color-text-muted)] hover:text-[var(--color-accent)] transition-colors"
             >
-              {publication.slug}.hotmetalapp.com
+              https://{publication.slug}.hotmetalapp.com
             </a>
           </div>
         </div>
