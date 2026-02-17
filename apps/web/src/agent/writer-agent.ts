@@ -193,6 +193,10 @@ export class WriterAgent extends AIChatAgent<Env, WriterAgentState> {
       return this.handleGetDraft(parseInt(draftVersionMatch[1], 10))
     }
 
+    if (url.pathname.endsWith('/drafts') && request.method === 'PUT') {
+      return this.handleUpdateDraft(request)
+    }
+
     if (url.pathname.endsWith('/generate-seo') && request.method === 'POST') {
       return this.handleGenerateSeo()
     }
@@ -503,6 +507,18 @@ export class WriterAgent extends AIChatAgent<Env, WriterAgentState> {
     return rows.length > 0 ? rows[0] : null
   }
 
+  updateDraft(content: string, title?: string): DraftRow | null {
+    const current = this.getCurrentDraft()
+    if (!current) return null
+
+    const wordCount = content.split(/\s+/).filter(Boolean).length
+    const newTitle = title !== undefined ? title : current.title
+
+    this.sql`UPDATE drafts SET content = ${content}, title = ${newTitle}, word_count = ${wordCount} WHERE version = ${current.version}`
+
+    return { ...current, content, title: newTitle, word_count: wordCount }
+  }
+
   getDraftByVersion(version: number): DraftRow | null {
     const rows = this.sql<DraftRow>`SELECT * FROM drafts WHERE version = ${version}`
     return rows.length > 0 ? rows[0] : null
@@ -551,5 +567,33 @@ export class WriterAgent extends AIChatAgent<Env, WriterAgentState> {
       return Response.json({ error: 'Draft not found' }, { status: 404 })
     }
     return Response.json(rows[0])
+  }
+
+  private async handleUpdateDraft(request: Request): Promise<Response> {
+    let body: { content?: unknown; title?: unknown }
+    try {
+      body = await request.json() as typeof body
+    } catch {
+      return Response.json({ error: 'Invalid JSON' }, { status: 400 })
+    }
+
+    if (typeof body.content !== 'string' || !body.content.trim()) {
+      return Response.json({ error: 'content is required and must be a non-empty string' }, { status: 400 })
+    }
+
+    if (body.content.length > 512 * 1024) {
+      return Response.json({ error: 'Content exceeds maximum allowed size' }, { status: 413 })
+    }
+
+    if (body.title !== undefined && typeof body.title !== 'string') {
+      return Response.json({ error: 'title must be a string' }, { status: 400 })
+    }
+
+    const updated = this.updateDraft(body.content, body.title as string | undefined)
+    if (!updated) {
+      return Response.json({ error: 'No draft exists yet' }, { status: 404 })
+    }
+
+    return Response.json(updated)
   }
 }

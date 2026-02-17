@@ -53,4 +53,26 @@ drafts.get('/sessions/:sessionId/drafts/:version', async (c) => {
   return c.json(data, res.status as ContentfulStatusCode)
 })
 
+/** Update the current draft content — proxied to agent DO. */
+drafts.put('/sessions/:sessionId/drafts', async (c) => {
+  if (!(await verifySessionOwnership(c))) {
+    return c.json({ error: 'Session not found' }, 404)
+  }
+
+  const sessionId = c.req.param('sessionId')
+  const agent = await getAgentByName<Env, WriterAgent>(c.env.WRITER_AGENT, sessionId)
+
+  const url = new URL(c.req.url)
+  url.pathname = '/drafts'
+
+  const res = await agent.fetch(new Request(url.toString(), {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: await c.req.text(),
+  }))
+  const data = await res.json()
+
+  return c.json(data, res.status as ContentfulStatusCode)
+})
+
 export default drafts

@@ -143,5 +143,11 @@
   - Bold template: Tech/design-forward style with Space Grotesk + JetBrains Mono fonts, blue accent (#2563eb), 3px black borders, split hero with featured post, numbered post list, topic filter chips, 4-column explore grid, dark footer, reading progress bar, sidebar TOC (server-side heading extraction), dark callout boxes
   - CSS isolation: Identical custom property names across templates with different values; only one template's theme.css loads per SSR request
   - Template registry updated with editorial and bold entries
+- [x] **Rich Text Draft Editing with Tiptap** — Added Tiptap WYSIWYG editor to the DraftPanel with view/edit toggle. Includes:
+  - Backend: `updateDraft()` method on WriterAgent DO (overwrites current draft in-place), PUT /drafts HTTP route, API proxy, frontend API function
+  - TiptapEditor component: StarterKit + tiptap-markdown extension for Markdown round-tripping, BubbleMenu for inline formatting (bold/italic/code/strikethrough), placeholder extension
+  - DraftPanel integration: view/edit toggle (PencilSimple/Eye icons), edit-only on latest version, auto-save with 2s debounce, save status indicator (Saving.../Saved/Unsaved), flush-on-mode-switch
+  - Agent conflict handling: when agent creates new draft version while user is editing, pending edits are flushed and edit mode exits to show the new AI draft
+  - No pipeline changes needed: agent's `getCurrentDraft()` reads from same SQLite, so user edits are visible to AI automatically
 - [ ] Writer Agent — Phase 2: Voice input (transcription in `input-processor.ts`)
 - [ ] Writer Agent — Phase 2: D1 session sync (synchronize DO state back to D1 for listing accuracy)

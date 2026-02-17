@@ -45,6 +45,84 @@ export function ScheduleEditor({
 }: ScheduleEditorProps) {
   return (
     <div className="space-y-6">
+      {/* Publish Mode */}
+      <section className="space-y-4 rounded-xl border border-[var(--color-border-default)] bg-[var(--color-bg-primary)] p-5">
+        <h3 className="font-semibold">Publish Mode</h3>
+
+        <div className="space-y-2">
+          {MODE_OPTIONS.map((mode) => (
+            <label
+              key={mode.value}
+              className={`flex cursor-pointer items-start gap-3 rounded-lg border p-3 transition-colors ${
+                state.autoPublishMode === mode.value
+                  ? "border-[var(--color-accent)] bg-[var(--color-accent-light)]"
+                  : "border-[var(--color-border-default)] hover:bg-[var(--color-bg-card)]"
+              }`}
+            >
+              <input
+                type="radio"
+                name="autoPublishMode"
+                value={mode.value}
+                checked={state.autoPublishMode === mode.value}
+                onChange={() => onAutoPublishModeChange(mode.value)}
+                className="mt-0.5 accent-[var(--color-accent)]"
+              />
+              <div>
+                <span className="text-sm font-medium">{mode.label}</span>
+                <p className="mt-0.5 text-xs text-[var(--color-text-muted)]">
+                  {mode.description}
+                </p>
+              </div>
+            </label>
+          ))}
+        </div>
+
+        {state.autoPublishMode === "full-auto" && (
+          <div>
+            <label className="mb-1 block text-sm font-medium">
+              Posts per week
+            </label>
+            <input
+              type="number"
+              min={1}
+              max={14}
+              value={state.cadencePostsPerWeek}
+              onChange={(e) => {
+                const parsed = parseInt(e.target.value, 10);
+                if (!Number.isNaN(parsed))
+                  onChange({
+                    cadencePostsPerWeek: Math.max(1, Math.min(14, parsed)),
+                  });
+              }}
+              className="w-24 rounded-lg border border-[var(--color-border-default)] bg-[var(--color-bg-primary)] px-3 py-2 text-sm focus:border-[var(--color-accent)] focus:outline-none focus:ring-1 focus:ring-[var(--color-accent)]"
+            />
+          </div>
+        )}
+
+        <div className="border-t border-[var(--color-border-default)] pt-4">
+          <p className="mb-2 text-sm text-[var(--color-text-muted)]">
+            Manually trigger the content scout to search for ideas now.
+          </p>
+          <button
+            type="button"
+            onClick={onRunScout}
+            disabled={scouting || !topicsExist}
+            className="flex items-center gap-2 rounded-lg border border-[var(--color-accent)] px-4 py-2 text-sm font-medium text-[var(--color-accent)] transition-colors hover:bg-[var(--color-accent-light)] disabled:opacity-50"
+          >
+            <MagnifyingGlassIcon
+              size={16}
+              className={scouting ? "animate-spin" : ""}
+            />
+            {scouting ? "Running Scout..." : "Run Scout Now"}
+          </button>
+          {!topicsExist && (
+            <p className="mt-1.5 text-xs text-[var(--color-text-muted)]">
+              Add at least one topic before running the scout.
+            </p>
+          )}
+        </div>
+      </section>
+
       {/* Scout Schedule */}
       <section className="space-y-4 rounded-xl border border-[var(--color-border-default)] bg-[var(--color-bg-primary)] p-5">
         <h3 className="font-semibold">Schedule</h3>
@@ -204,84 +282,6 @@ export function ScheduleEditor({
           >
             Cancel
           </button>
-        </div>
-      </section>
-
-      {/* Publish Mode */}
-      <section className="space-y-4 rounded-xl border border-[var(--color-border-default)] bg-[var(--color-bg-primary)] p-5">
-        <h3 className="font-semibold">Publish Mode</h3>
-
-        <div className="space-y-2">
-          {MODE_OPTIONS.map((mode) => (
-            <label
-              key={mode.value}
-              className={`flex cursor-pointer items-start gap-3 rounded-lg border p-3 transition-colors ${
-                state.autoPublishMode === mode.value
-                  ? "border-[var(--color-accent)] bg-[var(--color-accent-light)]"
-                  : "border-[var(--color-border-default)] hover:bg-[var(--color-bg-card)]"
-              }`}
-            >
-              <input
-                type="radio"
-                name="autoPublishMode"
-                value={mode.value}
-                checked={state.autoPublishMode === mode.value}
-                onChange={() => onAutoPublishModeChange(mode.value)}
-                className="mt-0.5 accent-[var(--color-accent)]"
-              />
-              <div>
-                <span className="text-sm font-medium">{mode.label}</span>
-                <p className="mt-0.5 text-xs text-[var(--color-text-muted)]">
-                  {mode.description}
-                </p>
-              </div>
-            </label>
-          ))}
-        </div>
-
-        {state.autoPublishMode === "full-auto" && (
-          <div>
-            <label className="mb-1 block text-sm font-medium">
-              Posts per week
-            </label>
-            <input
-              type="number"
-              min={1}
-              max={14}
-              value={state.cadencePostsPerWeek}
-              onChange={(e) => {
-                const parsed = parseInt(e.target.value, 10);
-                if (!Number.isNaN(parsed))
-                  onChange({
-                    cadencePostsPerWeek: Math.max(1, Math.min(14, parsed)),
-                  });
-              }}
-              className="w-24 rounded-lg border border-[var(--color-border-default)] bg-[var(--color-bg-primary)] px-3 py-2 text-sm focus:border-[var(--color-accent)] focus:outline-none focus:ring-1 focus:ring-[var(--color-accent)]"
-            />
-          </div>
-        )}
-
-        <div className="border-t border-[var(--color-border-default)] pt-4">
-          <p className="mb-2 text-sm text-[var(--color-text-muted)]">
-            Manually trigger the content scout to search for ideas now.
-          </p>
-          <button
-            type="button"
-            onClick={onRunScout}
-            disabled={scouting || !topicsExist}
-            className="flex items-center gap-2 rounded-lg border border-[var(--color-accent)] px-4 py-2 text-sm font-medium text-[var(--color-accent)] transition-colors hover:bg-[var(--color-accent-light)] disabled:opacity-50"
-          >
-            <MagnifyingGlassIcon
-              size={16}
-              className={scouting ? "animate-spin" : ""}
-            />
-            {scouting ? "Running Scout..." : "Run Scout Now"}
-          </button>
-          {!topicsExist && (
-            <p className="mt-1.5 text-xs text-[var(--color-text-muted)]">
-              Add at least one topic before running the scout.
-            </p>
-          )}
         </div>
       </section>
     </div>

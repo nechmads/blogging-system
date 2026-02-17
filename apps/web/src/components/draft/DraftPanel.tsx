@@ -1,14 +1,20 @@
-import { useCallback, useEffect, useImperativeHandle, useState } from 'react'
-import { CheckCircleIcon, CopyIcon, RocketLaunchIcon } from '@phosphor-icons/react'
+import { useCallback, useEffect, useImperativeHandle, useRef, useState } from 'react'
+import { CheckCircleIcon, CopyIcon, EyeIcon, PencilSimpleIcon, RocketLaunchIcon } from '@phosphor-icons/react'
 import { MemoizedMarkdown } from '@/components/memoized-markdown'
 import { Loader } from '@/components/loader/Loader'
 import { DraftVersionSelector } from './DraftVersionSelector'
 import { PublishModal } from './PublishModal'
 import { ImageGenerator } from './ImageGenerator'
 import { SourcesList } from './SourcesList'
-import { fetchDrafts, fetchDraft } from '@/lib/api'
+import { fetchDrafts, fetchDraft, updateDraft } from '@/lib/api'
 import type { Draft, DraftContent } from '@/lib/types'
+import { TiptapEditor } from './TiptapEditor'
 import React from 'react'
+
+const AUTOSAVE_DELAY = 2000
+const MAX_CONTENT_SIZE = 512 * 1024 // 512KB
+
+type SaveStatus = 'idle' | 'saving' | 'saved' | 'unsaved'
 
 export interface DraftPanelHandle {
   refresh: () => void
@@ -35,21 +41,84 @@ export const DraftPanel = React.forwardRef<DraftPanelHandle, DraftPanelProps>(
     const [publishedPostId, setPublishedPostId] = useState<string | null>(null)
     const [featuredImageUrl, setFeaturedImageUrl] = useState<string | null>(initialFeaturedImageUrl ?? null)
 
+    // Edit mode state
+    const [editing, setEditing] = useState(false)
+    const [saveStatus, setSaveStatus] = useState<SaveStatus>('idle')
+    const pendingMarkdownRef = useRef<string | null>(null)
+    const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+    const savingRef = useRef(false)
+
+    // Refs to avoid reactive deps in loadDrafts (prevents infinite re-render loop)
+    const draftsRef = useRef<Draft[]>([])
+    const editingRef = useRef(false)
+    useEffect(() => { draftsRef.current = drafts }, [drafts])
+    useEffect(() => { editingRef.current = editing }, [editing])
+
+    const latestVersion = drafts.length > 0 ? drafts[drafts.length - 1].version : null
+    const isOnLatest = selectedVersion === latestVersion
+    const canEdit = isOnLatest && !!content
+
+    // --- Save helpers ---
+
+    const doSave = useCallback(async (markdown: string): Promise<boolean> => {
+      if (savingRef.current) return false
+      if (markdown.length > MAX_CONTENT_SIZE) {
+        setSaveStatus('unsaved')
+        return false
+      }
+      savingRef.current = true
+      setSaveStatus('saving')
+      try {
+        const updated = await updateDraft(sessionId, markdown)
+        setContent((prev) => prev ? { ...prev, content: updated.content, word_count: updated.word_count } : prev)
+        setSaveStatus('saved')
+        pendingMarkdownRef.current = null
+        setTimeout(() => setSaveStatus((s) => s === 'saved' ? 'idle' : s), 2000)
+        return true
+      } catch {
+        setSaveStatus('unsaved')
+        return false
+      } finally {
+        savingRef.current = false
+      }
+    }, [sessionId])
+
+    const flushSave = useCallback(async (): Promise<boolean> => {
+      if (debounceTimerRef.current) {
+        clearTimeout(debounceTimerRef.current)
+        debounceTimerRef.current = null
+      }
+      if (pendingMarkdownRef.current !== null) {
+        return doSave(pendingMarkdownRef.current)
+      }
+      return true
+    }, [doSave])
+
     const loadDrafts = useCallback(async () => {
       try {
         const data = await fetchDrafts(sessionId)
-        const hadNewDraft = data.length > drafts.length
+        const hadNewDraft = data.length > draftsRef.current.length
         setDrafts(data)
-        if (data.length > 0 && (selectedVersion === null || hadNewDraft)) {
-          const latest = data[data.length - 1]
-          setSelectedVersion(latest.version)
+        if (data.length > 0) {
+          setSelectedVersion((prev) => {
+            if (prev === null || hadNewDraft) {
+              return data[data.length - 1].version
+            }
+            return prev
+          })
+
+          // Agent created a new draft while user was editing — flush and exit edit mode
+          if (hadNewDraft && editingRef.current) {
+            await flushSave()
+            setEditing(false)
+          }
         }
       } catch {
         // Drafts may not exist yet (404) — show empty state
       } finally {
         setLoading(false)
       }
-    }, [sessionId, drafts.length, selectedVersion])
+    }, [sessionId, flushSave])
 
     useEffect(() => {
       loadDrafts()
@@ -79,6 +148,58 @@ export const DraftPanel = React.forwardRef<DraftPanelHandle, DraftPanelProps>(
     useImperativeHandle(ref, () => ({
       refresh: loadDrafts,
     }))
+
+    const handleEditorUpdate = useCallback((markdown: string) => {
+      pendingMarkdownRef.current = markdown
+      setSaveStatus('unsaved')
+
+      if (debounceTimerRef.current) {
+        clearTimeout(debounceTimerRef.current)
+      }
+      debounceTimerRef.current = setTimeout(() => {
+        debounceTimerRef.current = null
+        if (pendingMarkdownRef.current !== null) {
+          doSave(pendingMarkdownRef.current)
+        }
+      }, AUTOSAVE_DELAY)
+    }, [doSave])
+
+    // Flush pending save on unmount
+    useEffect(() => {
+      return () => {
+        if (debounceTimerRef.current) {
+          clearTimeout(debounceTimerRef.current)
+        }
+        if (pendingMarkdownRef.current !== null) {
+          doSave(pendingMarkdownRef.current)
+        }
+      }
+    }, [doSave])
+
+    // --- Toggle edit mode ---
+
+    const handleToggleEdit = useCallback(async () => {
+      if (editing) {
+        // Switching to view mode — flush any pending save first
+        await flushSave()
+        setEditing(false)
+        setSaveStatus('idle')
+      } else {
+        setEditing(true)
+      }
+    }, [editing, flushSave])
+
+    // Exit edit mode when navigating to a different version
+    const handleVersionSelect = useCallback(async (version: number) => {
+      if (editing) {
+        await flushSave()
+        setEditing(false)
+        setSaveStatus('idle')
+      }
+      setSelectedVersion(version)
+    }, [editing, flushSave])
+
+    // --- Other handlers ---
 
     const handleCopy = async () => {
       if (!content) return
@@ -111,16 +232,54 @@ export const DraftPanel = React.forwardRef<DraftPanelHandle, DraftPanelProps>(
     return (
       <div className="relative flex h-full flex-col bg-[#f5f5f5] dark:bg-[#111]">
         {/* Header */}
-        <div className="flex items-center justify-between border-b border-[#e5e7eb] bg-white px-4 py-2 dark:border-[#374151] dark:bg-[#0a0a0a]">
+        <div className="flex items-center justify-between gap-3 border-b border-[#e5e7eb] bg-white px-4 py-2 dark:border-[#374151] dark:bg-[#0a0a0a]">
           <div className="flex min-w-0 flex-1 items-center gap-2">
             <span className="shrink-0 text-sm font-semibold text-[#0a0a0a] dark:text-[#fafafa]">Draft</span>
             <DraftVersionSelector
               drafts={drafts}
               selectedVersion={selectedVersion}
-              onSelect={setSelectedVersion}
+              onSelect={handleVersionSelect}
             />
           </div>
-          <div className="flex shrink-0 items-center gap-1">
+          <div className="flex shrink-0 items-center gap-2">
+            {/* Save status indicator */}
+            {editing && saveStatus !== 'idle' && (
+              <span className={`text-xs ${
+                saveStatus === 'saving' ? 'text-[#6b7280]' :
+                saveStatus === 'saved' ? 'text-green-600' :
+                'text-amber-600'
+              }`}>
+                {saveStatus === 'saving' ? 'Saving...' :
+                 saveStatus === 'saved' ? 'Saved' :
+                 'Unsaved'}
+              </span>
+            )}
+            {/* Edit/View toggle */}
+            {canEdit && (
+              <button
+                type="button"
+                onClick={handleToggleEdit}
+                className={`flex items-center gap-1 rounded-md px-3 py-1.5 text-xs font-medium transition-colors ${
+                  editing
+                    ? 'bg-[var(--color-accent-light)] text-[var(--color-accent)]'
+                    : 'text-[#6b7280] hover:bg-[#e5e7eb] hover:text-[#0a0a0a] dark:hover:bg-[#374151]'
+                }`}
+                aria-label={editing ? 'Switch to view mode' : 'Edit draft'}
+              >
+                {editing ? (
+                  <>
+                    <EyeIcon size={14} />
+                    View
+                  </>
+                ) : (
+                  <>
+                    <PencilSimpleIcon size={14} />
+                    Edit
+                  </>
+                )}
+              </button>
+            )}
+            <div className="h-4 w-px bg-[#e5e7eb] dark:bg-[#374151]" />
             <button
               type="button"
               onClick={handleCopy}
@@ -164,10 +323,17 @@ export const DraftPanel = React.forwardRef<DraftPanelHandle, DraftPanelProps>(
           ) : content ? (
             <>
               <div className="prose mx-auto max-w-prose rounded-xl bg-white p-8 shadow-sm dark:bg-[#1a1a1a]">
-                <MemoizedMarkdown
-                  content={content.content}
-                  id={`draft-${content.version}`}
-                />
+                {editing ? (
+                  <TiptapEditor
+                    content={content.content}
+                    onUpdate={handleEditorUpdate}
+                  />
+                ) : (
+                  <MemoizedMarkdown
+                    content={content.content}
+                    id={`draft-${content.version}`}
+                  />
+                )}
               </div>
               <SourcesList citationsJson={content.citations} />
             </>

@@ -33,16 +33,6 @@ export function ScheduleSummary({ publication, onEdit }: ScheduleSummaryProps) {
       </div>
 
       <div className="mt-4 grid gap-3 sm:grid-cols-2">
-        <SummaryItem label="Schedule">{scheduleDescription}</SummaryItem>
-        <SummaryItem label="Timezone">
-          {publication.timezone?.replace(/_/g, " ") || "Not set"}
-        </SummaryItem>
-        <SummaryItem label="Next scout run">
-          {formatNextRun(
-            publication.nextScoutAt,
-            publication.timezone || "UTC",
-          )}
-        </SummaryItem>
         <SummaryItem label="Publish mode">
           <span className="rounded-full bg-[var(--color-accent-light)] px-2 py-0.5 text-xs font-medium text-[var(--color-accent)]">
             {MODE_LABELS[publication.autoPublishMode] ??
@@ -52,6 +42,16 @@ export function ScheduleSummary({ publication, onEdit }: ScheduleSummaryProps) {
             <span className="ml-2 text-xs text-[var(--color-text-muted)]">
               {publication.cadencePostsPerWeek}/week
             </span>
+          )}
+        </SummaryItem>
+        <SummaryItem label="Schedule">{scheduleDescription}</SummaryItem>
+        <SummaryItem label="Timezone">
+          {publication.timezone?.replace(/_/g, " ") || "Not set"}
+        </SummaryItem>
+        <SummaryItem label="Next scout run">
+          {formatNextRun(
+            publication.nextScoutAt,
+            publication.timezone || "UTC",
           )}
         </SummaryItem>
       </div>
