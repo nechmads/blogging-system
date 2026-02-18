@@ -62,12 +62,13 @@ images.post('/sessions/:sessionId/generate-images', async (c) => {
   }
 
   try {
-    // Generate 4 images in parallel using flux-2-klein-4b (requires multipart)
+    // Generate 4 images in parallel using flux-2-dev (requires multipart)
     function buildMultipart(prompt: string) {
       const form = new FormData()
       form.append('prompt', prompt)
       form.append('width', '1024')
       form.append('height', '1024')
+      form.append('steps', '20')
       const formResponse = new Response(form)
       return {
         body: formResponse.body!,
@@ -78,7 +79,7 @@ images.post('/sessions/:sessionId/generate-images', async (c) => {
     const imagePromises = Array.from({ length: 4 }, () => {
       const multipart = buildMultipart(body.prompt.trim())
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      return (c.env.AI as any).run('@cf/black-forest-labs/flux-2-klein-4b', { multipart }) as Promise<{ image: string }>
+      return (c.env.AI as any).run('@cf/black-forest-labs/flux-2-dev', { multipart }) as Promise<{ image: string }>
     })
 
     const results = await Promise.all(imagePromises)
