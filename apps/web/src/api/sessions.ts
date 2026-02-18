@@ -24,6 +24,11 @@ sessions.post('/sessions', async (c) => {
     styleId?: string
   }>()
 
+  if (body.publicationId) {
+    const pub = await verifyPublicationOwnership(c, body.publicationId)
+    if (!pub) return c.json({ error: 'Publication not found' }, 404)
+  }
+
   const sessionId = crypto.randomUUID()
   const session = await c.env.DAL.createSession({
     id: sessionId,
