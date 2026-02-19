@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router'
 import { useUser } from '@clerk/clerk-react'
+import { useValue } from '@legendapp/state/react'
 import {
   ArrowRightIcon,
   MagnifyingGlassIcon,
@@ -9,19 +10,24 @@ import {
 } from '@phosphor-icons/react'
 import { Loader } from '@/components/loader/Loader'
 import { EmptyPublications } from '@/components/publications/EmptyPublications'
-import { CreatePublicationModal } from '@/components/publications/CreatePublicationModal'
+import { PublicationWizard } from '@/components/publications/wizard/PublicationWizard'
 import { PublicationCard } from '@/components/publications/PublicationCard'
+import { GettingStartedChecklist } from '@/components/dashboard/GettingStartedChecklist'
+import { QuickActions } from '@/components/dashboard/QuickActions'
+import { checklistStore$ } from '@/stores/checklist-store'
 import { IDEA_STATUS_COLORS } from '@/lib/constants'
 import { formatRelativeTime } from '@/lib/format'
-import { fetchPublications, fetchRecentIdeas, fetchSessions } from '@/lib/api'
-import type { PublicationConfig, Idea, Session } from '@/lib/types'
+import { fetchPublications, fetchRecentIdeas, fetchSessions, fetchStyles } from '@/lib/api'
+import type { PublicationConfig, Idea, Session, WritingStyle } from '@/lib/types'
 
 export function DashboardPage() {
   const { user } = useUser()
   const navigate = useNavigate()
+  const checklistDismissed = useValue(checklistStore$.dismissed)
   const [publications, setPublications] = useState<PublicationConfig[]>([])
   const [ideas, setIdeas] = useState<Idea[]>([])
   const [sessions, setSessions] = useState<Session[]>([])
+  const [styles, setStyles] = useState<WritingStyle[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [showCreateModal, setShowCreateModal] = useState(false)
@@ -29,14 +35,16 @@ export function DashboardPage() {
   const loadData = useCallback(async () => {
     try {
       setError(null)
-      const [pubs, recentIdeas, allSessions] = await Promise.all([
+      const [pubs, recentIdeas, allSessions, allStyles] = await Promise.all([
         fetchPublications(),
         fetchRecentIdeas(8).catch(() => [] as Idea[]),
         fetchSessions().catch(() => [] as Session[]),
+        fetchStyles().catch(() => [] as WritingStyle[]),
       ])
       setPublications(pubs)
       setIdeas(recentIdeas)
       setSessions(allSessions.filter((s) => s.status === 'active'))
+      setStyles(allStyles)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load')
     } finally {
@@ -80,7 +88,7 @@ export function DashboardPage() {
         <div className="mt-12 grid gap-6 sm:grid-cols-3">
           <InfoCard
             icon={<MagnifyingGlassIcon size={24} />}
-            title="Content Scout"
+            title="Ideas Agent"
             description="Discovers trending topics and generates fresh ideas for your publications."
           />
           <InfoCard
@@ -95,10 +103,10 @@ export function DashboardPage() {
           />
         </div>
 
-        <CreatePublicationModal
+        <PublicationWizard
           isOpen={showCreateModal}
           onClose={() => setShowCreateModal(false)}
-          onCreated={(pub) => navigate(`/publications/${pub.id}/settings`)}
+          onCreated={() => loadData()}
         />
       </div>
     )
@@ -118,6 +126,16 @@ export function DashboardPage() {
         <div className="mt-4 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700 dark:border-red-800 dark:bg-red-950 dark:text-red-300">
           {error}
         </div>
+      )}
+
+      {/* Getting Started Checklist or Quick Actions */}
+      {!checklistDismissed ? (
+        <GettingStartedChecklist publication={publications[0]} />
+      ) : (
+        <QuickActions
+          publications={publications}
+          hasCustomStyle={styles.some((s) => !s.isPrebuilt)}
+        />
       )}
 
       {/* Publications */}

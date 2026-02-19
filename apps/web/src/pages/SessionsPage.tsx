@@ -1,24 +1,18 @@
 import { useCallback, useEffect, useState } from 'react'
-import { useNavigate } from 'react-router'
 import { PlusIcon } from '@phosphor-icons/react'
 import { Modal } from '@/components/modal/Modal'
 import { Loader } from '@/components/loader/Loader'
 import { SessionCard } from '@/components/session/SessionCard'
-import { fetchSessions, createSession, deleteSession, fetchPublications } from '@/lib/api'
-import type { Session, PublicationConfig } from '@/lib/types'
+import { NewSessionModal } from '@/components/session/NewSessionModal'
+import { fetchSessions, deleteSession } from '@/lib/api'
+import type { Session } from '@/lib/types'
 
 export function SessionsPage() {
   const [sessions, setSessions] = useState<Session[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [showCreateModal, setShowCreateModal] = useState(false)
-  const [newTitle, setNewTitle] = useState('')
-  const [selectedPublicationId, setSelectedPublicationId] = useState<string>('')
-  const [publications, setPublications] = useState<PublicationConfig[]>([])
-  const [publicationsLoaded, setPublicationsLoaded] = useState(false)
-  const [creating, setCreating] = useState(false)
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null)
-  const navigate = useNavigate()
 
   const loadSessions = useCallback(async () => {
     try {
@@ -35,45 +29,6 @@ export function SessionsPage() {
   useEffect(() => {
     loadSessions()
   }, [loadSessions])
-
-  const openCreateModal = async () => {
-    setShowCreateModal(true)
-    if (!publicationsLoaded) {
-      try {
-        const pubs = await fetchPublications()
-        setPublications(pubs)
-        setSelectedPublicationId(pubs.length === 1 ? pubs[0].id : '')
-        setPublicationsLoaded(true)
-      } catch {
-        // Non-critical — user can still create session without publication
-        setPublicationsLoaded(true)
-      }
-    }
-  }
-
-  const closeCreateModal = () => {
-    setShowCreateModal(false)
-    setNewTitle('')
-    setSelectedPublicationId('')
-    setPublicationsLoaded(false)
-  }
-
-  const handleCreate = async () => {
-    if (creating) return
-    setCreating(true)
-    try {
-      const session = await createSession({
-        title: newTitle.trim() || undefined,
-        publicationId: selectedPublicationId || undefined,
-      })
-      closeCreateModal()
-      navigate(`/writing/${session.id}`)
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to create session')
-    } finally {
-      setCreating(false)
-    }
-  }
 
   const handleDelete = async (id: string) => {
     try {
@@ -99,7 +54,7 @@ export function SessionsPage() {
         <h2 className="text-xl font-bold">Writing Sessions</h2>
         <button
           type="button"
-          onClick={openCreateModal}
+          onClick={() => setShowCreateModal(true)}
           className="flex items-center gap-1.5 rounded-lg bg-[#d97706] px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-[#b45309]"
         >
           <PlusIcon size={16} />
@@ -133,68 +88,10 @@ export function SessionsPage() {
       )}
 
       {/* Create Session Modal */}
-      <Modal isOpen={showCreateModal} onClose={closeCreateModal}>
-        <div className="space-y-4 p-5">
-          <h3 className="text-lg font-semibold">New Writing Session</h3>
-          <input
-            type="text"
-            placeholder="Session title (optional)"
-            value={newTitle}
-            onChange={(e) => setNewTitle(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') handleCreate()
-            }}
-            className="w-full rounded-lg border border-[#e5e7eb] bg-white px-3 py-2 text-sm text-[#0a0a0a] placeholder:text-[#6b7280] focus:border-[#d97706] focus:outline-none focus:ring-1 focus:ring-[#d97706] dark:border-[#374151] dark:bg-[#1a1a1a] dark:text-[#fafafa]"
-            autoFocus
-          />
-          {!publicationsLoaded && (
-            <p className="text-xs text-[#6b7280]">Loading publications...</p>
-          )}
-          {publicationsLoaded && publications.length > 0 && (
-            <div>
-              <label
-                htmlFor="pub-select"
-                className="mb-1 block text-sm font-medium text-[#374151] dark:text-[#d1d5db]"
-              >
-                Publication
-              </label>
-              <select
-                id="pub-select"
-                value={selectedPublicationId}
-                onChange={(e) => setSelectedPublicationId(e.target.value)}
-                className="w-full rounded-lg border border-[#e5e7eb] bg-white px-3 py-2 text-sm text-[#0a0a0a] focus:border-[#d97706] focus:outline-none focus:ring-1 focus:ring-[#d97706] dark:border-[#374151] dark:bg-[#1a1a1a] dark:text-[#fafafa]"
-              >
-                <option value="">None</option>
-                {publications.map((pub) => (
-                  <option key={pub.id} value={pub.id}>
-                    {pub.name}
-                  </option>
-                ))}
-              </select>
-              <p className="mt-1 text-xs text-[#6b7280]">
-                Links this session to a publication's writing style and settings.
-              </p>
-            </div>
-          )}
-          <div className="flex justify-end gap-2">
-            <button
-              type="button"
-              onClick={closeCreateModal}
-              className="rounded-lg border border-[#e5e7eb] px-4 py-2 text-sm font-medium text-[#0a0a0a] transition-colors hover:bg-[#f5f5f5] dark:border-[#374151] dark:text-[#fafafa] dark:hover:bg-[#1a1a1a]"
-            >
-              Cancel
-            </button>
-            <button
-              type="button"
-              onClick={handleCreate}
-              disabled={creating}
-              className="rounded-lg bg-[#d97706] px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-[#b45309] disabled:opacity-50"
-            >
-              {creating ? 'Creating...' : 'Create'}
-            </button>
-          </div>
-        </div>
-      </Modal>
+      <NewSessionModal
+        isOpen={showCreateModal}
+        onClose={() => setShowCreateModal(false)}
+      />
 
       {/* Delete Confirmation Modal */}
       <Modal
