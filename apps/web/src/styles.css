@@ -2,6 +2,9 @@
 @source "../node_modules/streamdown/dist/index.js";
 
 /* Markdown Table Styling (Tailwind @apply) */
+.markdown-body {
+  @apply overflow-x-auto;
+}
 .markdown-body table {
   @apply w-full border-collapse my-4 text-[0.95em];
 }

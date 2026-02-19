@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router'
 import { PlusIcon } from '@phosphor-icons/react'
 import { Loader } from '@/components/loader/Loader'
 import { EmptyPublications } from '@/components/publications/EmptyPublications'
-import { CreatePublicationModal } from '@/components/publications/CreatePublicationModal'
+import { PublicationWizard } from '@/components/publications/wizard/PublicationWizard'
 import { PublicationCard } from '@/components/publications/PublicationCard'
 import { fetchPublications } from '@/lib/api'
 import type { PublicationConfig } from '@/lib/types'
@@ -43,10 +43,10 @@ export function PublicationsPage() {
     return (
       <div className="mx-auto max-w-2xl px-6 py-16 text-center">
         <EmptyPublications onCreateClick={() => setShowCreateModal(true)} />
-        <CreatePublicationModal
+        <PublicationWizard
           isOpen={showCreateModal}
           onClose={() => setShowCreateModal(false)}
-          onCreated={(pub) => navigate(`/publications/${pub.id}/settings`)}
+          onCreated={() => loadPublications()}
         />
       </div>
     )
@@ -82,10 +82,10 @@ export function PublicationsPage() {
         ))}
       </div>
 
-      <CreatePublicationModal
+      <PublicationWizard
         isOpen={showCreateModal}
         onClose={() => setShowCreateModal(false)}
-        onCreated={(pub) => navigate(`/publications/${pub.id}/settings`)}
+        onCreated={() => loadPublications()}
       />
     </div>
   )

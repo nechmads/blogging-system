@@ -103,8 +103,12 @@ export function ChatPanel({ sessionId, chatToken, seedContext, sessionTitle, onA
           </div>
         )}
 
-        {messages.map((msg) => (
-          <ChatMessage key={msg.id} message={msg} />
+        {messages.map((msg, i) => (
+          <ChatMessage
+            key={msg.id}
+            message={msg}
+            isStreaming={isPending && msg.role === 'assistant' && i === messages.length - 1}
+          />
         ))}
 
         {showThinking && (

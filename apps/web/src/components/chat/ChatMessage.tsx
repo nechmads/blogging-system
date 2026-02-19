@@ -4,9 +4,10 @@ import { ToolCallIndicator } from './ToolCallIndicator'
 
 interface ChatMessageProps {
   message: UIMessage
+  isStreaming?: boolean
 }
 
-export function ChatMessage({ message }: ChatMessageProps) {
+export function ChatMessage({ message, isStreaming = false }: ChatMessageProps) {
   const isUser = message.role === 'user'
 
   if (isUser) {
@@ -33,7 +34,7 @@ export function ChatMessage({ message }: ChatMessageProps) {
                 className="rounded-2xl border border-[#e5e7eb] bg-[#f5f5f5] px-4 py-2.5 text-base leading-relaxed text-[#0a0a0a] dark:border-[#374151] dark:bg-[#1a1a1a] dark:text-[#fafafa]"
               >
                 <div className="prose max-w-none">
-                  <MemoizedMarkdown content={part.text} id={`msg-${message.id}-${i}`} />
+                  <MemoizedMarkdown content={part.text} id={`msg-${message.id}-${i}`} isAnimating={isStreaming} />
                 </div>
               </div>
             )

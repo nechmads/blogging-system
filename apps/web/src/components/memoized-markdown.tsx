@@ -1,34 +1,20 @@
-import { marked } from "marked";
-import type { Tokens } from "marked";
-import { memo, useMemo } from "react";
+import { memo } from "react";
 import { Streamdown } from "streamdown";
 
-function parseMarkdownIntoBlocks(markdown: string): string[] {
-  const tokens: TokensList = marked.lexer(markdown);
-  return tokens.map((token: Tokens.Generic) => token.raw);
+interface MemoizedMarkdownProps {
+  content: string;
+  id: string;
+  isAnimating?: boolean;
 }
 
-type TokensList = Array<Tokens.Generic & { raw: string }>;
-
-const MemoizedMarkdownBlock = memo(
-  ({ content }: { content: string }) => (
+export const MemoizedMarkdown = memo(
+  ({ content, isAnimating = false }: MemoizedMarkdownProps) => (
     <div className="markdown-body">
-      <Streamdown>{content}</Streamdown>
+      <Streamdown isAnimating={isAnimating}>{content}</Streamdown>
     </div>
   ),
-  (prevProps, nextProps) => prevProps.content === nextProps.content
-);
-
-MemoizedMarkdownBlock.displayName = "MemoizedMarkdownBlock";
-
-export const MemoizedMarkdown = memo(
-  ({ content, id }: { content: string; id: string }) => {
-    const blocks = useMemo(() => parseMarkdownIntoBlocks(content), [content]);
-    return blocks.map((block, index) => (
-      // biome-ignore lint/suspicious/noArrayIndexKey: immutable index
-      <MemoizedMarkdownBlock content={block} key={`${id}-block_${index}`} />
-    ));
-  }
+  (prev, next) =>
+    prev.content === next.content && prev.isAnimating === next.isAnimating,
 );
 
 MemoizedMarkdown.displayName = "MemoizedMarkdown";

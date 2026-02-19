@@ -149,5 +149,28 @@
   - DraftPanel integration: view/edit toggle (PencilSimple/Eye icons), edit-only on latest version, auto-save with 2s debounce, save status indicator (Saving.../Saved/Unsaved), flush-on-mode-switch
   - Agent conflict handling: when agent creates new draft version while user is editing, pending edits are flushed and edit mode exits to show the new AI draft
   - No pipeline changes needed: agent's `getCurrentDraft()` reads from same SQLite, so user edits are visible to AI automatically
+- [x] **Publication Setup Wizard** — Replaced the simple 3-field `CreatePublicationModal` with a 5-step guided wizard for new publication creation. Includes:
+  - Legend State V3 observable store (`wizard-store.ts`) with async step handlers and saving guards
+  - Step 1 (Basics): Name, Slug (auto-derived), Description — creates publication on Next
+  - Step 2 (Topics): Inline topic creator with removable cards, batch create with `Promise.allSettled`, stable localId keys, duplicate-save prevention via serverId tracking
+  - Step 3 (Writing Style): Lazy-loaded prebuilt styles as radio cards, retry UI on load failure
+  - Step 4 (Publish Mode): Draft vs Auto Publish radio cards with clear explanations and "Recommended" badge, conditional posts-per-week input
+  - Step 5 (All Set): Configuration summary + two CTAs ("Run Content Scout" with scout polling, "Start Writing" with session creation)
+  - Progress bar with aria-label, Back/Skip/Next footer navigation
+  - Orphaned publication handling: notifies parent on mid-wizard close so the list refreshes
+  - Wired up in DashboardPage and PublicationsPage, old CreatePublicationModal deleted
+- [x] **Getting Started Checklist** — Persistent dashboard checklist guiding new users through 6 onboarding steps (create publication → add topics → run ideas agent → review idea → write first post → publish). Includes:
+  - `checklist-store.ts`: Legend State V3 observable with `syncObservable` + `ObservablePersistLocalStorage` for persistent collapsed/dismissed state
+  - `GettingStartedChecklist.tsx`: Self-contained component with 4 parallel API fetches, declarative step definitions with completion checks and conditional actions (links + handlers), progress bar, collapse/expand, per-publication dismiss
+  - Multi-publication support: accepts `publications[]` array, finds first undismissed pub (most recent first)
+  - Inline actions: "Run now" triggers scout + polling, "Start writing" creates session + navigates
+  - Step prerequisites: actions gated on prior step completion (e.g., write requires reviewed idea)
+  - Silent error handling: hides checklist on fetch failure, no dashboard blocking
+  - Integrated into DashboardPage between greeting and publications section
+- [x] **Dashboard Quick Actions** — Quick action shortcuts that replace the checklist after dismissal. Includes:
+  - Extracted `NewSessionModal` from `SessionsPage` into reusable `components/session/NewSessionModal.tsx`
+  - `QuickActions` component with 3 card-style CTAs: Start Writing (opens NewSessionModal), Get New Ideas (triggers scout, pub picker if >1), Create Writing Style (link to /styles, conditional on no custom styles)
+  - Dashboard integration: fetches styles on load, reads `checklistStore$.dismissed`, conditionally renders checklist vs quick actions in same slot
+  - Dynamic grid layout: 3-col when style card shows, 2-col when hidden
 - [ ] Writer Agent — Phase 2: Voice input (transcription in `input-processor.ts`)
 - [ ] Writer Agent — Phase 2: D1 session sync (synchronize DO state back to D1 for listing accuracy)
