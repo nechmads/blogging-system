@@ -9,12 +9,12 @@ export async function autoWriteTopIdea(
   ideas: IdeaBrief[],
   storedIdeaIds: string[],
 ): Promise<number> {
-  if (publication.autoPublishMode === 'draft') return 0
+  // Defense-in-depth: workflow already filters, but guard here too for safety
+  if (publication.autoPublishMode === 'ideas-only') return 0
 
-  if (publication.autoPublishMode === 'full-auto') {
-    const shouldWrite = await checkCadence(env, publication)
-    if (!shouldWrite) return 0
-  }
+  // Both 'draft' and 'full-auto' respect cadence
+  const shouldWrite = await checkCadence(env, publication)
+  if (!shouldWrite) return 0
 
   // Pick the highest-scoring idea and its corresponding stored ID
   let topIndex = 0
@@ -31,7 +31,8 @@ export async function autoWriteTopIdea(
   const storedIdea = await env.DAL.getIdeaById(ideaId)
   if (!storedIdea) return 0
 
-  await writeAndPublish(env, publication, storedIdea)
+  const shouldPublish = publication.autoPublishMode === 'full-auto'
+  await writeIdea(env, publication, storedIdea, shouldPublish)
   return 1
 }
 
@@ -45,13 +46,14 @@ async function checkCadence(env: ScoutEnv, publication: Publication): Promise<bo
  * Calls web worker's /internal/* endpoints via service binding to:
  * 1. Create a writing session with seed context
  * 2. Run autonomous auto-write (returns draft directly, no polling)
- * 3. Publish the draft to CMS
+ * 3. Publish the draft to CMS (only when publish=true)
  * 4. Update idea status
  */
-async function writeAndPublish(
+async function writeIdea(
   env: ScoutEnv,
   publication: Publication,
   idea: Idea,
+  publish: boolean,
 ): Promise<void> {
   const internalHeaders = {
     'Content-Type': 'application/json',
@@ -100,18 +102,20 @@ async function writeAndPublish(
     console.warn(`[auto-write] Session ${session.id}: draft is partial — proofread may be incomplete`)
   }
 
-  // 3. Publish the draft
-  const publishRes = await env.WEB.fetch(
-    new Request(`https://internal/internal/sessions/${session.id}/publish`, {
-      method: 'POST',
-      headers: internalHeaders,
-      body: JSON.stringify({
-        slug: slugify(idea.title),
-        author: publication.defaultAuthor,
+  // 3. Publish the draft (only in full-auto mode)
+  if (publish) {
+    const publishRes = await env.WEB.fetch(
+      new Request(`https://internal/internal/sessions/${session.id}/publish`, {
+        method: 'POST',
+        headers: internalHeaders,
+        body: JSON.stringify({
+          slug: slugify(idea.title),
+          author: publication.defaultAuthor,
+        }),
       }),
-    }),
-  )
-  if (!publishRes.ok) throw new Error(`Publish failed: ${await publishRes.text()}`)
+    )
+    if (!publishRes.ok) throw new Error(`Publish failed: ${await publishRes.text()}`)
+  }
 
   // 4. Update idea status
   await env.DAL.promoteIdea(idea.id, session.id)

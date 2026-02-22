@@ -34,7 +34,7 @@ export function PublicationCard({ publication, onClick }: PublicationCardProps) 
         <span className="rounded-full bg-[var(--color-accent-light)] px-2 py-0.5 font-medium text-[var(--color-accent)]">
           Schedule: {MODE_LABELS[publication.autoPublishMode] ?? publication.autoPublishMode}
         </span>
-        {publication.autoPublishMode === 'full-auto' && (
+        {publication.autoPublishMode !== 'ideas-only' && (
           <span>{publication.cadencePostsPerWeek}/week</span>
         )}
       </div>

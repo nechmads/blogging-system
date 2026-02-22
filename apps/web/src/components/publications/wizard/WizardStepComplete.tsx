@@ -104,7 +104,9 @@ export function WizardStepComplete({ onClose, onCreated }: WizardStepCompletePro
           <SummaryRow label="Publish mode" value={
             autoPublishMode === 'full-auto'
               ? `Auto Publish (${cadencePostsPerWeek}/week)`
-              : 'Draft (you review before publishing)'
+              : autoPublishMode === 'draft'
+                ? `Draft (${cadencePostsPerWeek}/week, you review and publish)`
+                : 'Gather Ideas (you decide what to write)'
           } />
         </div>
       </div>

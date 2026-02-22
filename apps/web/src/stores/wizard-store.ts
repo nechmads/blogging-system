@@ -243,7 +243,7 @@ export async function handlePublishModeNext(): Promise<void> {
   try {
     const updated = await updatePublication(publicationId, {
       autoPublishMode,
-      ...(autoPublishMode === 'full-auto' ? { cadencePostsPerWeek } : {}),
+      ...(autoPublishMode !== 'ideas-only' ? { cadencePostsPerWeek } : {}),
     })
     wizardStore$.publication.set(updated)
     wizardStore$.currentStep.set(5)

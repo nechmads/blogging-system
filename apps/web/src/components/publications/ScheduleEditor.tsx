@@ -77,7 +77,7 @@ export function ScheduleEditor({
           ))}
         </div>
 
-        {state.autoPublishMode === "full-auto" && (
+        {state.autoPublishMode !== "ideas-only" && (
           <div>
             <label className="mb-1 block text-sm font-medium">
               Posts per week
