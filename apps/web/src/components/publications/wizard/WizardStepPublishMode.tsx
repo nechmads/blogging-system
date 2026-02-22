@@ -9,6 +9,12 @@ const PUBLISH_MODES: {
   badge?: string
 }[] = [
   {
+    value: 'ideas-only',
+    label: 'Gather Ideas',
+    description:
+      'The Content Scout finds ideas based on your topics. You decide what to write and when to publish.',
+  },
+  {
     value: 'draft',
     label: 'Draft Mode',
     description:
@@ -75,7 +81,7 @@ export function WizardStepPublishMode() {
         ))}
       </div>
 
-      {autoPublishMode === 'full-auto' && (
+      {autoPublishMode !== 'ideas-only' && (
         <div className="rounded-lg border border-[var(--color-border-default)] bg-[var(--color-bg-card)] p-4">
           <label className="mb-2 block text-base font-medium">Posts per week</label>
           <input
@@ -92,7 +98,9 @@ export function WizardStepPublishMode() {
             className="w-24 rounded-lg border border-[var(--color-border-default)] bg-[var(--color-bg-primary)] px-3 py-2 text-base focus:border-[var(--color-accent)] focus:outline-none focus:ring-1 focus:ring-[var(--color-accent)]"
           />
           <p className="mt-2 text-base text-[var(--color-text-muted)]">
-            The system will aim to publish this many posts each week.
+            {autoPublishMode === 'full-auto'
+              ? 'The system will aim to publish this many posts each week.'
+              : 'The system will aim to write this many drafts each week.'}
           </p>
         </div>
       )}

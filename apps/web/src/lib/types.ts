@@ -76,7 +76,7 @@ export interface PublishResult {
 
 // --- Automation types ---
 
-export type AutoPublishMode = 'draft' | 'full-auto'
+export type AutoPublishMode = 'ideas-only' | 'draft' | 'full-auto'
 
 export type ScheduleType = 'daily' | 'times_per_day' | 'every_n_days'
 

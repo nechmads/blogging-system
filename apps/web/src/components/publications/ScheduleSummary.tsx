@@ -38,7 +38,7 @@ export function ScheduleSummary({ publication, onEdit }: ScheduleSummaryProps) {
             {MODE_LABELS[publication.autoPublishMode] ??
               publication.autoPublishMode}
           </span>
-          {publication.autoPublishMode === "full-auto" && (
+          {publication.autoPublishMode !== "ideas-only" && (
             <span className="ml-2 text-xs text-[var(--color-text-muted)]">
               {publication.cadencePostsPerWeek}/week
             </span>

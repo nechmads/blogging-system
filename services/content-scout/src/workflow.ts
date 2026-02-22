@@ -83,9 +83,9 @@ export class ScoutWorkflow extends WorkflowEntrypoint<ScoutEnv, ScoutWorkflowPar
       })
       console.log(`[workflow] Step 5 done: ${stored.count} ideas stored`)
 
-      // Step 6: Auto-write (conditional — only for publish/full-auto modes)
+      // Step 6: Auto-write (conditional — 'draft' writes only, 'full-auto' writes + publishes)
       let autoWritten = 0
-      if (context.publication.autoPublishMode !== 'draft') {
+      if (context.publication.autoPublishMode !== 'ideas-only') {
         autoWritten = await step.do(
           'auto-write',
           { retries: { limit: 1, delay: '10 seconds' }, timeout: '10 minutes' },
