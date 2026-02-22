@@ -48,6 +48,7 @@ export interface PublishInput {
   excerpt?: string
   hook?: string
   publicationId?: string
+  draftVersion?: number
   publishToLinkedIn?: boolean
   publishToTwitter?: boolean
   tweetText?: string

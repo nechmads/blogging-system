@@ -50,15 +50,15 @@ export const DraftPanel = React.forwardRef<DraftPanelHandle, DraftPanelProps>(
     const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
     const savingRef = useRef(false)
 
-    // Refs to avoid reactive deps in loadDrafts (prevents infinite re-render loop)
+    // Refs to avoid reactive deps in loadDrafts/doSave (prevents infinite re-render loop)
     const draftsRef = useRef<Draft[]>([])
     const editingRef = useRef(false)
+    const selectedVersionRef = useRef<number | null>(null)
     useEffect(() => { draftsRef.current = drafts }, [drafts])
     useEffect(() => { editingRef.current = editing }, [editing])
+    useEffect(() => { selectedVersionRef.current = selectedVersion }, [selectedVersion])
 
-    const latestVersion = drafts.length > 0 ? drafts[drafts.length - 1].version : null
-    const isOnLatest = selectedVersion === latestVersion
-    const canEdit = isOnLatest && !!content
+    const canEdit = !!content
 
     // --- Save helpers ---
 
@@ -71,7 +71,7 @@ export const DraftPanel = React.forwardRef<DraftPanelHandle, DraftPanelProps>(
       savingRef.current = true
       setSaveStatus('saving')
       try {
-        const updated = await updateDraft(sessionId, markdown, title)
+        const updated = await updateDraft(sessionId, markdown, title, selectedVersionRef.current ?? undefined)
         setContent((prev) => prev ? { ...prev, content: updated.content, title: updated.title, word_count: updated.word_count } : prev)
         setSaveStatus('saved')
         pendingMarkdownRef.current = null
@@ -397,6 +397,7 @@ export const DraftPanel = React.forwardRef<DraftPanelHandle, DraftPanelProps>(
           onClose={() => setShowPublishModal(false)}
           sessionId={sessionId}
           draftTitle={content?.title ?? null}
+          draftVersion={selectedVersion}
           featuredImageUrl={featuredImageUrl}
           sessionPublicationId={publicationId}
           onPublished={handlePublished}

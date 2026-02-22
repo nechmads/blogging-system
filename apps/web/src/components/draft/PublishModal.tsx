@@ -24,6 +24,7 @@ interface PublishModalProps {
   onClose: () => void
   sessionId: string
   draftTitle: string | null
+  draftVersion: number | null
   featuredImageUrl?: string | null
   sessionPublicationId?: string | null
   onPublished: (postId: string) => void
@@ -174,7 +175,7 @@ function SocialCard({ icon, label, connected, selected, onToggle, accentColor, a
 
 // --- Main modal ---
 
-export function PublishModal({ isOpen, onClose, sessionId, draftTitle, featuredImageUrl, sessionPublicationId, onPublished, isRepublish }: PublishModalProps) {
+export function PublishModal({ isOpen, onClose, sessionId, draftTitle, draftVersion, featuredImageUrl, sessionPublicationId, onPublished, isRepublish }: PublishModalProps) {
   const [slug, setSlug] = useState('')
   const [author, setAuthor] = useState('')
   const [tags, setTags] = useState('')
@@ -445,6 +446,7 @@ export function PublishModal({ isOpen, onClose, sessionId, draftTitle, featuredI
         excerpt: excerpt.trim() || undefined,
         hook: hook.trim() || undefined,
         publicationId: selectedPubId || undefined,
+        draftVersion: draftVersion ?? undefined,
         publishToLinkedIn: linkedinSelected || undefined,
         publishToTwitter: twitterSelected || undefined,
         tweetText: twitterSelected && tweetText.trim() ? tweetText.trim() : undefined,
@@ -496,7 +498,7 @@ export function PublishModal({ isOpen, onClose, sessionId, draftTitle, featuredI
           {/* Fixed header */}
           <div className="border-b border-[#e5e7eb] px-5 py-4 dark:border-[#374151]">
             <h3 className="text-lg font-semibold">
-              {isRepublish ? 'Share' : published ? 'Publish Again' : 'Publish Draft'}
+              {isRepublish ? 'Share' : published ? 'Publish Again' : `Publish Post${draftVersion ? ` - Draft ${draftVersion}` : ''}`}
             </h3>
           </div>
 

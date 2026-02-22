@@ -130,14 +130,15 @@ export async function fetchDraft(
 export async function updateDraft(
   sessionId: string,
   content: string,
-  title?: string
+  title?: string,
+  version?: number
 ): Promise<DraftContent> {
   return request<DraftContent>(
     `/api/sessions/${sessionId}/drafts`,
     {
       method: 'PUT',
       headers: JSON_HEADERS,
-      body: JSON.stringify({ content, title }),
+      body: JSON.stringify({ content, title, version }),
     }
   )
 }

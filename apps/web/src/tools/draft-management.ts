@@ -26,14 +26,19 @@ export function createDraftTools(agent: WriterAgent) {
         .describe('The user feedback that prompted this revision (if any)'),
     }),
     execute: async ({ title, content, citations, feedback }) => {
-      const citationsJson = citations ? JSON.stringify(citations) : null
-      const draft = agent.saveDraft(title, content, citationsJson, feedback ?? null)
+      try {
+        const citationsJson = citations ? JSON.stringify(citations) : null
+        const draft = agent.saveDraft(title, content, citationsJson, feedback ?? null)
 
-      return {
-        success: true,
-        version: draft.version,
-        wordCount: draft.word_count,
-        title: draft.title,
+        return {
+          success: true,
+          version: draft.version,
+          wordCount: draft.word_count,
+          title: draft.title,
+        }
+      } catch (error) {
+        console.error('[save_draft] Failed:', error)
+        return { success: false, error: 'Failed to save draft.' }
       }
     },
   })
@@ -43,19 +48,31 @@ export function createDraftTools(agent: WriterAgent) {
       'Get the latest draft version. Use this to review the current state of the post before making changes.',
     inputSchema: z.object({}),
     execute: async () => {
-      const draft = agent.getCurrentDraft()
-      if (!draft) {
-        return { found: false, message: 'No drafts exist yet.' }
-      }
+      try {
+        const draft = agent.getCurrentDraft()
+        if (!draft) {
+          return { found: false, message: 'No drafts exist yet.' }
+        }
 
-      return {
-        found: true,
-        version: draft.version,
-        title: draft.title,
-        content: draft.content,
-        wordCount: draft.word_count,
-        citations: draft.citations ? JSON.parse(draft.citations) : [],
-        isFinal: draft.is_final === 1,
+        let citations: unknown[] = []
+        try {
+          citations = draft.citations ? JSON.parse(draft.citations) : []
+        } catch {
+          console.error(`[get_current_draft] Invalid citations JSON in draft v${draft.version}`)
+        }
+
+        return {
+          found: true,
+          version: draft.version,
+          title: draft.title,
+          content: draft.content,
+          wordCount: draft.word_count,
+          citations,
+          isFinal: draft.is_final === 1,
+        }
+      } catch (error) {
+        console.error('[get_current_draft] Failed:', error)
+        return { found: false, message: 'Failed to retrieve current draft.' }
       }
     },
   })
@@ -67,19 +84,31 @@ export function createDraftTools(agent: WriterAgent) {
       version: z.number().int().positive().describe('The draft version number to retrieve'),
     }),
     execute: async ({ version }) => {
-      const draft = agent.getDraftByVersion(version)
-      if (!draft) {
-        return { found: false, message: `Draft version ${version} does not exist.` }
-      }
+      try {
+        const draft = agent.getDraftByVersion(version)
+        if (!draft) {
+          return { found: false, message: `Draft version ${version} does not exist.` }
+        }
 
-      return {
-        found: true,
-        version: draft.version,
-        title: draft.title,
-        content: draft.content,
-        wordCount: draft.word_count,
-        citations: draft.citations ? JSON.parse(draft.citations) : [],
-        isFinal: draft.is_final === 1,
+        let citations: unknown[] = []
+        try {
+          citations = draft.citations ? JSON.parse(draft.citations) : []
+        } catch {
+          console.error(`[get_draft] Invalid citations JSON in draft v${draft.version}`)
+        }
+
+        return {
+          found: true,
+          version: draft.version,
+          title: draft.title,
+          content: draft.content,
+          wordCount: draft.word_count,
+          citations,
+          isFinal: draft.is_final === 1,
+        }
+      } catch (error) {
+        console.error(`[get_draft] Failed for version ${version}:`, error)
+        return { found: false, message: `Failed to retrieve draft version ${version}.` }
       }
     },
   })
@@ -88,16 +117,21 @@ export function createDraftTools(agent: WriterAgent) {
     description: 'List all draft versions with their metadata. Use this to show draft history.',
     inputSchema: z.object({}),
     execute: async () => {
-      const drafts = agent.listDrafts()
-      return {
-        count: drafts.length,
-        drafts: drafts.map((d) => ({
-          version: d.version,
-          title: d.title,
-          wordCount: d.word_count,
-          isFinal: d.is_final === 1,
-          createdAt: d.created_at,
-        })),
+      try {
+        const drafts = agent.listDrafts()
+        return {
+          count: drafts.length,
+          drafts: drafts.map((d) => ({
+            version: d.version,
+            title: d.title,
+            wordCount: d.word_count,
+            isFinal: d.is_final === 1,
+            createdAt: d.created_at,
+          })),
+        }
+      } catch (error) {
+        console.error('[list_drafts] Failed:', error)
+        return { count: 0, drafts: [], error: 'Failed to list drafts.' }
       }
     },
   })

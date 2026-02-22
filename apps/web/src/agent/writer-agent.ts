@@ -180,39 +180,71 @@ export class WriterAgent extends AIChatAgent<Env, WriterAgentState> {
     onFinish: StreamTextOnFinishCallback<ToolSet>,
     options?: { abortSignal?: AbortSignal },
   ) {
-    const { systemPrompt, tools } = await this.prepareLlmCall();
+    let systemPrompt: string;
+    let tools: ReturnType<typeof createToolSet>;
+    try {
+      ({ systemPrompt, tools } = await this.prepareLlmCall());
+    } catch (error) {
+      console.error("[onChatMessage] prepareLlmCall failed:", error);
+      this.setState({
+        ...this.state,
+        isGenerating: false,
+        lastError: error instanceof Error ? error.message : "Unknown error",
+      });
+      return Response.json(
+        { error: "Failed to prepare LLM call" },
+        { status: 500 },
+      );
+    }
+
     const cleaned = cleanupMessages(this.messages);
 
     const stream = createUIMessageStream({
       execute: async ({ writer }) => {
-        const result = streamText({
-          model: anthropic("claude-sonnet-4-6"),
-          system: systemPrompt,
-          messages: await convertToModelMessages(cleaned),
-          tools,
-          stopWhen: stepCountIs(20),
-          abortSignal: options?.abortSignal,
-          onFinish: async (event) => {
-            this.setState({
-              ...this.state,
-              isGenerating: false,
-            });
-            await (
-              onFinish as unknown as StreamTextOnFinishCallback<typeof tools>
-            )(event);
-          },
-          onError: (error) => {
-            console.error("Stream error:", error);
-            this.setState({
-              ...this.state,
-              isGenerating: false,
-              lastError:
-                error instanceof Error ? error.message : "Unknown error",
-            });
-          },
-        });
+        try {
+          const result = streamText({
+            model: anthropic("claude-sonnet-4-6"),
+            system: systemPrompt,
+            messages: await convertToModelMessages(cleaned),
+            tools,
+            stopWhen: stepCountIs(20),
+            abortSignal: options?.abortSignal,
+            onFinish: async (event) => {
+              this.setState({
+                ...this.state,
+                isGenerating: false,
+                lastError: null,
+              });
+              await (
+                onFinish as unknown as StreamTextOnFinishCallback<typeof tools>
+              )(event);
+            },
+            onError: (error) => {
+              console.error("[onChatMessage] Stream error:", error);
+              this.setState({
+                ...this.state,
+                isGenerating: false,
+                lastError:
+                  error instanceof Error ? error.message : "Unknown error",
+              });
+            },
+          });
 
-        writer.merge(result.toUIMessageStream());
+          writer.merge(result.toUIMessageStream());
+        } catch (error) {
+          console.error("[onChatMessage] Stream execute failed:", error);
+          this.setState({
+            ...this.state,
+            isGenerating: false,
+            lastError:
+              error instanceof Error ? error.message : "Unknown error",
+          });
+          throw error;
+        }
+      },
+      onError: (error) => {
+        console.error("[onChatMessage] UIMessageStream error:", error);
+        return error instanceof Error ? error.message : "Unknown stream error";
       },
     });
 
@@ -222,86 +254,117 @@ export class WriterAgent extends AIChatAgent<Env, WriterAgentState> {
   async onRequest(request: Request): Promise<Response> {
     const url = new URL(request.url);
 
-    if (url.pathname.endsWith("/drafts") && request.method === "GET") {
-      return this.handleListDrafts();
-    }
-
-    const draftVersionMatch = url.pathname.match(/\/drafts\/(\d+)$/);
-    if (draftVersionMatch && request.method === "GET") {
-      return this.handleGetDraft(parseInt(draftVersionMatch[1], 10));
-    }
-
-    if (url.pathname.endsWith("/drafts") && request.method === "PUT") {
-      return this.handleUpdateDraft(request);
-    }
-
-    if (url.pathname.endsWith("/generate-seo") && request.method === "POST") {
-      return this.handleGenerateSeo();
-    }
-
-    if (url.pathname.endsWith("/generate-tweet") && request.method === "POST") {
-      return this.handleGenerateTweet(request);
-    }
-
-    if (
-      url.pathname.endsWith("/generate-linkedin-post") &&
-      request.method === "POST"
-    ) {
-      return this.handleGenerateLinkedInPost(request);
-    }
-
-    if (url.pathname.endsWith("/publish") && request.method === "POST") {
-      return this.handlePublishToCms(request);
-    }
-
-    if (
-      url.pathname.endsWith("/update-featured-image") &&
-      request.method === "POST"
-    ) {
-      return this.handleUpdateFeaturedImage(request);
-    }
-
-    if (url.pathname.endsWith("/auto-write") && request.method === "POST") {
-      let body: { message?: string };
-      try {
-        body = (await request.json()) as { message?: string };
-      } catch {
-        return Response.json(
-          { error: "Invalid JSON in request body" },
-          { status: 400 },
-        );
+    try {
+      if (url.pathname.endsWith("/drafts") && request.method === "GET") {
+        return this.handleListDrafts();
       }
-      if (!body.message?.trim()) {
-        return Response.json(
-          { error: "message is required" },
-          { status: 400 },
-        );
-      }
-      return this.handleAutoWrite(body.message.trim());
-    }
 
-    if (url.pathname.endsWith("/chat") && request.method === "POST") {
-      let body: { message?: string };
-      try {
-        body = (await request.json()) as { message?: string };
-      } catch {
-        return Response.json(
-          { error: "Invalid JSON in request body" },
-          { status: 400 },
-        );
+      const draftVersionMatch = url.pathname.match(/\/drafts\/(\d+)$/);
+      if (draftVersionMatch && request.method === "GET") {
+        return this.handleGetDraft(parseInt(draftVersionMatch[1], 10));
       }
-      if (!body.message?.trim()) {
-        return Response.json({ error: "message is required" }, { status: 400 });
-      }
-      return this.handleChat(body.message.trim());
-    }
 
-    // Delegate to AIChatAgent base (handles /get-messages, etc.)
-    return super.onRequest(request);
+      if (url.pathname.endsWith("/drafts") && request.method === "PUT") {
+        return this.handleUpdateDraft(request);
+      }
+
+      if (url.pathname.endsWith("/generate-seo") && request.method === "POST") {
+        return this.handleGenerateSeo();
+      }
+
+      if (url.pathname.endsWith("/generate-tweet") && request.method === "POST") {
+        return this.handleGenerateTweet(request);
+      }
+
+      if (
+        url.pathname.endsWith("/generate-linkedin-post") &&
+        request.method === "POST"
+      ) {
+        return this.handleGenerateLinkedInPost(request);
+      }
+
+      if (url.pathname.endsWith("/publish") && request.method === "POST") {
+        return this.handlePublishToCms(request);
+      }
+
+      if (
+        url.pathname.endsWith("/update-featured-image") &&
+        request.method === "POST"
+      ) {
+        return this.handleUpdateFeaturedImage(request);
+      }
+
+      if (url.pathname.endsWith("/auto-write") && request.method === "POST") {
+        let body: { message?: string };
+        try {
+          body = (await request.json()) as { message?: string };
+        } catch {
+          return Response.json(
+            { error: "Invalid JSON in request body" },
+            { status: 400 },
+          );
+        }
+        if (!body.message?.trim()) {
+          return Response.json(
+            { error: "message is required" },
+            { status: 400 },
+          );
+        }
+        return this.handleAutoWrite(body.message.trim());
+      }
+
+      if (url.pathname.endsWith("/chat") && request.method === "POST") {
+        let body: { message?: string };
+        try {
+          body = (await request.json()) as { message?: string };
+        } catch {
+          return Response.json(
+            { error: "Invalid JSON in request body" },
+            { status: 400 },
+          );
+        }
+        if (!body.message?.trim()) {
+          return Response.json({ error: "message is required" }, { status: 400 });
+        }
+        return this.handleChat(body.message.trim());
+      }
+
+      // Delegate to AIChatAgent base (handles /get-messages, etc.)
+      return super.onRequest(request);
+    } catch (error) {
+      console.error(`[onRequest] Unhandled error on ${request.method} ${url.pathname}:`, error);
+      // Reset isGenerating if it was left stuck
+      if (this.state.isGenerating) {
+        this.setState({
+          ...this.state,
+          isGenerating: false,
+          lastError: error instanceof Error ? error.message : "Unknown error",
+        });
+      }
+      return Response.json(
+        { error: "Internal server error" },
+        { status: 500 },
+      );
+    }
   }
 
   async handleChat(userMessage: string): Promise<Response> {
-    const { systemPrompt, tools } = await this.prepareLlmCall();
+    let systemPrompt: string;
+    let tools: ReturnType<typeof createToolSet>;
+    try {
+      ({ systemPrompt, tools } = await this.prepareLlmCall());
+    } catch (error) {
+      console.error("[handleChat] prepareLlmCall failed:", error);
+      this.setState({
+        ...this.state,
+        isGenerating: false,
+        lastError: error instanceof Error ? error.message : "Unknown error",
+      });
+      return Response.json(
+        { error: "Failed to prepare LLM call" },
+        { status: 500 },
+      );
+    }
 
     const userMsg = {
       id: crypto.randomUUID(),
@@ -329,7 +392,7 @@ export class WriterAgent extends AIChatAgent<Env, WriterAgentState> {
         usage: result.usage,
       });
     } catch (error) {
-      console.error("Chat error:", error);
+      console.error("[handleChat] generateText failed:", error);
       this.setState({
         ...this.state,
         isGenerating: false,
@@ -355,14 +418,23 @@ export class WriterAgent extends AIChatAgent<Env, WriterAgentState> {
       );
     }
 
-    const customStylePrompt = await this.resolveCustomStyle();
-
-    const systemPrompt = buildAutonomousSystemPrompt({
-      seedContext: this.state.seedContext,
-      customStylePrompt,
-    });
-
-    const tools = createAutoWriteToolSet(this);
+    let customStylePrompt: string | undefined;
+    let systemPrompt: string;
+    let tools: ReturnType<typeof createAutoWriteToolSet>;
+    try {
+      customStylePrompt = await this.resolveCustomStyle();
+      systemPrompt = buildAutonomousSystemPrompt({
+        seedContext: this.state.seedContext,
+        customStylePrompt,
+      });
+      tools = createAutoWriteToolSet(this);
+    } catch (error) {
+      console.error("[handleAutoWrite] Setup failed:", error);
+      return Response.json(
+        { success: false, error: "Failed to prepare auto-write" },
+        { status: 500 },
+      );
+    }
 
     // Set phase directly to drafting — skip idle/interviewing
     this.setState({
@@ -419,15 +491,21 @@ export class WriterAgent extends AIChatAgent<Env, WriterAgentState> {
       });
     } catch (error) {
       clearTimeout(timeoutId);
-      console.error("Auto-write error:", error);
+      console.error("[handleAutoWrite] generateText failed:", error);
       this.setState({
         ...this.state,
         isGenerating: false,
         lastError: error instanceof Error ? error.message : "Unknown error",
       });
 
-      // Still check if a draft was saved before the error
-      const draft = this.getCurrentDraft();
+      // Best-effort check for a partial draft saved before the error
+      let draft: DraftRow | null = null;
+      try {
+        draft = this.getCurrentDraft();
+      } catch (draftError) {
+        console.error("[handleAutoWrite] Failed to check for partial draft:", draftError);
+      }
+
       if (draft) {
         return Response.json({
           success: true,
@@ -476,36 +554,44 @@ export class WriterAgent extends AIChatAgent<Env, WriterAgentState> {
   }
 
   async handleGenerateSeo(): Promise<Response> {
-    const draft = this.getCurrentDraft();
-    if (!draft) {
-      return Response.json({ error: "No draft exists." }, { status: 400 });
+    try {
+      const draft = this.getCurrentDraft();
+      if (!draft) {
+        return Response.json({ error: "No draft exists." }, { status: 400 });
+      }
+
+      const draftInput: DraftInput = {
+        title: draft.title,
+        content: draft.content,
+      };
+
+      // Run hook (Sonnet) and SEO meta (Haiku) generation in parallel
+      const [hookResult, seoResult] = await Promise.allSettled([
+        createHook(draftInput),
+        createSeoMeta(draftInput),
+      ]);
+
+      const hook = hookResult.status === "fulfilled" ? hookResult.value : "";
+      const { excerpt, tags } =
+        seoResult.status === "fulfilled"
+          ? seoResult.value
+          : { excerpt: "", tags: "" };
+
+      if (hookResult.status === "rejected") {
+        console.error("[handleGenerateSeo] Hook generation failed:", hookResult.reason);
+      }
+      if (seoResult.status === "rejected") {
+        console.error("[handleGenerateSeo] SEO meta generation failed:", seoResult.reason);
+      }
+
+      return Response.json({ hook, excerpt, tags });
+    } catch (error) {
+      console.error("[handleGenerateSeo] Failed:", error);
+      return Response.json(
+        { error: "Failed to generate SEO metadata" },
+        { status: 500 },
+      );
     }
-
-    const draftInput: DraftInput = {
-      title: draft.title,
-      content: draft.content,
-    };
-
-    // Run hook (Sonnet) and SEO meta (Haiku) generation in parallel
-    const [hookResult, seoResult] = await Promise.allSettled([
-      createHook(draftInput),
-      createSeoMeta(draftInput),
-    ]);
-
-    const hook = hookResult.status === "fulfilled" ? hookResult.value : "";
-    const { excerpt, tags } =
-      seoResult.status === "fulfilled"
-        ? seoResult.value
-        : { excerpt: "", tags: "" };
-
-    if (hookResult.status === "rejected") {
-      console.error("Hook generation failed:", hookResult.reason);
-    }
-    if (seoResult.status === "rejected") {
-      console.error("SEO meta generation failed:", seoResult.reason);
-    }
-
-    return Response.json({ hook, excerpt, tags });
   }
 
   async handleGenerateTweet(request: Request): Promise<Response> {
@@ -526,9 +612,17 @@ export class WriterAgent extends AIChatAgent<Env, WriterAgentState> {
       title: draft.title,
       content: draft.content,
     };
-    const tweet = await createTweet(draftInput, hook);
 
-    return Response.json({ tweet });
+    try {
+      const tweet = await createTweet(draftInput, hook);
+      return Response.json({ tweet });
+    } catch (error) {
+      console.error("[handleGenerateTweet] Failed:", error);
+      return Response.json(
+        { error: "Failed to generate tweet" },
+        { status: 500 },
+      );
+    }
   }
 
   async handleGenerateLinkedInPost(request: Request): Promise<Response> {
@@ -549,13 +643,21 @@ export class WriterAgent extends AIChatAgent<Env, WriterAgentState> {
       title: draft.title,
       content: draft.content,
     };
-    const linkedInPost = await optimizeForLinkedIn(draftInput, {
-      mode,
-      hook: body.hook?.trim() || undefined,
-      currentText: body.currentText?.trim() || undefined,
-    });
 
-    return Response.json({ linkedInPost });
+    try {
+      const linkedInPost = await optimizeForLinkedIn(draftInput, {
+        mode,
+        hook: body.hook?.trim() || undefined,
+        currentText: body.currentText?.trim() || undefined,
+      });
+      return Response.json({ linkedInPost });
+    } catch (error) {
+      console.error("[handleGenerateLinkedInPost] Failed:", error);
+      return Response.json(
+        { error: "Failed to generate LinkedIn post" },
+        { status: 500 },
+      );
+    }
   }
 
   /**
@@ -588,14 +690,6 @@ export class WriterAgent extends AIChatAgent<Env, WriterAgentState> {
   }
 
   async handlePublishToCms(request: Request): Promise<Response> {
-    const draft = this.getCurrentDraft();
-    if (!draft) {
-      return Response.json(
-        { error: "No draft exists to publish." },
-        { status: 400 },
-      );
-    }
-
     if (this.state.writingPhase === "publishing") {
       return Response.json(
         { error: "A publish operation is already in progress." },
@@ -610,6 +704,7 @@ export class WriterAgent extends AIChatAgent<Env, WriterAgentState> {
       excerpt?: string;
       hook?: string;
       publicationId?: string;
+      draftVersion?: number;
     };
     try {
       body = (await request.json()) as typeof body;
@@ -632,6 +727,17 @@ export class WriterAgent extends AIChatAgent<Env, WriterAgentState> {
           error:
             "Slug must contain only lowercase letters, numbers, and hyphens",
         },
+        { status: 400 },
+      );
+    }
+
+    // Resolve which draft to publish
+    const draft = body.draftVersion
+      ? this.getDraftByVersion(body.draftVersion)
+      : this.getCurrentDraft();
+    if (!draft) {
+      return Response.json(
+        { error: body.draftVersion ? `Draft version ${body.draftVersion} not found.` : "No draft exists to publish." },
         { status: 400 },
       );
     }
@@ -688,7 +794,7 @@ export class WriterAgent extends AIChatAgent<Env, WriterAgentState> {
         publicationId: cmsPublicationId,
       });
 
-      this.finalizeDraft(post.id);
+      this.finalizeDraft(post.id, draft.version);
 
       return Response.json({
         success: true,
@@ -757,17 +863,19 @@ export class WriterAgent extends AIChatAgent<Env, WriterAgentState> {
     return rows.length > 0 ? rows[0] : null;
   }
 
-  updateDraft(content: string, title?: string): DraftRow | null {
-    const current = this.getCurrentDraft();
-    if (!current) return null;
+  updateDraft(content: string, title?: string, version?: number): DraftRow | null {
+    const draft = version
+      ? this.getDraftByVersion(version)
+      : this.getCurrentDraft();
+    if (!draft) return null;
 
     const wordCount = content.split(/\s+/).filter(Boolean).length;
-    const newTitle = title !== undefined ? title : current.title;
+    const newTitle = title !== undefined ? title : draft.title;
 
     this
-      .sql`UPDATE drafts SET content = ${content}, title = ${newTitle}, word_count = ${wordCount} WHERE version = ${current.version}`;
+      .sql`UPDATE drafts SET content = ${content}, title = ${newTitle}, word_count = ${wordCount} WHERE version = ${draft.version}`;
 
-    return { ...current, content, title: newTitle, word_count: wordCount };
+    return { ...draft, content, title: newTitle, word_count: wordCount };
   }
 
   getDraftByVersion(version: number): DraftRow | null {
@@ -781,23 +889,27 @@ export class WriterAgent extends AIChatAgent<Env, WriterAgentState> {
       .sql<DraftSummary>`SELECT id, version, title, word_count, is_final, created_at FROM drafts ORDER BY version ASC`;
   }
 
-  finalizeDraft(cmsPostId: string): void {
-    const current = this.getCurrentDraft();
-    if (!current) return;
+  finalizeDraft(cmsPostId: string, publishedVersion?: number): void {
+    const version = publishedVersion ?? this.getCurrentDraft()?.version;
+    if (!version) return;
 
-    // Mark current as final
-    this.sql`UPDATE drafts SET is_final = 1 WHERE version = ${current.version}`;
+    // Mark published version as final
+    this.sql`UPDATE drafts SET is_final = 1 WHERE version = ${version}`;
+
+    // Delete drafts after the published version (user chose an older draft)
+    this.sql`DELETE FROM drafts WHERE version > ${version}`;
 
     // Clean up intermediate drafts (keep v1 + final)
-    if (current.version > 1) {
+    if (version > 1) {
       this
-        .sql`DELETE FROM drafts WHERE version > 1 AND version < ${current.version}`;
+        .sql`DELETE FROM drafts WHERE version > 1 AND version < ${version}`;
     }
 
     this.setState({
       ...this.state,
       writingPhase: "published",
       cmsPostId,
+      currentDraftVersion: version,
     });
   }
 
@@ -825,7 +937,7 @@ export class WriterAgent extends AIChatAgent<Env, WriterAgentState> {
   }
 
   private async handleUpdateDraft(request: Request): Promise<Response> {
-    let body: { content?: unknown; title?: unknown };
+    let body: { content?: unknown; title?: unknown; version?: unknown };
     try {
       body = (await request.json()) as typeof body;
     } catch {
@@ -853,12 +965,15 @@ export class WriterAgent extends AIChatAgent<Env, WriterAgentState> {
       );
     }
 
+    const version = typeof body.version === "number" ? body.version : undefined;
+
     const updated = this.updateDraft(
       body.content,
       body.title as string | undefined,
+      version,
     );
     if (!updated) {
-      return Response.json({ error: "No draft exists yet" }, { status: 404 });
+      return Response.json({ error: "Draft not found" }, { status: 404 });
     }
 
     return Response.json(updated);
