@@ -43,8 +43,10 @@ export const DraftPanel = React.forwardRef<DraftPanelHandle, DraftPanelProps>(
 
     // Edit mode state
     const [editing, setEditing] = useState(false)
+    const [editableTitle, setEditableTitle] = useState('')
     const [saveStatus, setSaveStatus] = useState<SaveStatus>('idle')
     const pendingMarkdownRef = useRef<string | null>(null)
+    const pendingTitleRef = useRef<string | null>(null)
     const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
     const savingRef = useRef(false)
 
@@ -60,7 +62,7 @@ export const DraftPanel = React.forwardRef<DraftPanelHandle, DraftPanelProps>(
 
     // --- Save helpers ---
 
-    const doSave = useCallback(async (markdown: string): Promise<boolean> => {
+    const doSave = useCallback(async (markdown: string, title?: string): Promise<boolean> => {
       if (savingRef.current) return false
       if (markdown.length > MAX_CONTENT_SIZE) {
         setSaveStatus('unsaved')
@@ -69,10 +71,11 @@ export const DraftPanel = React.forwardRef<DraftPanelHandle, DraftPanelProps>(
       savingRef.current = true
       setSaveStatus('saving')
       try {
-        const updated = await updateDraft(sessionId, markdown)
-        setContent((prev) => prev ? { ...prev, content: updated.content, word_count: updated.word_count } : prev)
+        const updated = await updateDraft(sessionId, markdown, title)
+        setContent((prev) => prev ? { ...prev, content: updated.content, title: updated.title, word_count: updated.word_count } : prev)
         setSaveStatus('saved')
         pendingMarkdownRef.current = null
+        pendingTitleRef.current = null
         setTimeout(() => setSaveStatus((s) => s === 'saved' ? 'idle' : s), 2000)
         return true
       } catch {
@@ -88,11 +91,12 @@ export const DraftPanel = React.forwardRef<DraftPanelHandle, DraftPanelProps>(
         clearTimeout(debounceTimerRef.current)
         debounceTimerRef.current = null
       }
-      if (pendingMarkdownRef.current !== null) {
-        return doSave(pendingMarkdownRef.current)
+      if (pendingMarkdownRef.current !== null || pendingTitleRef.current !== null) {
+        const md = pendingMarkdownRef.current ?? content?.content ?? ''
+        return doSave(md, pendingTitleRef.current ?? undefined)
       }
       return true
-    }, [doSave])
+    }, [doSave, content])
 
     const loadDrafts = useCallback(async () => {
       try {
@@ -131,7 +135,10 @@ export const DraftPanel = React.forwardRef<DraftPanelHandle, DraftPanelProps>(
 
       fetchDraft(sessionId, selectedVersion)
         .then((data) => {
-          if (!cancelled) setContent(data)
+          if (!cancelled) {
+            setContent(data)
+            setEditableTitle(data.title ?? '')
+          }
         })
         .catch(() => {
           if (!cancelled) setContent(null)
@@ -149,29 +156,43 @@ export const DraftPanel = React.forwardRef<DraftPanelHandle, DraftPanelProps>(
       refresh: loadDrafts,
     }))
 
-    const handleEditorUpdate = useCallback((markdown: string) => {
-      pendingMarkdownRef.current = markdown
-      setSaveStatus('unsaved')
-
+    const scheduleSave = useCallback(() => {
       if (debounceTimerRef.current) {
         clearTimeout(debounceTimerRef.current)
       }
       debounceTimerRef.current = setTimeout(() => {
         debounceTimerRef.current = null
-        if (pendingMarkdownRef.current !== null) {
-          doSave(pendingMarkdownRef.current)
+        if (pendingMarkdownRef.current !== null || pendingTitleRef.current !== null) {
+          const md = pendingMarkdownRef.current ?? content?.content ?? ''
+          doSave(md, pendingTitleRef.current ?? undefined)
         }
       }, AUTOSAVE_DELAY)
-    }, [doSave])
+    }, [doSave, content])
+
+    const handleEditorUpdate = useCallback((markdown: string) => {
+      pendingMarkdownRef.current = markdown
+      setSaveStatus('unsaved')
+      scheduleSave()
+    }, [scheduleSave])
+
+    const handleTitleChange = useCallback((newTitle: string) => {
+      setEditableTitle(newTitle)
+      pendingTitleRef.current = newTitle
+      setSaveStatus('unsaved')
+      scheduleSave()
+    }, [scheduleSave])
 
     // Flush pending save on unmount
+    const contentRef = useRef(content)
+    useEffect(() => { contentRef.current = content }, [content])
     useEffect(() => {
       return () => {
         if (debounceTimerRef.current) {
           clearTimeout(debounceTimerRef.current)
         }
-        if (pendingMarkdownRef.current !== null) {
-          doSave(pendingMarkdownRef.current)
+        if (pendingMarkdownRef.current !== null || pendingTitleRef.current !== null) {
+          const md = pendingMarkdownRef.current ?? contentRef.current?.content ?? ''
+          doSave(md, pendingTitleRef.current ?? undefined)
         }
       }
     }, [doSave])
@@ -204,7 +225,8 @@ export const DraftPanel = React.forwardRef<DraftPanelHandle, DraftPanelProps>(
     const handleCopy = async () => {
       if (!content) return
       try {
-        await navigator.clipboard.writeText(content.content)
+        const text = content.title ? `# ${content.title}\n\n${content.content}` : content.content
+        await navigator.clipboard.writeText(text)
         setShowToast('Copied to clipboard')
       } catch {
         setShowToast('Failed to copy')
@@ -324,15 +346,30 @@ export const DraftPanel = React.forwardRef<DraftPanelHandle, DraftPanelProps>(
             <>
               <div className="prose mx-auto max-w-prose rounded-xl bg-white p-8 shadow-sm dark:bg-[#1a1a1a]">
                 {editing ? (
-                  <TiptapEditor
-                    content={content.content}
-                    onUpdate={handleEditorUpdate}
-                  />
+                  <>
+                    <input
+                      type="text"
+                      value={editableTitle}
+                      onChange={(e) => handleTitleChange(e.target.value)}
+                      placeholder="Post title..."
+                      aria-label="Post title"
+                      className="mb-4 w-full border-none bg-transparent p-0 text-3xl font-bold leading-tight text-[#0a0a0a] placeholder:text-[#d1d5db] focus:outline-none dark:text-[#fafafa] dark:placeholder:text-[#4b5563]"
+                    />
+                    <TiptapEditor
+                      content={content.content}
+                      onUpdate={handleEditorUpdate}
+                    />
+                  </>
                 ) : (
-                  <MemoizedMarkdown
-                    content={content.content}
-                    id={`draft-${content.version}`}
-                  />
+                  <>
+                    {content.title && (
+                      <h1 className="mb-4 text-3xl font-bold leading-tight">{content.title}</h1>
+                    )}
+                    <MemoizedMarkdown
+                      content={content.content}
+                      id={`draft-${content.version}`}
+                    />
+                  </>
                 )}
               </div>
               <SourcesList citationsJson={content.citations} />
