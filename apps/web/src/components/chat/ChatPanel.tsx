@@ -125,12 +125,15 @@ export function ChatPanel({ sessionId, chatToken, seedContext, sessionTitle, onA
         )}
       </div>
 
+      {/* TODO: Re-enable persistent "agent is working" indicator once we
+          resolve the visual overlap with other loading states (e.g. Thinking...).
       {isPending && !showThinking && (
         <div role="status" aria-live="polite" className="flex items-center gap-2 bg-[#fafafa] px-4 py-1.5 text-sm text-[#6b7280] dark:bg-[#111]">
           <Loader size={14} />
           <span>Agent is working...</span>
         </div>
       )}
+      */}
 
       <ChatInput
         onSend={handleSend}

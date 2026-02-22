@@ -5,10 +5,10 @@ import type { WriterAgent } from '../agent/writer-agent'
 export function createDraftTools(agent: WriterAgent) {
   const save_draft = tool({
     description:
-      'Save a new draft version of the blog post. Use this after writing or significantly revising content. Increments the version number automatically. Always include citations from any research tools you used (search_web, search_news, ask_question, research_topic, crawl_url).',
+      'Save a new draft version of the blog post. Use this after writing or significantly revising content. Increments the version number automatically. The title and content are separate fields — do NOT include the title as an H1 heading in the content markdown. Always include citations from any research tools you used (search_web, search_news, ask_question, research_topic, crawl_url).',
     inputSchema: z.object({
       title: z.string().describe('The title of the blog post'),
-      content: z.string().describe('The full content of the blog post in Markdown format'),
+      content: z.string().describe('The full content of the blog post in Markdown format. Do NOT start with the title as an H1 heading — the title is passed separately via the "title" parameter. Start directly with the opening paragraph or hook.'),
       citations: z
         .array(
           z.object({
