@@ -112,7 +112,7 @@ export function ChatPanel({ sessionId, chatToken, seedContext, sessionTitle, onA
         ))}
 
         {showThinking && (
-          <div className="flex items-center gap-2 text-base text-[#6b7280]">
+          <div role="status" aria-live="polite" className="flex items-center gap-2 text-base text-[#6b7280]">
             <Loader size={16} />
             <span>Thinking...</span>
           </div>
@@ -124,6 +124,13 @@ export function ChatPanel({ sessionId, chatToken, seedContext, sessionTitle, onA
           </div>
         )}
       </div>
+
+      {isPending && !showThinking && (
+        <div role="status" aria-live="polite" className="flex items-center gap-2 bg-[#fafafa] px-4 py-1.5 text-sm text-[#6b7280] dark:bg-[#111]">
+          <Loader size={14} />
+          <span>Agent is working...</span>
+        </div>
+      )}
 
       <ChatInput
         onSend={handleSend}

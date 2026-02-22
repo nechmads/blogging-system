@@ -9,6 +9,7 @@ import {
   RocketLaunchIcon,
   LinkSimpleIcon,
   ChatCircleDotsIcon,
+  CheckCircleIcon,
 } from '@phosphor-icons/react'
 import { Loader } from '@/components/loader/Loader'
 
@@ -40,6 +41,8 @@ const TOOL_CONFIG: Record<string, { label: string | (() => string); icon: React.
   list_drafts: { label: 'Listing drafts', icon: ListBulletsIcon },
   publish_to_cms: { label: 'Publishing', icon: RocketLaunchIcon },
   ask_question: { label: 'Searching for answers', icon: ChatCircleDotsIcon },
+  proofread_draft: { label: 'Proofreading draft', icon: CheckCircleIcon },
+  generate_title: { label: 'Generating title', icon: PencilSimpleIcon },
 }
 
 interface ToolCallIndicatorProps {
