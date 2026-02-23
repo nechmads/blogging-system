@@ -5,6 +5,7 @@ import { LinkedinLogoIcon, XLogoIcon, LinkIcon, TrashIcon, PlugIcon } from '@pho
 import { Loader } from '@/components/loader/Loader'
 import { Modal } from '@/components/modal/Modal'
 import { fetchConnections, deleteConnection, getLinkedInAuthUrl, getTwitterAuthUrl } from '@/lib/api'
+import { AnalyticsManager, AnalyticsEvent } from '@hotmetal/analytics'
 import type { SocialConnection } from '@/lib/types'
 
 function formatExpiryTime(expiresAt: number | null): string {
@@ -64,6 +65,7 @@ export function SettingsPage() {
     if (connected === 'linkedin' || connected === 'twitter') {
       const label = PROVIDER_CONFIG[connected as keyof typeof PROVIDER_CONFIG]?.label ?? connected
       toast.success(`${label} connected successfully!`)
+      AnalyticsManager.track(AnalyticsEvent.SocialConnected, { provider: connected })
       loadConnections()
       setSearchParams((prev) => { prev.delete('connected'); prev.delete('error'); return prev }, { replace: true })
     } else if (error) {
@@ -102,6 +104,7 @@ export function SettingsPage() {
     try {
       await deleteConnection(disconnectTarget.id)
       setConnections((prev) => prev.filter((c) => c.id !== disconnectTarget.id))
+      AnalyticsManager.track(AnalyticsEvent.SocialDisconnected, { provider: disconnectTarget.provider })
       toast.success(`${PROVIDER_CONFIG[disconnectTarget.provider as keyof typeof PROVIDER_CONFIG]?.label ?? disconnectTarget.provider} disconnected`)
       setDisconnectTarget(null)
     } catch {

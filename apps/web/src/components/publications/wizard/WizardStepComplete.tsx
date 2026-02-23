@@ -11,6 +11,7 @@ import { Loader } from '@/components/loader/Loader'
 import { wizardStore$, resetWizard } from '@/stores/wizard-store'
 import { triggerScout, createSession, fetchIdeasCount } from '@/lib/api'
 import { startScoutPolling } from '@/stores/scout-store'
+import { AnalyticsManager, AnalyticsEvent } from '@hotmetal/analytics'
 import type { PublicationConfig } from '@/lib/types'
 
 interface WizardStepCompleteProps {
@@ -45,6 +46,7 @@ export function WizardStepComplete({ onClose, onCreated }: WizardStepCompletePro
       await triggerScout(publicationId)
       startScoutPolling(publicationId, currentCount)
       toast.success('Ideas agent is running! New ideas will appear shortly.')
+      AnalyticsManager.track(AnalyticsEvent.ScoutTriggered, { publicationId, source: 'wizard-complete' })
       if (publication && onCreated) onCreated(publication)
       resetWizard()
       onClose()
@@ -61,6 +63,7 @@ export function WizardStepComplete({ onClose, onCreated }: WizardStepCompletePro
     setStartingSession(true)
     try {
       const session = await createSession({ publicationId })
+      AnalyticsManager.track(AnalyticsEvent.SessionCreated, { publicationId, source: 'wizard-complete' })
       if (publication && onCreated) onCreated(publication)
       resetWizard()
       onClose()

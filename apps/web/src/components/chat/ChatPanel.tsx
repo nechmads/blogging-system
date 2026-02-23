@@ -3,6 +3,7 @@ import { ChatMessage } from './ChatMessage'
 import { ChatInput } from './ChatInput'
 import { Loader } from '@/components/loader/Loader'
 import { useWriterChat, type ChatStatus } from '@/hooks/useWriterChat'
+import { AnalyticsManager, AnalyticsEvent } from '@hotmetal/analytics'
 import type { WriterAgentState } from '@/hooks/useWriterState'
 
 interface ChatPanelProps {
@@ -78,7 +79,13 @@ export function ChatPanel({ sessionId, chatToken, seedContext, sessionTitle, onA
 
   const handleSend = useCallback((text: string) => {
     sendMessage({ text })
+    AnalyticsManager.track(AnalyticsEvent.ChatMessageSent, { messageLength: text.length })
   }, [sendMessage])
+
+  const handleStop = useCallback(() => {
+    stop()
+    AnalyticsManager.track(AnalyticsEvent.ChatGenerationStopped)
+  }, [stop])
 
   // Determine whether to show the "Thinking..." indicator
   const showThinking = isPending && messages.length > 0 && (() => {
@@ -138,7 +145,7 @@ export function ChatPanel({ sessionId, chatToken, seedContext, sessionTitle, onA
       <ChatInput
         onSend={handleSend}
         disabled={isPending}
-        onStop={isPending ? stop : undefined}
+        onStop={isPending ? handleStop : undefined}
       />
     </div>
   )

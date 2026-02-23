@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router'
 import { Modal } from '@/components/modal/Modal'
 import { createSession, fetchPublications } from '@/lib/api'
+import { AnalyticsManager, AnalyticsEvent } from '@hotmetal/analytics'
 import type { PublicationConfig } from '@/lib/types'
 
 interface NewSessionModalProps {
@@ -54,6 +55,7 @@ export function NewSessionModal({ isOpen, onClose }: NewSessionModalProps) {
         title: newTitle.trim() || undefined,
         publicationId: selectedPublicationId || undefined,
       })
+      AnalyticsManager.track(AnalyticsEvent.SessionCreated, { publicationId: selectedPublicationId || '', source: 'new-session-modal' })
       handleClose()
       navigate(`/writing/${session.id}`)
     } catch (err) {

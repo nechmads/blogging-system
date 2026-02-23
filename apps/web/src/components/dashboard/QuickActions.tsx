@@ -11,6 +11,7 @@ import { Modal } from '@/components/modal/Modal'
 import { NewSessionModal } from '@/components/session/NewSessionModal'
 import { fetchIdeasCount, triggerScout } from '@/lib/api'
 import { startScoutPolling } from '@/stores/scout-store'
+import { AnalyticsManager, AnalyticsEvent } from '@hotmetal/analytics'
 import type { PublicationConfig } from '@/lib/types'
 
 interface QuickActionsProps {
@@ -33,6 +34,7 @@ export function QuickActions({ publications, hasCustomStyle }: QuickActionsProps
       await triggerScout(pubId)
       startScoutPolling(pubId, currentCount)
       toast.success('Ideas agent is running! New ideas will appear shortly.')
+      AnalyticsManager.track(AnalyticsEvent.ScoutTriggered, { publicationId: pubId, source: 'quick-actions' })
     } catch {
       toast.error('Failed to start the ideas agent')
     } finally {

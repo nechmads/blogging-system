@@ -12,6 +12,7 @@ import { fetchIdea, updateIdeaStatus, promoteIdea } from '@/lib/api'
 import type { Idea, IdeaStatus } from '@/lib/types'
 import { IDEA_STATUS_COLORS } from '@/lib/constants'
 import { refreshNewIdeasCount } from '@/stores/scout-store'
+import { AnalyticsManager, AnalyticsEvent } from '@hotmetal/analytics'
 
 function formatDate(timestamp: number): string {
   return new Date(timestamp * 1000).toLocaleDateString('en-US', {
@@ -55,6 +56,8 @@ export function IdeaDetailPage() {
       const updated = await updateIdeaStatus(id, status)
       setIdea(updated)
       refreshNewIdeasCount()
+      if (status === 'reviewed') AnalyticsManager.track(AnalyticsEvent.IdeaReviewed, { publicationId: idea?.publicationId ?? '' })
+      if (status === 'dismissed') AnalyticsManager.track(AnalyticsEvent.IdeaDismissed, { publicationId: idea?.publicationId ?? '' })
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to update status')
     }
@@ -66,6 +69,7 @@ export function IdeaDetailPage() {
     try {
       const session = await promoteIdea(id)
       refreshNewIdeasCount()
+      AnalyticsManager.track(AnalyticsEvent.IdeaPromoted, { publicationId: idea?.publicationId ?? '' })
       navigate(`/writing/${session.id}`)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to promote idea')

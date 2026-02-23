@@ -27,6 +27,7 @@ import {
   fetchStyles,
 } from '@/lib/api'
 import { startScoutPolling } from '@/stores/scout-store'
+import { AnalyticsManager, AnalyticsEvent } from '@hotmetal/analytics'
 import type { PublicationConfig, Topic, WritingStyle, AutoPublishMode } from '@/lib/types'
 
 const PRIORITY_OPTIONS = [
@@ -162,21 +163,28 @@ export function PublicationPage() {
   const handleStyleChange = (value: string | null) => {
     setStyleId(value)
     saveFields({ styleId: value })
+    if (id) {
+      const style = availableStyles.find((s) => s.id === value)
+      AnalyticsManager.track(AnalyticsEvent.PublicationStyleChanged, { publicationId: id, styleId: value ?? '', styleName: style?.name ?? 'None' })
+    }
   }
 
   const handleTemplateChange = (value: string) => {
     setTemplateId(value)
     saveFields({ templateId: value })
+    if (id) AnalyticsManager.track(AnalyticsEvent.PublicationTemplateChanged, { publicationId: id, templateId: value, templateName: value })
   }
 
   const handleFeedFullChange = (checked: boolean) => {
     setFeedFullEnabled(checked)
     saveFields({ feedFullEnabled: checked })
+    if (id) AnalyticsManager.track(AnalyticsEvent.FeedToggled, { publicationId: id, feedType: 'full', enabled: checked })
   }
 
   const handleFeedPartialChange = (checked: boolean) => {
     setFeedPartialEnabled(checked)
     saveFields({ feedPartialEnabled: checked })
+    if (id) AnalyticsManager.track(AnalyticsEvent.FeedToggled, { publicationId: id, feedType: 'partial', enabled: checked })
   }
 
   const handleAutoPublishModeChange = (mode: AutoPublishMode) => {
@@ -268,6 +276,7 @@ export function PublicationPage() {
       }))
       setEditingSchedule(false)
       toast.success('Schedule saved')
+      AnalyticsManager.track(AnalyticsEvent.ScoutScheduleUpdated, { publicationId: id, scheduleType: scheduleState.scheduleType, publishMode: scheduleState.autoPublishMode })
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Failed to save schedule')
     } finally {
@@ -284,6 +293,7 @@ export function PublicationPage() {
       await triggerScout(id)
       toast.success('Content scout is running. New ideas will appear shortly.')
       startScoutPolling(id, currentCount)
+      AnalyticsManager.track(AnalyticsEvent.ScoutTriggered, { publicationId: id, source: 'publication-settings' })
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to trigger scout')
     } finally {
@@ -296,6 +306,7 @@ export function PublicationPage() {
     setDeleting(true)
     try {
       await deletePublication(id)
+      AnalyticsManager.track(AnalyticsEvent.PublicationDeleted, { publicationId: id })
       navigate('/publications')
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to delete')
@@ -339,6 +350,7 @@ export function PublicationPage() {
           priority: topicPriority,
         })
         setTopics((prev) => prev.map((t) => (t.id === updated.id ? updated : t)))
+        AnalyticsManager.track(AnalyticsEvent.TopicUpdated, { publicationId: id })
       } else {
         const created = await createTopic(id, {
           name: topicName.trim(),
@@ -346,6 +358,7 @@ export function PublicationPage() {
           priority: topicPriority,
         })
         setTopics((prev) => [...prev, created])
+        AnalyticsManager.track(AnalyticsEvent.TopicCreated, { publicationId: id, source: 'publication-settings' })
       }
       closeTopicModal()
     } catch (err) {
@@ -361,6 +374,7 @@ export function PublicationPage() {
       await deleteTopic(topicId)
       setTopics((prev) => prev.filter((t) => t.id !== topicId))
       setTopicToDelete(null)
+      if (id) AnalyticsManager.track(AnalyticsEvent.TopicDeleted, { publicationId: id })
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to delete topic')
     }
@@ -371,6 +385,7 @@ export function PublicationPage() {
     try {
       const updated = await updateTopic(topic.id, { isActive: !topic.isActive })
       setTopics((prev) => prev.map((t) => (t.id === updated.id ? updated : t)))
+      if (id) AnalyticsManager.track(AnalyticsEvent.TopicToggled, { publicationId: id, active: !topic.isActive })
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to toggle topic')
     }

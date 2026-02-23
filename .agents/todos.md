@@ -213,5 +213,11 @@
   - Route added to `app.tsx`, pre-render config + script entries for SEO
   - Blog link added to `PublicNavbar` and all public page footers (Landing, FAQ, About, Privacy, Terms)
   - Pre-rendered HTML shell at `dist/client/blog/index.html` (posts populate on client hydration)
+- [x] **Product Analytics (PostHog)** — Vendor-agnostic analytics system with PostHog adapter. Includes:
+  - New `packages/analytics` shared package: `AnalyticsManager` singleton, `AnalyticsAdapter` interface, `PostHogAdapter` (autocapture off, manual page views), `AnalyticsProvider` React component (init, page tracking via `useLocation`, user identify/reset)
+  - Typed event catalog (`AnalyticsEvent` enum + `AnalyticsEventProperties` mapped type) with ~40 events covering auth, publications, topics, scout, ideas, sessions, chat, drafts, images, publishing, SEO, styles, social connections, RSS, onboarding, and navigation
+  - `AnalyticsProviderWrapper` in `apps/web` bridging Clerk `useUser()` to analytics identification
+  - Track calls added to 15 files: PublicationPage, StylesPage, IdeasPage, IdeaDetailPage, SessionsPage, SettingsPage, NewSessionModal, ChatPanel, GettingStartedChecklist, QuickActions, PublishModal, ImageGenerator, WizardStepComplete, wizard-store
+  - Dev/production gating via `VITE_POSTHOG_KEY` + `VITE_ANALYTICS_ENABLED` env vars
 - [ ] Writer Agent — Phase 2: Voice input (transcription in `input-processor.ts`)
 - [ ] Writer Agent — Phase 2: D1 session sync (synchronize DO state back to D1 for listing accuracy)

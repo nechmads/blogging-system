@@ -1,4 +1,5 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router'
+import { AnalyticsProviderWrapper } from '@/providers/AnalyticsProviderWrapper'
 import { AppLayout } from '@/components/layout/AppLayout'
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute'
 import { LandingPage } from '@/pages/LandingPage'
@@ -25,6 +26,7 @@ import { SettingsPage } from '@/pages/SettingsPage'
 export default function App() {
   return (
     <BrowserRouter>
+      <AnalyticsProviderWrapper>
       <Routes>
         {/* Public routes */}
         <Route path="/" element={<LandingPage />} />
@@ -61,6 +63,7 @@ export default function App() {
         {/* Catch-all: redirect to landing */}
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
+      </AnalyticsProviderWrapper>
     </BrowserRouter>
   )
 }
