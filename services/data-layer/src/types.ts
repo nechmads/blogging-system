@@ -64,6 +64,7 @@ export interface CreateSessionInput {
 	ideaId?: string
 	seedContext?: string
 	styleId?: string
+	cmsPostId?: string
 }
 
 export interface UpdateSessionInput {

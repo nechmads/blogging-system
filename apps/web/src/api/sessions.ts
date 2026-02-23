@@ -1,6 +1,7 @@
 import { Hono } from 'hono'
 import type { AppEnv } from '../server'
 import type { SessionStatus } from '@hotmetal/data-layer'
+import { CmsApi } from '@hotmetal/shared'
 import { verifyPublicationOwnership } from '../middleware/ownership'
 import { computeChatToken } from '../lib/chat-token'
 
@@ -94,6 +95,28 @@ sessions.patch('/sessions/:id', async (c) => {
   })
 
   return c.json(updated)
+})
+
+/** Get the CMS post linked to a session (for pre-filling edit modal). */
+sessions.get('/sessions/:id/post', async (c) => {
+  const session = await c.env.DAL.getSessionById(c.req.param('id'))
+  if (!session) return c.json({ error: 'Session not found' }, 404)
+  if (session.userId !== c.get('userId')) {
+    return c.json({ error: 'Session not found' }, 404)
+  }
+  if (!session.cmsPostId) {
+    return c.json({ error: 'No published post linked to this session' }, 404)
+  }
+
+  const cmsApi = new CmsApi(c.env.CMS_URL, c.env.CMS_API_KEY)
+  const post = await cmsApi.getPost(session.cmsPostId)
+  return c.json({
+    slug: post.slug,
+    author: post.author,
+    tags: post.tags || undefined,
+    excerpt: post.excerpt || undefined,
+    hook: post.hook || undefined,
+  })
 })
 
 /** List sessions for a specific publication. */

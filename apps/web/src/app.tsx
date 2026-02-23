@@ -9,6 +9,7 @@ import { FaqPage } from '@/pages/FaqPage'
 import { AboutPage } from '@/pages/AboutPage'
 import { PrivacyPage } from '@/pages/PrivacyPage'
 import { TermsPage } from '@/pages/TermsPage'
+import { BlogPage } from '@/pages/BlogPage'
 import { DashboardPage } from '@/pages/DashboardPage'
 import { SessionsPage } from '@/pages/SessionsPage'
 import { WorkspacePage } from '@/pages/WorkspacePage'
@@ -17,6 +18,7 @@ import { IdeaDetailPage } from '@/pages/IdeaDetailPage'
 import { PublicationsPage } from '@/pages/PublicationsPage'
 import { PublicationPage } from '@/pages/PublicationPage'
 import { PublicationHomePage } from '@/pages/PublicationHomePage'
+import { PublishedPostsPage } from '@/pages/PublishedPostsPage'
 import { StylesPage } from '@/pages/StylesPage'
 import { SettingsPage } from '@/pages/SettingsPage'
 
@@ -33,6 +35,7 @@ export default function App() {
         <Route path="/about/*" element={<AboutPage />} />
         <Route path="/privacy/*" element={<PrivacyPage />} />
         <Route path="/terms/*" element={<TermsPage />} />
+        <Route path="/blog/*" element={<BlogPage />} />
 
         {/* Protected routes — require Clerk auth */}
         <Route
@@ -49,6 +52,7 @@ export default function App() {
           <Route path="/writing/:id" element={<WorkspacePage />} />
           <Route path="/publications" element={<PublicationsPage />} />
           <Route path="/publications/:id" element={<PublicationHomePage />} />
+          <Route path="/publications/:id/posts" element={<PublishedPostsPage />} />
           <Route path="/publications/:id/settings" element={<PublicationPage />} />
           <Route path="/styles" element={<StylesPage />} />
           <Route path="/settings" element={<SettingsPage />} />

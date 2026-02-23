@@ -39,14 +39,20 @@ const { posts, heading = 'More Stories', showViewAll = true } = Astro.props;
                   : 'md:pl-8',
               ]}
             >
-              {bgStyle && (
-                <a href={`/${post.slug}`} class="shrink-0">
+              <a href={`/${post.slug}`} class="shrink-0">
+                {bgStyle ? (
                   <div
                     class="w-[100px] md:w-[120px] aspect-square overflow-hidden bg-bg-card"
                     style={bgStyle}
                   />
-                </a>
-              )}
+                ) : (
+                  <div class="w-[100px] md:w-[120px] aspect-square overflow-hidden bg-bg-card flex items-center justify-center">
+                    <span class="font-display text-3xl font-bold text-text/20">
+                      {post.title.charAt(0)}
+                    </span>
+                  </div>
+                )}
+              </a>
               <div class="flex-1 min-w-0">
                 {firstTopic && (
                   <p class="font-sans text-[11px] uppercase tracking-[0.1em] text-accent font-semibold mb-1">

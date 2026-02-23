@@ -111,6 +111,16 @@ export async function fetchPublishedPosts(pubId: string): Promise<{ id: string; 
   return result.data
 }
 
+export async function editPublishedPost(pubId: string, postId: string): Promise<Session> {
+  return request<Session>(`/api/publications/${pubId}/posts/${postId}/edit`, {
+    method: 'POST',
+  })
+}
+
+export async function fetchCmsPost(sessionId: string): Promise<{ slug: string; author: string; tags?: string; excerpt?: string; hook?: string }> {
+  return request<{ slug: string; author: string; tags?: string; excerpt?: string; hook?: string }>(`/api/sessions/${sessionId}/post`)
+}
+
 export async function fetchDrafts(sessionId: string): Promise<Draft[]> {
   const result = await request<{ data: Draft[] }>(
     `/api/sessions/${sessionId}/drafts`
@@ -130,14 +140,15 @@ export async function fetchDraft(
 export async function updateDraft(
   sessionId: string,
   content: string,
-  title?: string
+  title?: string,
+  version?: number
 ): Promise<DraftContent> {
   return request<DraftContent>(
     `/api/sessions/${sessionId}/drafts`,
     {
       method: 'PUT',
       headers: JSON_HEADERS,
-      body: JSON.stringify({ content, title }),
+      body: JSON.stringify({ content, title, version }),
     }
   )
 }

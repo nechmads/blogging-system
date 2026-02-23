@@ -72,4 +72,16 @@ export const pages: PageConfig[] = [
       "Terms governing your use of Hot Metal, the AI-powered writing assistant.",
     ogUrl: `${BASE_URL}/terms`,
   },
+  {
+    path: "/blog",
+    outputPath: "blog/index.html",
+    component: "BlogContent",
+    title: "Blog — Hot Metal",
+    description:
+      "Behind the scenes of building Hot Metal — product updates, writing experiments, and lessons learned.",
+    ogTitle: "Blog — Hot Metal",
+    ogDescription:
+      "Product updates, writing experiments, and lessons learned shipping an AI content engine.",
+    ogUrl: `${BASE_URL}/blog`,
+  },
 ];

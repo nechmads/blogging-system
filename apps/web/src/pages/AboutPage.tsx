@@ -196,6 +196,10 @@ export function AboutPage() {
           FAQ
         </Link>
         <span className="mx-2">·</span>
+        <Link to="/blog" className="hover:underline">
+          Blog
+        </Link>
+        <span className="mx-2">·</span>
         <Link to="/privacy" className="hover:underline">
           Privacy
         </Link>

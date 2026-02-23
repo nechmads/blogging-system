@@ -79,6 +79,7 @@ function rowToPost(row: SonicJSRow): Post {
   // Only set optional fields if they have values (exactOptionalPropertyTypes)
   const pubId = str(d.publication); if (pubId) post.publicationId = pubId
   const subtitle = str(d.subtitle); if (subtitle) post.subtitle = subtitle
+  const markdown = str(d.markdown); if (markdown) post.markdown = markdown
   const hook = str(d.hook); if (hook) post.hook = hook
   const excerpt = str(d.excerpt); if (excerpt) post.excerpt = excerpt
   const featuredImage = str(d.featuredImage); if (featuredImage) post.featuredImage = featuredImage
@@ -311,6 +312,7 @@ apiV1.post('/posts', async (c) => {
     subtitle: body.subtitle,
     hook: body.hook,
     content: body.content,
+    markdown: body.markdown,
     excerpt: body.excerpt,
     featuredImage: body.featuredImage,
     status: postStatus,
@@ -367,6 +369,7 @@ apiV1.put('/posts/:id', async (c) => {
     subtitle: 'subtitle',
     hook: 'hook',
     content: 'content',
+    markdown: 'markdown',
     excerpt: 'excerpt',
     featuredImage: 'featuredImage',
     status: 'status',

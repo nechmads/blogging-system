@@ -422,6 +422,10 @@ export function FaqPage() {
           About
         </Link>
         <span className="mx-2">·</span>
+        <Link to="/blog" className="hover:underline">
+          Blog
+        </Link>
+        <span className="mx-2">·</span>
         <Link to="/" className="hover:underline">
           Home
         </Link>

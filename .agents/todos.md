@@ -2,6 +2,12 @@
 
 ## Completed
 
+- [x] **Three-Mode Publish System** — Added `'ideas-only'` mode to the automation system. Renamed misleading `'draft'` (which only gathered ideas) to `'ideas-only'`. New `'draft'` mode finds ideas AND writes drafts but doesn't publish. `'full-auto'` unchanged. Includes D1 migration, workflow guard update, auto-write refactor with `publish` flag, and all frontend UI (wizard, schedule editor, cards).
+
+- [x] **Draft Version Publishing** — Users can now publish any draft version, not just the latest. The publish modal shows "Publish Post - Draft N". When publishing an older draft, all subsequent drafts are deleted to keep history clean. Threaded `draftVersion` through DraftPanel → PublishModal → API → agent DO.
+
+- [x] **Writer Agent Error Logging** — Added comprehensive error handling to prevent silent failures and stuck `isGenerating` states. Wrapped all agent handlers (`onChatMessage`, `handleChat`, `handleAutoWrite`, `handleGenerateSeo`, `handleGenerateTweet`, `handleGenerateLinkedInPost`) in try/catch with structured `[prefix]` logging. Added top-level safety net in `onRequest`. Wrapped all tool execute functions. Guarded `getCurrentDraft()` in error recovery paths.
+
 - [x] **Define SonicJS Collections & Shared Content Types** — Created `posts` and `renditions` collections in `apps/cms-admin`, shared TypeScript types in `packages/content-core`. Replaced sample `blog-posts` collection with full PRD-aligned content model.
 - [x] **Build "Looking Ahead" Blog Frontend** — Built Astro 6 frontend with Tailwind v4, SSR on Cloudflare. Pages: Home (hero + post grid), Post detail (with sanitized CMS content), About, Contact. Components: Header with mobile menu, Footer, PostCard, Hero, Illustration SVG. Includes SonicJS API client, view transitions, scroll animations, and full accessibility (ARIA, keyboard nav, focus management).
 - [x] **Fix CMS Integration Issues** — Fixed R2 media upload (MEDIA_BUCKET binding), publication creation (SonicJS requires title/slug fields), and API data mapping (SonicJS nests custom fields inside `data` column). Added slug validation and request timeouts to API client.
@@ -187,5 +193,25 @@
   - `StyleSaveData` now extends `ToneGuideFields` instead of redeclaring all fields
   - `adminAuth` middleware: validates X-Internal-Key only (no X-User-Id required, unlike internalAuth)
   - Admin route calls Alexander → extracts structured fields → composes finalPrompt via LLM → creates prebuilt style
+- [x] **Edit Published Posts** — Full post editing flow. Includes:
+  - Bug fix: "View all" link on publication home now goes to `/publications/:id/posts` (was incorrectly going to `/writing`)
+  - New `PublishedPostsPage` at `/publications/:id/posts` listing all published posts with View (external link) and Edit (creates edit session) hover buttons
+  - Backend: `POST /publications/:pubId/posts/:postId/edit` creates a new session with `cmsPostId` pre-set, fetches post from CMS, reads stored `markdown` field (falls back to HTML for pre-backfill posts), seeds WriterAgent with draft v1
+  - WriterAgent: `handleSeedDraft` method for injecting post content, `handlePublishToCms` now checks `cmsPostId` — if set calls `updatePost()` instead of `createPost()`
+  - PublishModal: detects "update mode" when `cmsPostId` is set, pre-fills slug/author/tags/excerpt from CMS post, slug is read-only, labels show "Update Post"/"Update"
+  - DAL: `cmsPostId` added to `CreateSessionInput`, `GET /sessions/:id/post` endpoint for fetching linked CMS post metadata
+  - Security: post ownership verified against publication, seed-draft failure returns 502, draftVersion/version validated as positive integers
+- [x] **Add Markdown Field to CMS Posts** — Store original Markdown at publish time for lossless round-tripping when editing published posts. Replaces Turndown (which crashed on Workers due to `require()`). Includes:
+  - `markdown?: string` added to Post type, CMS collection schema, and API v1 routes (rowToPost, create, update)
+  - Writer agent sends `markdown: draft.content` alongside HTML on both create and update publish paths
+  - Edit endpoint uses `post.markdown` instead of Turndown conversion, with HTML fallback for pre-backfill posts
+  - Removed `turndown` and `@types/turndown` dependencies from `@hotmetal/web`
+  - One-time backfill script (`scripts/backfill-markdown.ts`) using `unified`/`rehype-parse`/`rehype-remark`/`remark-stringify` with pagination support
+  - Idempotency guard on `handleSeedDraft` to prevent duplicate draft creation on retries
+- [x] **Blog Page on Marketing Site** — Added `/blog` page to the marketing site that displays posts from the Hot Metal Story RSS feed (`https://hot-metal-story.hotmetalapp.com/rss`). Includes:
+  - `BlogPage.tsx`: RSS fetch via `DOMParser` XML parsing, HTML stripping for descriptions, responsive 2-col post grid, loading/error/empty states, external links with `target="_blank"`
+  - Route added to `app.tsx`, pre-render config + script entries for SEO
+  - Blog link added to `PublicNavbar` and all public page footers (Landing, FAQ, About, Privacy, Terms)
+  - Pre-rendered HTML shell at `dist/client/blog/index.html` (posts populate on client hydration)
 - [ ] Writer Agent — Phase 2: Voice input (transcription in `input-processor.ts`)
 - [ ] Writer Agent — Phase 2: D1 session sync (synchronize DO state back to D1 for listing accuracy)
