@@ -15,8 +15,8 @@ class AnalyticsManagerImpl {
   }
 
   identify(userId: string, traits?: UserTraits): void {
-    if (!this.enabled || !this.adapter) return
     if (LOG_CALLS) console.log('[Analytics] identify', userId, traits)
+    if (!this.enabled || !this.adapter) return
     this.adapter.identify(userId, traits)
   }
 
@@ -25,21 +25,21 @@ class AnalyticsManagerImpl {
       ? [event: E]
       : [event: E, properties: AnalyticsEventProperties[E]]
   ): void {
-    if (!this.enabled || !this.adapter) return
     const [event, properties] = args
     if (LOG_CALLS) console.log('[Analytics] track', event, properties ?? '')
+    if (!this.enabled || !this.adapter) return
     this.adapter.track(event, properties as Record<string, unknown> | undefined)
   }
 
   page(properties?: PageProperties): void {
-    if (!this.enabled || !this.adapter) return
     if (LOG_CALLS) console.log('[Analytics] page', properties)
+    if (!this.enabled || !this.adapter) return
     this.adapter.page(properties)
   }
 
   reset(): void {
-    if (!this.enabled || !this.adapter) return
     if (LOG_CALLS) console.log('[Analytics] reset')
+    if (!this.enabled || !this.adapter) return
     this.adapter.reset()
   }
 
