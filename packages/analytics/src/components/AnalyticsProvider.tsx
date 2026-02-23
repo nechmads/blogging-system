@@ -17,11 +17,12 @@ export interface AnalyticsProviderProps {
   apiKey: string | undefined
   enabled?: boolean
   debug?: boolean
+  logCalls?: boolean
   user: AnalyticsUser | null
   children: React.ReactNode
 }
 
-export function AnalyticsProvider({ apiKey, enabled = true, debug = false, user, children }: AnalyticsProviderProps) {
+export function AnalyticsProvider({ apiKey, enabled = true, debug = false, logCalls = false, user, children }: AnalyticsProviderProps) {
   const location = useLocation()
   const prevPathRef = useRef<string>('')
   const identifiedUserRef = useRef<string | null>(null)
@@ -33,9 +34,9 @@ export function AnalyticsProvider({ apiKey, enabled = true, debug = false, user,
     if (AnalyticsManager.isEnabled) return
 
     const adapter = new PostHogAdapter()
-    AnalyticsManager.init(adapter, { apiKey, debug })
+    AnalyticsManager.init(adapter, { apiKey, debug, logCalls })
     setInitialized(true)
-  }, [apiKey, enabled, debug])
+  }, [apiKey, enabled, debug, logCalls])
 
   // Track page views on route change (or when analytics first initializes)
   useEffect(() => {

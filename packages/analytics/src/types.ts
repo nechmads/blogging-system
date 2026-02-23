@@ -16,6 +16,7 @@ export interface PageProperties {
 export interface AnalyticsConfig {
   apiKey: string
   debug?: boolean
+  logCalls?: boolean
 }
 
 export interface AnalyticsAdapter {
