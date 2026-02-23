@@ -20,6 +20,7 @@ import { AboutPage } from "../src/pages/AboutPage";
 import { FaqPage } from "../src/pages/FaqPage";
 import { PrivacyPage } from "../src/pages/PrivacyPage";
 import { TermsPage } from "../src/pages/TermsPage";
+import { BlogContent } from "../src/pages/BlogPage";
 
 import { pages, type PageConfig } from "./prerender-config";
 
@@ -42,6 +43,7 @@ const componentMap: Record<string, React.FC> = {
   FaqPage,
   PrivacyPage,
   TermsPage,
+  BlogContent,
 };
 
 // ── Render each page ─────────────────────────────────────────────────

@@ -1,12 +1,12 @@
 import { useCallback, useEffect, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router'
-import { ArrowLeftIcon, ArrowRightIcon, GearSixIcon, MagnifyingGlassIcon, RssIcon } from '@phosphor-icons/react'
+import { ArrowLeftIcon, ArrowRightIcon, ArrowSquareOutIcon, GearSixIcon, MagnifyingGlassIcon, PencilSimpleIcon, RssIcon } from '@phosphor-icons/react'
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu'
 import { Loader } from '@/components/loader/Loader'
 import { IDEA_STATUS_COLORS } from '@/lib/constants'
 import { formatRelativeTime } from '@/lib/format'
 import { toast } from 'sonner'
-import { fetchPublication, fetchPublishedPosts, fetchIdeas, fetchIdeasCount, triggerScout } from '@/lib/api'
+import { fetchPublication, fetchPublishedPosts, fetchIdeas, fetchIdeasCount, triggerScout, editPublishedPost } from '@/lib/api'
 import { startScoutPolling } from '@/stores/scout-store'
 import type { PublicationConfig, Idea, Topic } from '@/lib/types'
 
@@ -20,6 +20,7 @@ export function PublicationHomePage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [scouting, setScouting] = useState(false)
+  const [editingPostId, setEditingPostId] = useState<string | null>(null)
 
   const loadData = useCallback(async () => {
     if (!id) return
@@ -55,6 +56,23 @@ export function PublicationHomePage() {
       setScouting(false)
     }
   }, [id, scouting])
+
+  const handleEdit = useCallback(async (postId: string) => {
+    if (!id || editingPostId) return
+    setEditingPostId(postId)
+    try {
+      const session = await editPublishedPost(id, postId)
+      navigate(`/writing/${session.id}`)
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Failed to create edit session')
+      setEditingPostId(null)
+    }
+  }, [id, editingPostId, navigate])
+
+  const getPostUrl = useCallback((postSlug: string) => {
+    if (!publication) return '#'
+    return `https://${publication.slug}.hotmetalapp.com/${postSlug}`
+  }, [publication])
 
   useEffect(() => {
     loadData()
@@ -124,7 +142,7 @@ export function PublicationHomePage() {
       <section className="mt-8">
         <SectionHeader
           title="Published Posts"
-          linkTo={`/writing`}
+          linkTo={`/publications/${id}/posts`}
           showLink={posts.length > 0}
         />
         {posts.length === 0 ? (
@@ -136,15 +154,39 @@ export function PublicationHomePage() {
             {posts.map((post) => (
               <div
                 key={post.id}
-                className="flex items-center gap-3 rounded-lg px-3 py-2.5 transition-colors hover:bg-[var(--color-bg-card)]"
+                className="group flex items-center gap-3 rounded-lg px-3 py-2.5 transition-colors hover:bg-[var(--color-bg-card)]"
               >
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-sm font-medium">
                     {post.title || 'Untitled post'}
                   </p>
                   <p className="mt-0.5 text-xs text-[var(--color-text-muted)]">
-                    {formatRelativeTime(Number(post.createdAt))}
+                    {formatRelativeTime(Math.floor(new Date(post.createdAt).getTime() / 1000))}
                   </p>
+                </div>
+                <div className="flex shrink-0 items-center gap-1 opacity-0 transition-opacity group-hover:opacity-100">
+                  <a
+                    href={getPostUrl(post.slug)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="rounded-md p-1.5 text-[var(--color-text-muted)] transition-colors hover:bg-[var(--color-bg-primary)] hover:text-[var(--color-accent)]"
+                    title="View published post"
+                  >
+                    <ArrowSquareOutIcon size={16} />
+                  </a>
+                  <button
+                    type="button"
+                    onClick={() => handleEdit(post.id)}
+                    disabled={editingPostId === post.id}
+                    className="rounded-md p-1.5 text-[var(--color-text-muted)] transition-colors hover:bg-[var(--color-bg-primary)] hover:text-[var(--color-accent)] disabled:opacity-50"
+                    title="Edit post"
+                  >
+                    {editingPostId === post.id ? (
+                      <Loader size={16} />
+                    ) : (
+                      <PencilSimpleIcon size={16} />
+                    )}
+                  </button>
                 </div>
               </div>
             ))}

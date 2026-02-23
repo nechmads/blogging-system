@@ -1,5 +1,7 @@
+import { getAgentByName } from 'agents'
 import { Hono } from 'hono'
 import type { AppEnv } from '../server'
+import type { WriterAgent } from '../agent/writer-agent'
 import { verifyPublicationOwnership } from '../middleware/ownership'
 import { AUTO_PUBLISH_MODES, type AutoPublishMode, type ScoutSchedule } from '@hotmetal/content-core'
 import { validateSchedule, validateTimezone, computeNextRun, CmsApi } from '@hotmetal/shared'
@@ -192,6 +194,67 @@ publications.get('/publications/:id/posts', async (c) => {
   })
 
   return c.json({ data: result.data })
+})
+
+/** Create an edit session for a published post. Fetches the post from CMS, converts to Markdown, and seeds a new session. */
+publications.post('/publications/:id/posts/:postId/edit', async (c) => {
+  const pub = await verifyPublicationOwnership(c, c.req.param('id'))
+  if (!pub) return c.json({ error: 'Publication not found' }, 404)
+
+  if (!pub.cmsPublicationId) {
+    return c.json({ error: 'Publication has no CMS link' }, 400)
+  }
+
+  const postId = c.req.param('postId')
+  const cmsApi = new CmsApi(c.env.CMS_URL, c.env.CMS_API_KEY)
+
+  let post
+  try {
+    post = await cmsApi.getPost(postId)
+  } catch {
+    return c.json({ error: 'Post not found in CMS' }, 404)
+  }
+
+  // Verify the post belongs to this publication
+  if (post.publicationId !== pub.cmsPublicationId) {
+    return c.json({ error: 'Post not found in CMS' }, 404)
+  }
+
+  // Use stored markdown if available, fall back to HTML for pre-backfill posts.
+  // NOTE: If markdown is absent, post.content is raw HTML — run the backfill script
+  // (scripts/backfill-markdown.ts) to populate markdown for all existing posts.
+  const markdownContent = post.markdown || post.content || ''
+
+  // Create a new session linked to the existing CMS post
+  const sessionId = crypto.randomUUID()
+  const userId = c.get('userId')
+  const session = await c.env.DAL.createSession({
+    id: sessionId,
+    userId,
+    title: post.title || 'Untitled',
+    publicationId: pub.id,
+    cmsPostId: postId,
+  })
+
+  // Seed the WriterAgent with the existing post content as draft v1
+  const agent = await getAgentByName<Env, WriterAgent>(c.env.WRITER_AGENT, sessionId)
+  const seedRes = await agent.fetch(
+    new Request('https://internal/seed-draft', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        title: post.title || 'Untitled',
+        content: markdownContent,
+        citations: post.citations ? JSON.stringify(post.citations) : null,
+      }),
+    }),
+  )
+  if (!seedRes.ok) {
+    console.error(`Failed to seed draft for edit session ${sessionId}:`, await seedRes.text())
+    return c.json({ error: 'Failed to load post content into the new session' }, 502)
+  }
+
+  return c.json(session, 201)
 })
 
 /** Delete a publication and its topics/ideas. */

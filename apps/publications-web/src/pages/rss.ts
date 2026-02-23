@@ -56,6 +56,7 @@ ${items.join('\n')}
     headers: {
       'Content-Type': 'application/rss+xml',
       'Cache-Control': 'public, s-maxage=3600, stale-while-revalidate=86400',
+      'Access-Control-Allow-Origin': '*',
     },
   });
 }

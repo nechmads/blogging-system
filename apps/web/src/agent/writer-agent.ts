@@ -313,6 +313,10 @@ export class WriterAgent extends AIChatAgent<Env, WriterAgentState> {
         return this.handleAutoWrite(body.message.trim());
       }
 
+      if (url.pathname.endsWith("/seed-draft") && request.method === "POST") {
+        return this.handleSeedDraft(request);
+      }
+
       if (url.pathname.endsWith("/chat") && request.method === "POST") {
         let body: { message?: string };
         try {
@@ -731,6 +735,14 @@ export class WriterAgent extends AIChatAgent<Env, WriterAgentState> {
       );
     }
 
+    // Validate draftVersion if provided
+    if (body.draftVersion !== undefined && (!Number.isInteger(body.draftVersion) || body.draftVersion < 1)) {
+      return Response.json(
+        { error: "draftVersion must be a positive integer" },
+        { status: 400 },
+      );
+    }
+
     // Resolve which draft to publish
     const draft = body.draftVersion
       ? this.getDraftByVersion(body.draftVersion)
@@ -779,20 +791,41 @@ export class WriterAgent extends AIChatAgent<Env, WriterAgentState> {
       const cmsApi = new CmsApi(this.env.CMS_URL, this.env.CMS_API_KEY);
       const cmsPublicationId = await this.resolveCmsPublicationId(pub);
 
-      const post = await cmsApi.createPost({
-        title: draft.title || "Untitled",
-        slug,
-        content: htmlContent,
-        status: "published",
-        author: body.author?.trim() || pub.defaultAuthor,
-        tags: body.tags?.trim() || undefined,
-        excerpt: body.excerpt?.trim() || undefined,
-        hook,
-        citations: parsedCitations,
-        featuredImage: this.state.featuredImageUrl || undefined,
-        publishedAt: new Date().toISOString(),
-        publicationId: cmsPublicationId,
-      });
+      const isUpdate = !!this.state.cmsPostId;
+      let post;
+
+      if (isUpdate) {
+        // Update existing post in CMS
+        post = await cmsApi.updatePost(this.state.cmsPostId!, {
+          title: draft.title || "Untitled",
+          slug,
+          content: htmlContent,
+          markdown: draft.content,
+          author: body.author?.trim() || pub.defaultAuthor,
+          tags: body.tags?.trim() || undefined,
+          excerpt: body.excerpt?.trim() || undefined,
+          hook,
+          citations: parsedCitations,
+          featuredImage: this.state.featuredImageUrl || undefined,
+        });
+      } else {
+        // Create new post in CMS
+        post = await cmsApi.createPost({
+          title: draft.title || "Untitled",
+          slug,
+          content: htmlContent,
+          markdown: draft.content,
+          status: "published",
+          author: body.author?.trim() || pub.defaultAuthor,
+          tags: body.tags?.trim() || undefined,
+          excerpt: body.excerpt?.trim() || undefined,
+          hook,
+          citations: parsedCitations,
+          featuredImage: this.state.featuredImageUrl || undefined,
+          publishedAt: new Date().toISOString(),
+          publicationId: cmsPublicationId,
+        });
+      }
 
       this.finalizeDraft(post.id, draft.version);
 
@@ -966,6 +999,12 @@ export class WriterAgent extends AIChatAgent<Env, WriterAgentState> {
     }
 
     const version = typeof body.version === "number" ? body.version : undefined;
+    if (version !== undefined && (!Number.isInteger(version) || version < 1)) {
+      return Response.json(
+        { error: "version must be a positive integer" },
+        { status: 400 },
+      );
+    }
 
     const updated = this.updateDraft(
       body.content,
@@ -977,5 +1016,39 @@ export class WriterAgent extends AIChatAgent<Env, WriterAgentState> {
     }
 
     return Response.json(updated);
+  }
+
+  /** Seed the agent with an existing post's content as draft v1. Used when editing a published post. */
+  private async handleSeedDraft(request: Request): Promise<Response> {
+    if (this.state.currentDraftVersion > 0) {
+      return Response.json(
+        { error: "Draft already seeded for this session" },
+        { status: 409 },
+      );
+    }
+
+    let body: { title?: string; content?: string; citations?: string | null };
+    try {
+      body = (await request.json()) as typeof body;
+    } catch {
+      return Response.json({ error: "Invalid JSON" }, { status: 400 });
+    }
+
+    if (typeof body.content !== "string" || !body.content.trim()) {
+      return Response.json(
+        { error: "content is required" },
+        { status: 400 },
+      );
+    }
+
+    // saveDraft handles setState (sets currentDraftVersion, writingPhase, title)
+    const draft = this.saveDraft(
+      body.title || null,
+      body.content,
+      body.citations ?? null,
+      null,
+    );
+
+    return Response.json({ success: true, version: draft.version });
   }
 }

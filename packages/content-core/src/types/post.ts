@@ -25,6 +25,7 @@ export interface Post {
   slug: string
   hook?: string
   content: string
+  markdown?: string
   excerpt?: string
   featuredImage?: string
   status: PostStatus

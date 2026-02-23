@@ -400,8 +400,9 @@ export const DraftPanel = React.forwardRef<DraftPanelHandle, DraftPanelProps>(
           draftVersion={selectedVersion}
           featuredImageUrl={featuredImageUrl}
           sessionPublicationId={publicationId}
+          cmsPostId={cmsPostId}
           onPublished={handlePublished}
-          isRepublish={!!(publishedPostId || cmsPostId)}
+          isRepublish={!!publishedPostId}
         />
       </div>
     )

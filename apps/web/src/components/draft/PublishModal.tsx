@@ -2,7 +2,7 @@ import { useEffect, useState, useCallback } from 'react'
 import { CheckCircleIcon, GlobeIcon, ImageIcon, LinkedinLogoIcon, XLogoIcon, SparkleIcon, CaretDownIcon, LinkSimpleIcon } from '@phosphor-icons/react'
 import { Modal } from '@/components/modal/Modal'
 import { Loader } from '@/components/loader/Loader'
-import { fetchPublications, fetchDrafts, fetchDraft, generateSeo, generateTweet, generateLinkedInPost, publishDraft, getLinkedInStatus, getTwitterStatus } from '@/lib/api'
+import { fetchPublications, fetchDrafts, fetchDraft, fetchCmsPost, generateSeo, generateTweet, generateLinkedInPost, publishDraft, getLinkedInStatus, getTwitterStatus } from '@/lib/api'
 import type { PublicationConfig } from '@/lib/types'
 
 const TCO_URL_LENGTH = 23
@@ -27,6 +27,7 @@ interface PublishModalProps {
   draftVersion: number | null
   featuredImageUrl?: string | null
   sessionPublicationId?: string | null
+  cmsPostId?: string | null
   onPublished: (postId: string) => void
   isRepublish?: boolean
 }
@@ -175,7 +176,8 @@ function SocialCard({ icon, label, connected, selected, onToggle, accentColor, a
 
 // --- Main modal ---
 
-export function PublishModal({ isOpen, onClose, sessionId, draftTitle, draftVersion, featuredImageUrl, sessionPublicationId, onPublished, isRepublish }: PublishModalProps) {
+export function PublishModal({ isOpen, onClose, sessionId, draftTitle, draftVersion, featuredImageUrl, sessionPublicationId, cmsPostId, onPublished, isRepublish }: PublishModalProps) {
+  const isUpdate = !!cmsPostId && !isRepublish
   const [slug, setSlug] = useState('')
   const [author, setAuthor] = useState('')
   const [tags, setTags] = useState('')
@@ -277,19 +279,33 @@ export function PublishModal({ isOpen, onClose, sessionId, draftTitle, draftVers
       .then(({ connected }) => { if (!cancelled) setTwitterConnected(connected) })
       .catch(() => { if (!cancelled) setTwitterConnected(false) })
 
-    setGeneratingSeo(true)
-    generateSeo(sessionId)
-      .then((seo) => {
-        if (cancelled) return
-        if (seo.hook) setHook(seo.hook)
-        if (seo.excerpt) setExcerpt(seo.excerpt)
-        if (seo.tags) setTags(seo.tags)
-      })
-      .catch(() => { /* best-effort */ })
-      .finally(() => { if (!cancelled) setGeneratingSeo(false) })
+    if (isUpdate && cmsPostId) {
+      // Pre-fill from existing CMS post instead of generating SEO
+      fetchCmsPost(sessionId)
+        .then((post) => {
+          if (cancelled) return
+          if (post.slug) setSlug(post.slug)
+          if (post.author) setAuthor(post.author)
+          if (post.tags) setTags(post.tags)
+          if (post.excerpt) setExcerpt(post.excerpt)
+          if (post.hook) setHook(post.hook)
+        })
+        .catch(() => { /* best-effort */ })
+    } else {
+      setGeneratingSeo(true)
+      generateSeo(sessionId)
+        .then((seo) => {
+          if (cancelled) return
+          if (seo.hook) setHook(seo.hook)
+          if (seo.excerpt) setExcerpt(seo.excerpt)
+          if (seo.tags) setTags(seo.tags)
+        })
+        .catch(() => { /* best-effort */ })
+        .finally(() => { if (!cancelled) setGeneratingSeo(false) })
+    }
 
     return () => { cancelled = true }
-  }, [isOpen, sessionId, draftTitle, sessionPublicationId, isRepublish])
+  }, [isOpen, sessionId, draftTitle, sessionPublicationId, isRepublish, isUpdate, cmsPostId])
 
   // Set author from selected publication's defaultAuthor
   useEffect(() => {
@@ -457,7 +473,7 @@ export function PublishModal({ isOpen, onClose, sessionId, draftTitle, draftVers
       // Build success message from actual results
       const parts: string[] = []
       if (selectedPubId) {
-        parts.push('Published successfully')
+        parts.push(isUpdate ? 'Post updated successfully' : 'Published successfully')
       }
       if (result.socialResults) {
         for (const sr of result.socialResults) {
@@ -498,7 +514,7 @@ export function PublishModal({ isOpen, onClose, sessionId, draftTitle, draftVers
           {/* Fixed header */}
           <div className="border-b border-[#e5e7eb] px-5 py-4 dark:border-[#374151]">
             <h3 className="text-lg font-semibold">
-              {isRepublish ? 'Share' : published ? 'Publish Again' : `Publish Post${draftVersion ? ` - Draft ${draftVersion}` : ''}`}
+              {isRepublish ? 'Share' : published ? (isUpdate ? 'Update Again' : 'Publish Again') : isUpdate ? 'Update Post' : `Publish Post${draftVersion ? ` - Draft ${draftVersion}` : ''}`}
             </h3>
           </div>
 
@@ -599,7 +615,7 @@ export function PublishModal({ isOpen, onClose, sessionId, draftTitle, draftVers
                         <div className="grid grid-cols-2 gap-3">
                           <div>
                             <label htmlFor="publish-slug" className="mb-1 block text-xs font-medium text-[#6b7280]">Slug</label>
-                            <input id="publish-slug" type="text" value={slug} onChange={(e) => setSlug(e.target.value)} placeholder="my-blog-post" className={inputClass} />
+                            <input id="publish-slug" type="text" value={slug} onChange={(e) => setSlug(e.target.value)} placeholder="my-blog-post" readOnly={isUpdate} className={`${inputClass}${isUpdate ? ' opacity-60 cursor-not-allowed' : ''}`} />
                           </div>
                           <div>
                             <label htmlFor="publish-author" className="mb-1 block text-xs font-medium text-[#6b7280]">Author</label>
@@ -864,12 +880,14 @@ export function PublishModal({ isOpen, onClose, sessionId, draftTitle, draftVers
               {publishing ? (
                 <>
                   <Loader size={14} />
-                  Publishing...
+                  {isUpdate ? 'Updating...' : 'Publishing...'}
                 </>
               ) : isRepublish ? (
                 'Share'
               ) : published ? (
-                'Publish Again'
+                isUpdate ? 'Update Again' : 'Publish Again'
+              ) : isUpdate ? (
+                'Update'
               ) : (
                 'Publish'
               )}

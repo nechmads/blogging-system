@@ -47,13 +47,14 @@ export async function createSession(db: D1Database, data: CreateSessionInput): P
 	await db
 		.prepare(
 			`INSERT INTO sessions (id, user_id, title, status, current_draft_version,
-			 publication_id, idea_id, seed_context, style_id, created_at, updated_at)
-			 VALUES (?, ?, ?, 'active', 0, ?, ?, ?, ?, ?, ?)`
+			 cms_post_id, publication_id, idea_id, seed_context, style_id, created_at, updated_at)
+			 VALUES (?, ?, ?, 'active', 0, ?, ?, ?, ?, ?, ?, ?)`
 		)
 		.bind(
 			data.id,
 			data.userId,
 			title,
+			data.cmsPostId ?? null,
 			data.publicationId ?? null,
 			data.ideaId ?? null,
 			data.seedContext ?? null,
@@ -69,7 +70,7 @@ export async function createSession(db: D1Database, data: CreateSessionInput): P
 		title,
 		status: 'active',
 		currentDraftVersion: 0,
-		cmsPostId: null,
+		cmsPostId: data.cmsPostId ?? null,
 		publicationId: data.publicationId ?? null,
 		ideaId: data.ideaId ?? null,
 		seedContext: data.seedContext ?? null,

@@ -61,6 +61,7 @@ ${entries.join('\n')}
     headers: {
       'Content-Type': 'application/atom+xml',
       'Cache-Control': 'public, s-maxage=3600, stale-while-revalidate=86400',
+      'Access-Control-Allow-Origin': '*',
     },
   });
 }

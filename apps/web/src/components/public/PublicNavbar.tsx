@@ -28,6 +28,12 @@ export function PublicNavbar({ showWaitlistCta = true }: PublicNavbarProps) {
         >
           FAQ
         </Link>
+        <Link
+          to="/blog"
+          className="text-sm font-medium text-[var(--color-text-muted)] transition-colors hover:text-[var(--color-text-primary)] hover:underline"
+        >
+          Blog
+        </Link>
 
         {showWaitlistCta ? (
           <Link

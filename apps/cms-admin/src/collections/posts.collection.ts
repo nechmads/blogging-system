@@ -41,6 +41,11 @@ export default {
         type: 'quill' as any,
         title: 'Content',
       },
+      markdown: {
+        type: 'textarea',
+        title: 'Markdown',
+        helpText: 'Original Markdown source (auto-populated at publish time)',
+      },
       excerpt: {
         type: 'textarea',
         title: 'Excerpt',
