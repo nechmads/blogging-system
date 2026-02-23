@@ -4,7 +4,6 @@ import { AnalyticsProvider, type AnalyticsUser } from '@hotmetal/analytics'
 
 const POSTHOG_KEY = import.meta.env.VITE_POSTHOG_KEY as string | undefined
 const ANALYTICS_ENABLED = import.meta.env.VITE_ANALYTICS_ENABLED === 'true'
-const LOG_ANALYTICS = import.meta.env.VITE_LOG_ANALYTICS_CALLS === 'true'
 const IS_DEV = import.meta.env.DEV
 
 function resolveEnabled(): boolean {
@@ -32,7 +31,6 @@ export function AnalyticsProviderWrapper({ children }: { children: React.ReactNo
       apiKey={POSTHOG_KEY}
       enabled={resolveEnabled()}
       debug={IS_DEV}
-      logCalls={LOG_ANALYTICS}
       user={analyticsUser}
     >
       {children}
