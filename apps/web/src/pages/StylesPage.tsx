@@ -14,6 +14,7 @@ import {
   duplicateStyle,
   createSession,
 } from '@/lib/api'
+import { AnalyticsManager, AnalyticsEvent } from '@hotmetal/analytics'
 import type { WritingStyle } from '@/lib/types'
 
 export function StylesPage() {
@@ -65,6 +66,7 @@ export function StylesPage() {
       })
       setStyles((prev) => prev.map((s) => (s.id === updated.id ? updated : s)))
       toast.success('Style updated')
+      AnalyticsManager.track(AnalyticsEvent.StyleUpdated, { styleId: editingStyle.id })
     } else {
       const created = await createStyle({
         ...data,
@@ -72,6 +74,7 @@ export function StylesPage() {
       })
       setStyles((prev) => [...prev, created])
       toast.success('Style created')
+      AnalyticsManager.track(AnalyticsEvent.StyleCreated, { styleId: created.id, method: 'manual' })
     }
   }
 
@@ -81,6 +84,7 @@ export function StylesPage() {
     try {
       await deleteStyle(deleteTarget.id)
       setStyles((prev) => prev.filter((s) => s.id !== deleteTarget.id))
+      AnalyticsManager.track(AnalyticsEvent.StyleDeleted, { styleId: deleteTarget.id, isPrebuilt: deleteTarget.isPrebuilt })
       setDeleteTarget(null)
       toast.success('Style deleted')
     } catch (err) {
@@ -95,6 +99,7 @@ export function StylesPage() {
       const dup = await duplicateStyle(style.id)
       setStyles((prev) => [...prev, dup])
       toast.success(`Duplicated "${style.name}"`)
+      AnalyticsManager.track(AnalyticsEvent.StyleDuplicated, { sourceStyleId: style.id, newStyleId: dup.id })
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Failed to duplicate')
     }
@@ -103,6 +108,7 @@ export function StylesPage() {
   const handleUse = async (style: WritingStyle) => {
     try {
       const session = await createSession({ styleId: style.id })
+      AnalyticsManager.track(AnalyticsEvent.SessionCreated, { publicationId: '', source: 'styles-page' })
       navigate(`/writing/${session.id}`)
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Failed to create session')

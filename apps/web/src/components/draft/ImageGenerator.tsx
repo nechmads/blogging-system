@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { ImageIcon, SparkleIcon, ArrowClockwiseIcon, CheckCircleIcon, XIcon } from '@phosphor-icons/react'
 import { Loader } from '@/components/loader/Loader'
 import { generateImagePrompt, generateImages, selectFeaturedImage } from '@/lib/api'
+import { AnalyticsManager, AnalyticsEvent } from '@hotmetal/analytics'
 import type { GeneratedImage } from '@/lib/types'
 
 type Mode = 'collapsed' | 'prompt' | 'generating' | 'results'
@@ -21,6 +22,7 @@ export function ImageGenerator({ sessionId, hasDraft, featuredImageUrl, onImageS
   const [selectedImageUrl, setSelectedImageUrl] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
+  const [promptFromAI, setPromptFromAI] = useState(false)
 
   const handleAutoPrompt = async () => {
     setGeneratingPrompt(true)
@@ -28,6 +30,7 @@ export function ImageGenerator({ sessionId, hasDraft, featuredImageUrl, onImageS
     try {
       const result = await generateImagePrompt(sessionId)
       setPrompt(result.prompt)
+      setPromptFromAI(true)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to generate prompt')
     } finally {
@@ -42,6 +45,7 @@ export function ImageGenerator({ sessionId, hasDraft, featuredImageUrl, onImageS
     setImages([])
     setSelectedImageUrl(null)
     try {
+      AnalyticsManager.track(AnalyticsEvent.ImageGenerationStarted, { promptSource: promptFromAI ? 'ai' : 'manual' })
       const result = await generateImages(sessionId, prompt.trim())
       setImages(result.images)
       setMode('results')
@@ -58,6 +62,7 @@ export function ImageGenerator({ sessionId, hasDraft, featuredImageUrl, onImageS
     try {
       await selectFeaturedImage(sessionId, selectedImageUrl)
       onImageSelected(selectedImageUrl)
+      AnalyticsManager.track(AnalyticsEvent.ImageSelected)
       setMode('collapsed')
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to save selection')
@@ -127,7 +132,7 @@ export function ImageGenerator({ sessionId, hasDraft, featuredImageUrl, onImageS
         <div className="flex gap-2">
           <textarea
             value={prompt}
-            onChange={(e) => setPrompt(e.target.value)}
+            onChange={(e) => { setPrompt(e.target.value); setPromptFromAI(false) }}
             placeholder="Describe the image you want..."
             rows={2}
             className="flex-1 resize-none rounded-lg border border-[#e5e7eb] bg-[#f5f5f5] px-3 py-2 text-xs text-[#0a0a0a] placeholder:text-[#9ca3af] focus:border-[#d97706] focus:outline-none focus:ring-1 focus:ring-[#d97706] dark:border-[#374151] dark:bg-[#111] dark:text-[#fafafa]"

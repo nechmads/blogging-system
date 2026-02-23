@@ -5,6 +5,7 @@ import { Loader } from '@/components/loader/Loader'
 import { SessionCard } from '@/components/session/SessionCard'
 import { NewSessionModal } from '@/components/session/NewSessionModal'
 import { fetchSessions, deleteSession } from '@/lib/api'
+import { AnalyticsManager, AnalyticsEvent } from '@hotmetal/analytics'
 import type { Session } from '@/lib/types'
 
 export function SessionsPage() {
@@ -35,6 +36,7 @@ export function SessionsPage() {
       await deleteSession(id)
       setSessions((prev) => prev.filter((s) => s.id !== id))
       setDeleteConfirmId(null)
+      AnalyticsManager.track(AnalyticsEvent.SessionDeleted)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to delete session')
     }

@@ -1,0 +1,7 @@
+export { AnalyticsManager } from './manager'
+export { AnalyticsEvent } from './events'
+export type { AnalyticsEventProperties } from './events'
+export type { AnalyticsAdapter, AnalyticsConfig, UserTraits, PageProperties } from './types'
+export { PostHogAdapter } from './adapters/posthog'
+export { AnalyticsProvider } from './components/AnalyticsProvider'
+export type { AnalyticsProviderProps, AnalyticsUser } from './components/AnalyticsProvider'

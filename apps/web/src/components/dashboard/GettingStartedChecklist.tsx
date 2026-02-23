@@ -22,6 +22,7 @@ import {
   createSession,
 } from '@/lib/api'
 import { scoutStore$, startScoutPolling } from '@/stores/scout-store'
+import { AnalyticsManager, AnalyticsEvent } from '@hotmetal/analytics'
 import type { PublicationConfig, Topic, Idea } from '@/lib/types'
 
 interface ChecklistData {
@@ -100,8 +101,10 @@ export function GettingStartedChecklist({ publication }: GettingStartedChecklist
   }
 
   const handleDismiss = () => {
+    const completedSteps = steps ? steps.filter((s) => s.complete).length : 0
     checklistStore$.dismissed.set(true)
     setShowDismissConfirm(false)
+    AnalyticsManager.track(AnalyticsEvent.ChecklistDismissed, { publicationId: pubId, completedSteps })
   }
 
   const handleRunScout = async () => {
@@ -112,6 +115,7 @@ export function GettingStartedChecklist({ publication }: GettingStartedChecklist
       await triggerScout(publication.id)
       startScoutPolling(publication.id, currentCount)
       toast.success('Ideas agent is running! New ideas will appear shortly.')
+      AnalyticsManager.track(AnalyticsEvent.ScoutTriggered, { publicationId: publication.id, source: 'checklist' })
     } catch {
       toast.error('Failed to start the ideas agent')
     } finally {
@@ -124,6 +128,7 @@ export function GettingStartedChecklist({ publication }: GettingStartedChecklist
     setCreatingSession(true)
     try {
       const session = await createSession({ publicationId: publication.id })
+      AnalyticsManager.track(AnalyticsEvent.SessionCreated, { publicationId: publication.id, source: 'checklist' })
       navigate(`/writing/${session.id}`)
     } catch {
       toast.error('Failed to create writing session')

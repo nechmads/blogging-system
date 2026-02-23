@@ -31,6 +31,7 @@
     "@clerk/clerk-react": "^5.60.0",
     "@clerk/themes": "^2.4.51",
     "@cloudflare/ai-chat": "^0.0.6",
+    "@hotmetal/analytics": "workspace:*",
     "@hotmetal/content-core": "workspace:*",
     "@hotmetal/data-layer": "workspace:*",
     "@hotmetal/shared": "workspace:*",

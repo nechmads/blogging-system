@@ -8,6 +8,7 @@ import type { PublicationConfig, Idea, IdeaStatus } from '@/lib/types'
 import { IDEA_STATUS_COLORS } from '@/lib/constants'
 import { formatRelativeTime } from '@/lib/format'
 import { scoutStore$, refreshNewIdeasCount } from '@/stores/scout-store'
+import { AnalyticsManager, AnalyticsEvent } from '@hotmetal/analytics'
 
 const STATUS_FILTERS: { value: IdeaStatus | 'all'; label: string }[] = [
   { value: 'all', label: 'All' },
@@ -96,6 +97,8 @@ export function IdeasPage() {
       await updateIdeaStatus(id, 'dismissed')
       setIdeas((prev) => prev.map((i) => (i.id === id ? { ...i, status: 'dismissed' as IdeaStatus } : i)))
       refreshNewIdeasCount()
+      const dismissedIdea = ideas.find((i) => i.id === id)
+      AnalyticsManager.track(AnalyticsEvent.IdeaDismissed, { publicationId: dismissedIdea?.publicationId ?? selectedPubId })
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to dismiss idea')
     }
@@ -162,7 +165,7 @@ export function IdeasPage() {
             <button
               key={f.value}
               type="button"
-              onClick={() => setStatusFilter(f.value)}
+              onClick={() => { setStatusFilter(f.value); AnalyticsManager.track(AnalyticsEvent.IdeasFiltered, { publicationId: selectedPubId, filter: f.value }) }}
               className={`rounded-full px-3 py-1 text-xs font-medium transition-colors ${
                 statusFilter === f.value
                   ? 'bg-[var(--color-accent)] text-white'

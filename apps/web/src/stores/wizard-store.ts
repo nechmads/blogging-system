@@ -6,6 +6,7 @@ import {
   createTopic,
   fetchStyles,
 } from '@/lib/api'
+import { AnalyticsManager, AnalyticsEvent } from '@hotmetal/analytics'
 import type { AutoPublishMode, PublicationConfig, WritingStyle } from '@/lib/types'
 
 let topicIdCounter = 0
@@ -123,6 +124,7 @@ export async function handleBasicsNext(): Promise<void> {
       })
       wizardStore$.publicationId.set(pub.id)
       wizardStore$.publication.set(pub)
+      AnalyticsManager.track(AnalyticsEvent.PublicationCreated, { publicationId: pub.id, name: name.trim(), source: 'wizard' })
     }
     wizardStore$.currentStep.set(2)
   } catch (err) {
