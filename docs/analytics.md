@@ -8,30 +8,30 @@ Product analytics is implemented via a vendor-agnostic `@hotmetal/analytics` pac
 
 ### Key Exports
 
-| Export | Description |
-|--------|-------------|
-| `AnalyticsManager` | Singleton class with static methods: `init()`, `identify()`, `track()`, `page()`, `reset()` |
-| `AnalyticsEvent` | Enum of all tracked events (human-readable names) |
-| `AnalyticsProvider` | React component — handles init, page-view tracking, and user identification |
-| `AnalyticsAdapter` | Interface for implementing new vendor adapters |
-| `PostHogAdapter` | PostHog implementation (`autocapture: false`, `capture_pageview: false`) |
+| Export              | Description                                                                                 |
+| ------------------- | ------------------------------------------------------------------------------------------- |
+| `AnalyticsManager`  | Singleton class with static methods: `init()`, `identify()`, `track()`, `page()`, `reset()` |
+| `AnalyticsEvent`    | Enum of all tracked events (human-readable names)                                           |
+| `AnalyticsProvider` | React component — handles init, page-view tracking, and user identification                 |
+| `AnalyticsAdapter`  | Interface for implementing new vendor adapters                                              |
+| `PostHogAdapter`    | PostHog implementation (`autocapture: false`, `capture_pageview: false`)                    |
 
 ### Usage
 
 **Track an event (anywhere — components, stores, callbacks):**
 
 ```typescript
-import { AnalyticsManager, AnalyticsEvent } from '@hotmetal/analytics'
+import { AnalyticsManager, AnalyticsEvent } from "@hotmetal/analytics";
 
 // Event with properties
 AnalyticsManager.track(AnalyticsEvent.PublicationCreated, {
   publicationId: pub.id,
   name: pub.name,
-  source: 'wizard',
-})
+  source: "wizard",
+});
 
 // Event without properties
-AnalyticsManager.track(AnalyticsEvent.ChatGenerationStopped)
+AnalyticsManager.track(AnalyticsEvent.ChatGenerationStopped);
 ```
 
 The `track()` method is fully type-safe — TypeScript enforces the correct properties for each event.
@@ -50,20 +50,20 @@ The `track()` method is fully type-safe — TypeScript enforces the correct prop
 
 ## Environment Variables
 
-| Variable | Required | Description |
-|----------|----------|-------------|
-| `VITE_POSTHOG_KEY` | Yes (for tracking) | PostHog project API key |
-| `VITE_ANALYTICS_ENABLED` | No | Set to `"true"` to enable in dev mode |
+| Variable                  | Required           | Description                           |
+| ------------------------- | ------------------ | ------------------------------------- |
+| `VITE_PUBLIC_POSTHOG_KEY` | Yes (for tracking) | PostHog project API key               |
+| `VITE_ANALYTICS_ENABLED`  | No                 | Set to `"true"` to enable in dev mode |
 
 ### Behavior Matrix
 
-| Environment | `VITE_POSTHOG_KEY` | `VITE_ANALYTICS_ENABLED` | Result |
-|-------------|-------------------|--------------------------|--------|
-| Development | Not set | — | Disabled (silent no-ops) |
-| Development | Set | `"true"` | Enabled with debug mode |
-| Development | Set | Not `"true"` | Disabled |
-| Production | Set | — | Enabled |
-| Production | Not set | — | Disabled |
+| Environment | `VITE_PUBLIC_POSTHOG_KEY` | `VITE_ANALYTICS_ENABLED` | Result                   |
+| ----------- | ------------------------- | ------------------------ | ------------------------ |
+| Development | Not set                   | —                        | Disabled (silent no-ops) |
+| Development | Set                       | `"true"`                 | Enabled with debug mode  |
+| Development | Set                       | Not `"true"`             | Disabled                 |
+| Production  | Set                       | —                        | Enabled                  |
+| Production  | Not set                   | —                        | Disabled                 |
 
 ## Event Catalog
 
