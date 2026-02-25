@@ -70,6 +70,8 @@ app.get('/api/images/*', async (c) => {
     headers: {
       'Content-Type': object.httpMetadata?.contentType || 'image/jpeg',
       'Cache-Control': 'public, max-age=31536000, immutable',
+      'X-Content-Type-Options': 'nosniff',
+      'Content-Security-Policy': "default-src 'none'",
     },
   })
 })

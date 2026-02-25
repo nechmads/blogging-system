@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useImperativeHandle, useRef, useState } from 'react'
-import { CheckCircleIcon, CopyIcon, EyeIcon, PencilSimpleIcon, RocketLaunchIcon } from '@phosphor-icons/react'
+import { CheckCircleIcon, CopyIcon, EyeIcon, ImageIcon, PencilSimpleIcon, RocketLaunchIcon } from '@phosphor-icons/react'
 import { MemoizedMarkdown } from '@/components/memoized-markdown'
 import { Loader } from '@/components/loader/Loader'
 import { DraftVersionSelector } from './DraftVersionSelector'
@@ -8,7 +8,7 @@ import { ImageGenerator } from './ImageGenerator'
 import { SourcesList } from './SourcesList'
 import { fetchDrafts, fetchDraft, updateDraft } from '@/lib/api'
 import type { Draft, DraftContent } from '@/lib/types'
-import { TiptapEditor } from './TiptapEditor'
+import { TiptapEditor, type TiptapEditorHandle } from './TiptapEditor'
 import React from 'react'
 
 const AUTOSAVE_DELAY = 2000
@@ -45,6 +45,9 @@ export const DraftPanel = React.forwardRef<DraftPanelHandle, DraftPanelProps>(
     const [editing, setEditing] = useState(false)
     const [editableTitle, setEditableTitle] = useState('')
     const [saveStatus, setSaveStatus] = useState<SaveStatus>('idle')
+    const [imageUploading, setImageUploading] = useState(false)
+    const editorHandleRef = useRef<TiptapEditorHandle>(null)
+    const imageFileInputRef = useRef<HTMLInputElement>(null)
     const pendingMarkdownRef = useRef<string | null>(null)
     const pendingTitleRef = useRef<string | null>(null)
     const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -243,6 +246,20 @@ export const DraftPanel = React.forwardRef<DraftPanelHandle, DraftPanelProps>(
       setPublishedPostId(postId)
     }
 
+    const handleImageButtonClick = useCallback(() => {
+      imageFileInputRef.current?.click()
+    }, [])
+
+    const handleImageFileChange = useCallback(
+      async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0]
+        if (!file) return
+        e.target.value = ''
+        await editorHandleRef.current?.uploadImage(file)
+      },
+      [],
+    )
+
     if (loading) {
       return (
         <div className="flex h-full items-center justify-center bg-[#f5f5f5] dark:bg-[#111]">
@@ -328,13 +345,43 @@ export const DraftPanel = React.forwardRef<DraftPanelHandle, DraftPanelProps>(
           </div>
         </div>
 
-        {/* Image Generator */}
-        <ImageGenerator
-          sessionId={sessionId}
-          hasDraft={!!content}
-          featuredImageUrl={featuredImageUrl}
-          onImageSelected={setFeaturedImageUrl}
-        />
+        {/* Image Generator — hidden in edit mode */}
+        {!editing && (
+          <ImageGenerator
+            sessionId={sessionId}
+            hasDraft={!!content}
+            featuredImageUrl={featuredImageUrl}
+            onImageSelected={setFeaturedImageUrl}
+          />
+        )}
+
+        {/* Edit toolbar — sticky above scrollable content */}
+        {editing && content && (
+          <div className="flex items-center gap-1 border-b border-[#e5e7eb] bg-white px-4 py-1.5 dark:border-[#374151] dark:bg-[#0a0a0a]">
+            <button
+              type="button"
+              onClick={handleImageButtonClick}
+              disabled={imageUploading}
+              title="Insert image"
+              className={`flex items-center gap-1.5 rounded px-2 py-1 text-xs font-medium transition-colors ${
+                imageUploading
+                  ? 'cursor-not-allowed opacity-40'
+                  : 'text-[#6b7280] hover:bg-[#e5e7eb] hover:text-[#0a0a0a] dark:hover:bg-[#374151] dark:hover:text-[#fafafa]'
+              }`}
+            >
+              <ImageIcon size={14} />
+              {imageUploading ? 'Uploading...' : 'Add Image'}
+            </button>
+            <input
+              ref={imageFileInputRef}
+              type="file"
+              accept="image/jpeg,image/png,image/webp,image/gif"
+              className="hidden"
+              onChange={handleImageFileChange}
+              aria-label="Upload image"
+            />
+          </div>
+        )}
 
         {/* Content */}
         <div className="flex-1 overflow-y-auto p-6">
@@ -356,8 +403,11 @@ export const DraftPanel = React.forwardRef<DraftPanelHandle, DraftPanelProps>(
                       className="mb-4 w-full border-none bg-transparent p-0 text-3xl font-bold leading-tight text-[#0a0a0a] placeholder:text-[#d1d5db] focus:outline-none dark:text-[#fafafa] dark:placeholder:text-[#4b5563]"
                     />
                     <TiptapEditor
+                      ref={editorHandleRef}
                       content={content.content}
                       onUpdate={handleEditorUpdate}
+                      onUploadingChange={setImageUploading}
+                      sessionId={sessionId}
                     />
                   </>
                 ) : (
