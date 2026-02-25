@@ -41,6 +41,10 @@ async function getAuthHeaders(): Promise<Record<string, string>> {
 
 async function request<T>(url: string, init?: RequestInit): Promise<T> {
   const headers = new Headers(init?.headers)
+  // When body is FormData, browser must set Content-Type with the multipart boundary
+  if (init?.body instanceof FormData) {
+    headers.delete('Content-Type')
+  }
   // Merge fresh auth header
   const auth = await getAuthHeaders()
   for (const [k, v] of Object.entries(auth)) {
@@ -202,6 +206,18 @@ export async function generateImages(sessionId: string, prompt: string): Promise
     method: 'POST',
     headers: JSON_HEADERS,
     body: JSON.stringify({ prompt }),
+  })
+}
+
+export async function uploadInlineImage(
+  sessionId: string,
+  file: File,
+): Promise<{ url: string }> {
+  const formData = new FormData()
+  formData.append('file', file)
+  return request<{ url: string }>(`/api/sessions/${sessionId}/upload-inline-image`, {
+    method: 'POST',
+    body: formData,
   })
 }
 

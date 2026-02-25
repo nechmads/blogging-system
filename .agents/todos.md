@@ -229,5 +229,11 @@
   - Settings page: new Notifications section below Connections
   - Web API: GET/PATCH `/api/notifications/preferences` with boolean type validation
   - All emails include unsubscribe/settings link footer
+- [x] **Inline Image Upload in Draft Editor** — Users can upload images from their device and embed them inline in draft content. Includes:
+  - Backend: `POST /sessions/:sessionId/upload-inline-image` endpoint with multipart FormData handling, file type/size validation (JPEG/PNG/WebP/GIF, 5MB max), R2 upload at `sessions/{sessionId}/inline/{uuid}.{ext}`
+  - Frontend: `uploadInlineImage()` API function with FormData body, defensive `Content-Type` deletion in `request()` helper for multipart
+  - Tiptap editor: `@tiptap/extension-image` registered (activates `tiptap-markdown` image serialization), toolbar "Image" button with file picker, clipboard paste handler, drag-and-drop handler, `uploading` state with "Uploading..." indicator, toast error feedback via `sonner`
+  - Security: `X-Content-Type-Options: nosniff` and `Content-Security-Policy: default-src 'none'` headers on image serving route, `allowBase64: false` on Image extension
+  - Images stored as `![alt](url)` markdown, survive full pipeline: Tiptap → tiptap-markdown → `marked.parse()` → `sanitize-html` → publication templates
 - [ ] Writer Agent — Phase 2: Voice input (transcription in `input-processor.ts`)
 - [ ] Writer Agent — Phase 2: D1 session sync (synchronize DO state back to D1 for listing accuracy)

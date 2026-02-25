@@ -162,6 +162,63 @@ images.post('/sessions/:sessionId/select-image', async (c) => {
   return c.json({ featuredImageUrl: updated.featuredImageUrl })
 })
 
+/** Upload an image file for inline use in a draft. */
+images.post('/sessions/:sessionId/upload-inline-image', async (c) => {
+  const sessionId = c.req.param('sessionId')
+  const session = await c.env.DAL.getSessionById(sessionId)
+  if (!session) return c.json({ error: 'Session not found' }, 404)
+  if (session.userId !== c.get('userId')) {
+    return c.json({ error: 'Session not found' }, 404)
+  }
+
+  let formData: FormData
+  try {
+    formData = await c.req.formData()
+  } catch {
+    return c.json({ error: 'Invalid multipart request' }, 400)
+  }
+
+  const file = formData.get('file')
+  if (!(file instanceof File)) {
+    return c.json({ error: 'No file provided' }, 400)
+  }
+
+  const MAX_SIZE = 5 * 1024 * 1024
+  if (file.size > MAX_SIZE) {
+    return c.json({ error: 'File exceeds 5MB limit' }, 400)
+  }
+
+  const ALLOWED_TYPES: Record<string, string> = {
+    'image/jpeg': 'jpg',
+    'image/png': 'png',
+    'image/webp': 'webp',
+    'image/gif': 'gif',
+  }
+  const ext = ALLOWED_TYPES[file.type]
+  if (!ext) {
+    return c.json({ error: 'Unsupported image type. Use JPEG, PNG, WebP, or GIF.' }, 400)
+  }
+
+  const key = `sessions/${sessionId}/inline/${crypto.randomUUID()}.${ext}`
+  try {
+    const buffer = await file.arrayBuffer()
+    await c.env.IMAGE_BUCKET.put(key, buffer, {
+      httpMetadata: { contentType: file.type },
+    })
+  } catch (err) {
+    console.error('R2 inline image upload error:', err)
+    return c.json({ error: 'Upload failed, please try again' }, 502)
+  }
+
+  const imageBaseUrl = c.env.IMAGE_BASE_URL?.trim().replace(/\/$/, '') || ''
+  const origin = new URL(c.req.url).origin
+  const url = imageBaseUrl
+    ? `${imageBaseUrl}/${key}`
+    : `${origin}/api/images/${key}`
+
+  return c.json({ url })
+})
+
 // Note: Public image serving (GET /api/images/*) is handled in server.ts
 // before auth middleware, so it doesn't need to be duplicated here.
 
