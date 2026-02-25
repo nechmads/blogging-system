@@ -292,6 +292,8 @@ export async function updatePublication(
 }
 
 export async function deletePublication(db: D1Database, id: string): Promise<void> {
+	// Detach sessions first — sessions.publication_id has no ON DELETE CASCADE
+	await db.prepare('UPDATE sessions SET publication_id = NULL WHERE publication_id = ?').bind(id).run()
 	await db.prepare('DELETE FROM publications WHERE id = ?').bind(id).run()
 }
 
