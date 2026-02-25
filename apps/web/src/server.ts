@@ -33,6 +33,7 @@ import chat from './api/chat'
 import publish from './api/publish'
 import images from './api/images'
 import connections from './api/connections'
+import notifications from './api/notifications'
 import internal from './api/internal'
 import admin from './api/admin'
 import webhooks from './api/webhooks'
@@ -98,6 +99,7 @@ app.route('/api', drafts)
 app.route('/api', chat)
 app.route('/api', publish)
 app.route('/api', connections)
+app.route('/api', notifications)
 app.route('/api', images)
 
 // ─── Scout trigger (proxied to content-scout) ───────────────────────

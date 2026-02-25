@@ -219,5 +219,15 @@
   - `AnalyticsProviderWrapper` in `apps/web` bridging Clerk `useUser()` to analytics identification
   - Track calls added to 15 files: PublicationPage, StylesPage, IdeasPage, IdeaDetailPage, SessionsPage, SettingsPage, NewSessionModal, ChatPanel, GettingStartedChecklist, QuickActions, PublishModal, ImageGenerator, WizardStepComplete, wizard-store
   - Dev/production gating via `VITE_POSTHOG_KEY` + `VITE_ANALYTICS_ENABLED` env vars
+- [x] **Email Notifications (Resend)** — Automatic email notifications when the content scout completes. Includes:
+  - D1 migration (`0014_notification_preferences.sql`): per-user toggle flags for 3 notification types (new ideas, draft ready, post published), all default enabled
+  - Data layer: `notification-preferences.ts` domain (getOrCreate + partial update), exposed via DAL RPC
+  - Notifications service (`services/notifications`): Resend email sending, `NotificationsService` WorkerEntrypoint for typed RPC, preference checking + user lookup before each send, never-throw error handling
+  - Content scout integration: NOTIFICATIONS service binding, notification calls after step 5 (ideas stored) and step 6 (auto-write), try/catch guards so notifications never fail the workflow
+  - Auto-write return type updated to surface idea title back to workflow for email content
+  - Frontend: NotificationPreferences component with toggle switches, optimistic updates, accessibility (role=switch, aria-checked)
+  - Settings page: new Notifications section below Connections
+  - Web API: GET/PATCH `/api/notifications/preferences` with boolean type validation
+  - All emails include unsubscribe/settings link footer
 - [ ] Writer Agent — Phase 2: Voice input (transcription in `input-processor.ts`)
 - [ ] Writer Agent — Phase 2: D1 session sync (synchronize DO state back to D1 for listing accuracy)

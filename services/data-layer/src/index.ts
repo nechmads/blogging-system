@@ -13,6 +13,7 @@ import * as socialConnections from './domains/social-connections'
 import * as publicationOutlets from './domains/publication-outlets'
 import * as publicationTokens from './domains/publication-tokens'
 import * as writingStyles from './domains/writing-styles'
+import * as notificationPreferences from './domains/notification-preferences'
 
 import type {
 	CreateUserInput,
@@ -34,6 +35,7 @@ import type {
 	CreatePublicationOutletInput,
 	CreateWritingStyleInput,
 	UpdateWritingStyleInput,
+	UpdateNotificationPreferencesInput,
 } from './types'
 
 // Re-export types for consumers
@@ -53,6 +55,7 @@ import type {
 	PublicationTokenWithRawToken,
 	ScoutSchedule,
 	WritingStyle,
+	NotificationPreferences,
 } from './types'
 
 /**
@@ -137,6 +140,10 @@ export interface DataLayerApi {
 	validatePublicationToken(rawToken: string): Promise<string | null>
 	revokePublicationToken(id: string): Promise<void>
 	listPublicationTokens(pubId: string): Promise<PublicationToken[]>
+
+	// Notification Preferences
+	getOrCreateNotificationPreferences(userId: string): Promise<NotificationPreferences>
+	updateNotificationPreferences(userId: string, data: UpdateNotificationPreferencesInput): Promise<NotificationPreferences>
 
 	// Writing Styles
 	createWritingStyle(data: CreateWritingStyleInput): Promise<WritingStyle>
@@ -239,6 +246,10 @@ export class DataLayer extends WorkerEntrypoint<Env> {
 	validatePublicationToken(rawToken: string) { return publicationTokens.validatePublicationToken(this.env.DB, rawToken) }
 	revokePublicationToken(id: string) { return publicationTokens.revokePublicationToken(this.env.DB, id) }
 	listPublicationTokens(pubId: string) { return publicationTokens.listPublicationTokens(this.env.DB, pubId) }
+
+	// ─── Notification Preferences ──────────────────────────────────────
+	getOrCreateNotificationPreferences(userId: string) { return notificationPreferences.getOrCreatePreferences(this.env.DB, userId) }
+	updateNotificationPreferences(userId: string, data: UpdateNotificationPreferencesInput) { return notificationPreferences.updatePreferences(this.env.DB, userId, data) }
 
 	// ─── Writing Styles ────────────────────────────────────────────────
 	createWritingStyle(data: CreateWritingStyleInput) { return writingStyles.createWritingStyle(this.env.DB, data) }

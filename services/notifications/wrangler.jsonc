@@ -1,0 +1,41 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "hotmetal-notifications",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-02-24",
+  "compatibility_flags": ["nodejs_compat"],
+  "observability": {
+    "enabled": true,
+  },
+
+  "dev": {
+    "port": 8792,
+  },
+
+  // Data Access Layer via Service Binding
+  "services": [
+    {
+      "binding": "DAL",
+      "service": "hotmetal-data-layer",
+      "entrypoint": "DataLayer",
+    },
+  ],
+
+  "routes": [
+    {
+      "pattern": "notifications.hotmetalapp.com",
+      "zone_name": "hotmetalapp.com",
+      "custom_domain": true,
+    },
+  ],
+
+  // Non-secret environment variables
+  "vars": {
+    "FROM_EMAIL": "Hot Metal <subscriptions@mail.hotmetalapp.com>",
+    "WEB_APP_URL": "https://hotmetalapp.com",
+  },
+
+  // Secrets (set via `wrangler secret put`):
+  // RESEND_API_KEY       — Resend email API key
+  // API_KEY              — authenticates incoming requests to this service
+}

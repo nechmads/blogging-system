@@ -13,82 +13,89 @@
  * 6. Set NOTIFICATION_EMAIL in wrangler.jsonc vars (not a secret)
  */
 
-import { Hono } from 'hono'
-import { Webhook } from 'svix'
-import { Resend } from 'resend'
-import type { AppEnv } from '../server'
+import { Hono } from "hono";
+import { Webhook } from "svix";
+import { Resend } from "resend";
+import type { AppEnv } from "../server";
 
-const webhooks = new Hono<AppEnv>()
+const webhooks = new Hono<AppEnv>();
 
-webhooks.post('/clerk', async (c) => {
-  const secret = c.env.CLERK_WEBHOOK_SECRET
+webhooks.post("/clerk", async (c) => {
+  const secret = c.env.CLERK_WEBHOOK_SECRET;
   if (!secret) {
-    console.error('CLERK_WEBHOOK_SECRET not configured')
-    return c.json({ error: 'Webhook not configured' }, 500)
+    console.error("CLERK_WEBHOOK_SECRET not configured");
+    return c.json({ error: "Webhook not configured" }, 500);
   }
 
-  const svixId = c.req.header('svix-id')
-  const svixTimestamp = c.req.header('svix-timestamp')
-  const svixSignature = c.req.header('svix-signature')
+  const svixId = c.req.header("svix-id");
+  const svixTimestamp = c.req.header("svix-timestamp");
+  const svixSignature = c.req.header("svix-signature");
 
   if (!svixId || !svixTimestamp || !svixSignature) {
-    return c.json({ error: 'Missing svix headers' }, 400)
+    return c.json({ error: "Missing svix headers" }, 400);
   }
 
-  const body = await c.req.text()
+  const body = await c.req.text();
 
-  let payload: { type: string; data: Record<string, unknown> }
+  let payload: { type: string; data: Record<string, unknown> };
   try {
-    const wh = new Webhook(secret)
+    const wh = new Webhook(secret);
     payload = wh.verify(body, {
-      'svix-id': svixId,
-      'svix-timestamp': svixTimestamp,
-      'svix-signature': svixSignature,
-    }) as typeof payload
+      "svix-id": svixId,
+      "svix-timestamp": svixTimestamp,
+      "svix-signature": svixSignature,
+    }) as typeof payload;
   } catch (err) {
-    console.error('Webhook signature verification failed:', err)
-    return c.json({ error: 'Invalid signature' }, 400)
+    console.error("Webhook signature verification failed:", err);
+    return c.json({ error: "Invalid signature" }, 400);
   }
 
-  if (payload.type === 'waitlistEntry.created') {
-    const email = (payload.data.email_address ?? payload.data.emailAddress) as string | undefined
-    console.log(`[Webhook] New waitlist entry: ${email ?? 'unknown'}`, JSON.stringify(payload.data))
+  if (payload.type === "waitlistEntry.created") {
+    const email = (payload.data.email_address ?? payload.data.emailAddress) as
+      | string
+      | undefined;
+    console.log(
+      `[Webhook] New waitlist entry: ${email ?? "unknown"}`,
+      JSON.stringify(payload.data),
+    );
 
     try {
-      await sendWaitlistNotification(c.env, email)
+      await sendWaitlistNotification(c.env, email);
     } catch (err) {
-      console.error('Failed to send waitlist notification email:', err)
+      console.error("Failed to send waitlist notification email:", err);
       // Don't return error to Clerk — we received the webhook successfully
     }
   } else {
-    console.log(`[Webhook] Unhandled event type: ${payload.type}`)
+    console.log(`[Webhook] Unhandled event type: ${payload.type}`);
   }
 
-  return c.json({ received: true })
-})
+  return c.json({ received: true });
+});
 
 async function sendWaitlistNotification(
-  env: Pick<Env, 'RESEND_API_KEY' | 'NOTIFICATION_EMAIL'>,
+  env: Pick<Env, "RESEND_API_KEY" | "NOTIFICATION_EMAIL">,
   email?: string,
 ): Promise<void> {
   if (!env.RESEND_API_KEY || !env.NOTIFICATION_EMAIL) {
-    console.warn('RESEND_API_KEY or NOTIFICATION_EMAIL not configured, skipping email')
-    return
+    console.warn(
+      "RESEND_API_KEY or NOTIFICATION_EMAIL not configured, skipping email",
+    );
+    return;
   }
 
-  const resend = new Resend(env.RESEND_API_KEY)
+  const resend = new Resend(env.RESEND_API_KEY);
   await resend.emails.send({
-    from: 'Hot Metal <notifications@mail.hotmetalapp.com>',
+    from: "Hot Metal <subscriptions@mail.hotmetalapp.com>",
     to: env.NOTIFICATION_EMAIL,
-    subject: `New waitlist signup${email ? `: ${email}` : ''}`,
+    subject: `New waitlist signup${email ? `: ${email}` : ""}`,
     text: [
-      'Someone just joined the Hot Metal waitlist!',
-      '',
-      email ? `Email: ${email}` : 'Email not available in webhook payload.',
-      '',
+      "Someone just joined the Hot Metal waitlist!",
+      "",
+      email ? `Email: ${email}` : "Email not available in webhook payload.",
+      "",
       `Time: ${new Date().toISOString()}`,
-    ].join('\n'),
-  })
+    ].join("\n"),
+  });
 }
 
-export default webhooks
+export default webhooks;

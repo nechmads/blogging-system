@@ -63,6 +63,11 @@
 			"binding": "WEB",
 			"service": "hotmetal-web",
 		},
+		{
+			"binding": "NOTIFICATIONS",
+			"service": "hotmetal-notifications",
+			"entrypoint": "NotificationsService",
+		},
 	],
 	"routes": [
 		{
@@ -75,6 +80,7 @@
 	// Non-secret environment variables
 	"vars": {
 		"ALEXANDER_API_URL": "https://alexanderai.farfarawaylabs.com",
+		"PUBLICATIONS_BASE_DOMAIN": "hotmetalapp.com",
 	},
 
 	// Secrets (set via `wrangler secret put`):
