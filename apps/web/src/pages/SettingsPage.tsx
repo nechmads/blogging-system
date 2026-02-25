@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useSearchParams } from 'react-router'
 import { toast } from 'sonner'
-import { LinkedinLogoIcon, XLogoIcon, LinkIcon, TrashIcon, PlugIcon } from '@phosphor-icons/react'
+import { LinkedinLogoIcon, XLogoIcon, LinkIcon, TrashIcon, PlugIcon, BellIcon } from '@phosphor-icons/react'
+import { NotificationPreferences } from '@/components/settings/NotificationPreferences'
 import { Loader } from '@/components/loader/Loader'
 import { Modal } from '@/components/modal/Modal'
 import { fetchConnections, deleteConnection, getLinkedInAuthUrl, getTwitterAuthUrl } from '@/lib/api'
@@ -267,6 +268,20 @@ export function SettingsPage() {
             </div>
           </div>
         )}
+      </section>
+
+      {/* Notifications Section */}
+      <section>
+        <div className="mb-4">
+          <h2 className="flex items-center gap-2 text-lg font-semibold text-[var(--color-text-primary)]">
+            <BellIcon size={20} />
+            Notifications
+          </h2>
+          <p className="mt-0.5 text-sm text-[var(--color-text-muted)]">
+            Choose which emails you receive from Hot Metal.
+          </p>
+        </div>
+        <NotificationPreferences />
       </section>
 
       {/* Disconnect confirmation modal */}

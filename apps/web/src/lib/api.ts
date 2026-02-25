@@ -461,3 +461,25 @@ export async function fetchActivity(days = 30): Promise<ActivityItem[]> {
   const result = await request<{ data: ActivityItem[] }>(`/api/activity?days=${days}`)
   return result.data
 }
+
+// --- Notification Preferences ---
+
+export interface NotificationPreferences {
+  newIdeas: boolean
+  draftReady: boolean
+  postPublished: boolean
+}
+
+export async function fetchNotificationPreferences(): Promise<NotificationPreferences> {
+  return request<NotificationPreferences>('/api/notifications/preferences')
+}
+
+export async function updateNotificationPreferences(
+  data: Partial<NotificationPreferences>,
+): Promise<NotificationPreferences> {
+  return request<NotificationPreferences>('/api/notifications/preferences', {
+    method: 'PATCH',
+    headers: JSON_HEADERS,
+    body: JSON.stringify(data),
+  })
+}

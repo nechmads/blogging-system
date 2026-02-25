@@ -6,6 +6,7 @@ import { dedupeStories } from './steps/dedupe'
 import { generateIdeas } from './steps/generate-ideas'
 import { storeIdeas } from './steps/store-ideas'
 import { autoWriteTopIdea } from './steps/auto-write'
+import { slugify } from './utils'
 
 export class ScoutWorkflow extends WorkflowEntrypoint<ScoutEnv, ScoutWorkflowParams> {
   async run(event: WorkflowEvent<ScoutWorkflowParams>, step: WorkflowStep) {
@@ -83,17 +84,58 @@ export class ScoutWorkflow extends WorkflowEntrypoint<ScoutEnv, ScoutWorkflowPar
       })
       console.log(`[workflow] Step 5 done: ${stored.count} ideas stored`)
 
+      // Notify: new ideas gathered
+      if (stored.count > 0) {
+        try {
+          await this.env.NOTIFICATIONS.sendNewIdeasNotification({
+            userId: context.publication.userId,
+            publicationName: context.publication.name,
+            ideasCount: stored.count,
+          })
+        } catch (err) {
+          console.warn('[workflow] Failed to send new-ideas notification (non-blocking):', err)
+        }
+      }
+
       // Step 6: Auto-write (conditional — 'draft' writes only, 'full-auto' writes + publishes)
       let autoWritten = 0
+      let ideaTitle: string | null = null
       if (context.publication.autoPublishMode !== 'ideas-only') {
-        autoWritten = await step.do(
+        const autoWriteResult = await step.do(
           'auto-write',
           { retries: { limit: 1, delay: '10 seconds' }, timeout: '10 minutes' },
           async () => {
             return await autoWriteTopIdea(this.env, context.publication, ideas, stored.ideaIds)
           },
         )
+        autoWritten = autoWriteResult.written
+        ideaTitle = autoWriteResult.ideaTitle
         console.log(`[workflow] Step 6 done: ${autoWritten} auto-written`)
+      }
+
+      // Notify: draft ready or post published
+      if (autoWritten > 0 && ideaTitle) {
+        try {
+          if (context.publication.autoPublishMode === 'full-auto') {
+            const domain = context.publication.customDomain
+              || `${context.publication.slug}.${this.env.PUBLICATIONS_BASE_DOMAIN}`
+            const postUrl = `https://${domain}/${slugify(ideaTitle)}`
+            await this.env.NOTIFICATIONS.sendPostPublishedNotification({
+              userId: context.publication.userId,
+              publicationName: context.publication.name,
+              postTitle: ideaTitle,
+              postUrl,
+            })
+          } else {
+            await this.env.NOTIFICATIONS.sendDraftReadyNotification({
+              userId: context.publication.userId,
+              publicationName: context.publication.name,
+              postTitle: ideaTitle,
+            })
+          }
+        } catch (err) {
+          console.warn('[workflow] Failed to send auto-write notification (non-blocking):', err)
+        }
       }
 
       return {

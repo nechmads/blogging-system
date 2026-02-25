@@ -3,18 +3,23 @@ import type { Publication, Idea } from '@hotmetal/data-layer'
 import type { IdeaBrief } from '../types'
 import { slugify, getWeekStartTimestamp } from '../utils'
 
+export interface AutoWriteResult {
+  written: number
+  ideaTitle: string | null
+}
+
 export async function autoWriteTopIdea(
   env: ScoutEnv,
   publication: Publication,
   ideas: IdeaBrief[],
   storedIdeaIds: string[],
-): Promise<number> {
+): Promise<AutoWriteResult> {
   // Defense-in-depth: workflow already filters, but guard here too for safety
-  if (publication.autoPublishMode === 'ideas-only') return 0
+  if (publication.autoPublishMode === 'ideas-only') return { written: 0, ideaTitle: null }
 
   // Both 'draft' and 'full-auto' respect cadence
   const shouldWrite = await checkCadence(env, publication)
-  if (!shouldWrite) return 0
+  if (!shouldWrite) return { written: 0, ideaTitle: null }
 
   // Pick the highest-scoring idea and its corresponding stored ID
   let topIndex = 0
@@ -25,15 +30,15 @@ export async function autoWriteTopIdea(
   }
 
   const ideaId = storedIdeaIds[topIndex]
-  if (!ideaId) return 0
+  if (!ideaId) return { written: 0, ideaTitle: null }
 
   // Fetch the stored idea by primary key
   const storedIdea = await env.DAL.getIdeaById(ideaId)
-  if (!storedIdea) return 0
+  if (!storedIdea) return { written: 0, ideaTitle: null }
 
   const shouldPublish = publication.autoPublishMode === 'full-auto'
   await writeIdea(env, publication, storedIdea, shouldPublish)
-  return 1
+  return { written: 1, ideaTitle: storedIdea.title }
 }
 
 async function checkCadence(env: ScoutEnv, publication: Publication): Promise<boolean> {

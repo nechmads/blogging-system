@@ -424,6 +424,23 @@ export interface UpdateWritingStyleInput {
 	donts?: string[] | null
 }
 
+// ─── Notification Preferences ───────────────────────────────────────
+
+export interface NotificationPreferences {
+	userId: string
+	newIdeas: boolean
+	draftReady: boolean
+	postPublished: boolean
+	createdAt: number
+	updatedAt: number
+}
+
+export interface UpdateNotificationPreferencesInput {
+	newIdeas?: boolean
+	draftReady?: boolean
+	postPublished?: boolean
+}
+
 // ─── Publication Tokens ──────────────────────────────────────────────
 
 export interface PublicationToken {
