@@ -12,17 +12,17 @@ This workflow guides you through a structured process. Execute each step in orde
 
 ### Step 99: Next Todo
 
-If you didn't do it already, read .agents/prd.md, .agents/technical_requirements.md and .agents/todos.md to understand the project and current prog...
+If you didn't do it already, read .agentspack/prd.md, .agentspack/technical_requirements.md and .agentspack/todos.md to understand the project and ...
 
-**Invoke**: /development-99-next-todo
+**Invoke**: /development-next-todo
 
 ---
 
 ### Step 99: Start Session
 
-First read the .agents/PRD.md, .agents/TECHNICAL_REQUIREMENTS.md and .agents/todos.md files to orient yourself on the project and what was done so ...
+First read the .agentspack/PRD.md, .agentspack/TECHNICAL_REQUIREMENTS.md and .agentspack/todos.md files to orient yourself on the project and what ...
 
-**Invoke**: /development-99-start-session
+**Invoke**: /development-start-session
 
 ---
 

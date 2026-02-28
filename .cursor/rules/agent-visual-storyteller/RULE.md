@@ -1,5 +1,5 @@
 ---
-description: "Use this agent when creating visual narratives, designing infographics, building presentations, or communicating complex ideas through imagery."
+description: "Agent: visual-storyteller"
 alwaysApply: false
 ---
 

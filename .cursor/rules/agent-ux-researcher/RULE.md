@@ -1,5 +1,5 @@
 ---
-description: "Use this agent for UX analysis, heuristic evaluations, design pattern research, and creating user-centered documentation."
+description: "Agent: ux-researcher"
 alwaysApply: false
 ---
 

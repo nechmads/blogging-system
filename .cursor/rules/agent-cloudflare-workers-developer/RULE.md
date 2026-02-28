@@ -1,5 +1,5 @@
 ---
-description: "Use this agent when you need expert backend development work with Cloudflare Workers, including API design, database integration with D1 or Supabase, serverless architecture, edge computing, or any..."
+description: "Use this agent when you need expert backend development work with Cloudflare Workers, including API design, database integration with D1 or Supabase, serverless architecture, edge computing, or any Cloudflare Workers-focused development tasks."
 alwaysApply: false
 ---
 

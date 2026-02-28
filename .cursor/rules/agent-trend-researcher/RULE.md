@@ -1,5 +1,5 @@
 ---
-description: "Use this agent when you need to identify market opportunities, analyze trending topics, research viral content, or understand emerging user behaviors."
+description: "Agent: trend-researcher"
 alwaysApply: false
 ---
 

@@ -1,5 +1,5 @@
 ---
-description: "PROACTIVELY use this agent after any UI/UX changes to ensure delightful, playful elements are incorporated."
+description: "Agent: ux-enhancer"
 alwaysApply: false
 ---
 
