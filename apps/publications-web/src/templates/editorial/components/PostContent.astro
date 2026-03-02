@@ -111,6 +111,9 @@ const firstTopic = getFirstTopic(post);
     </div>
   )}
 
+  {/* Comments (slot filled by PostPage.astro) */}
+  <slot name="comments" />
+
   {/* Share */}
   <div class="max-w-[var(--max-width-prose)] mx-auto px-6 mt-6 flex justify-between items-center font-sans text-sm text-text-muted">
     <span>Share this article</span>

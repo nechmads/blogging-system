@@ -6,6 +6,7 @@
  */
 import type { Post } from '@hotmetal/content-core';
 import type { PublicationBranding } from '../dl/publication';
+import CommentSection from './comments/CommentSection';
 
 // Starter template
 import StarterBaseLayout from '../templates/starter/layouts/BaseLayout.astro';
@@ -46,6 +47,9 @@ interface Props {
   articleModifiedTime?: string;
   articleAuthor?: string;
   articleTags?: string[];
+  commentsEnabled: boolean;
+  publicationSlug: string;
+  turnstileSiteKey: string;
 }
 
 const {
@@ -69,6 +73,9 @@ const {
   articleModifiedTime,
   articleAuthor,
   articleTags,
+  commentsEnabled,
+  publicationSlug,
+  turnstileSiteKey,
 } = Astro.props;
 
 const layoutProps = {
@@ -101,7 +108,18 @@ const contentProps = {
 {templateId === 'editorial' ? (
   <EditorialBaseLayout {...layoutProps}>
     <EditorialHeader publicationName={branding.name} logoUrl={branding.logoUrl} />
-    <EditorialPostContent {...contentProps} />
+    <EditorialPostContent {...contentProps}>
+      {commentsEnabled && (
+        <CommentSection
+          slot="comments"
+          client:load
+          publicationSlug={publicationSlug}
+          postSlug={post.slug}
+          turnstileSiteKey={turnstileSiteKey}
+          commentsEnabled={commentsEnabled}
+        />
+      )}
+    </EditorialPostContent>
     <EditorialFooter
       publicationName={branding.name}
       publicationSlug={branding.slug}
@@ -111,7 +129,18 @@ const contentProps = {
 ) : templateId === 'bold' ? (
   <BoldBaseLayout {...layoutProps}>
     <BoldHeader publicationName={branding.name} logoUrl={branding.logoUrl} />
-    <BoldPostContent {...contentProps} />
+    <BoldPostContent {...contentProps}>
+      {commentsEnabled && (
+        <CommentSection
+          slot="comments"
+          client:load
+          publicationSlug={publicationSlug}
+          postSlug={post.slug}
+          turnstileSiteKey={turnstileSiteKey}
+          commentsEnabled={commentsEnabled}
+        />
+      )}
+    </BoldPostContent>
     <BoldFooter
       publicationName={branding.name}
       publicationSlug={branding.slug}
@@ -121,7 +150,18 @@ const contentProps = {
 ) : (
   <StarterBaseLayout {...layoutProps}>
     <StarterHeader publicationName={branding.name} logoUrl={branding.logoUrl} />
-    <StarterPostContent {...contentProps} />
+    <StarterPostContent {...contentProps}>
+      {commentsEnabled && (
+        <CommentSection
+          slot="comments"
+          client:load
+          publicationSlug={publicationSlug}
+          postSlug={post.slug}
+          turnstileSiteKey={turnstileSiteKey}
+          commentsEnabled={commentsEnabled}
+        />
+      )}
+    </StarterPostContent>
     <StarterFooter
       publicationName={branding.name}
       publicationSlug={branding.slug}

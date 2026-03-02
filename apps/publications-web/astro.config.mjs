@@ -1,5 +1,6 @@
 import { defineConfig } from 'astro/config';
 import cloudflare from '@astrojs/cloudflare';
+import preact from '@astrojs/preact';
 import tailwindcss from '@tailwindcss/vite';
 import { cloudflare as cfVitePlugin } from '@cloudflare/vite-plugin';
 
@@ -21,6 +22,7 @@ const stackPlugins = process.env.STACK
 export default defineConfig({
   output: 'server',
   adapter: cloudflare(),
+  integrations: [preact()],
   server: { port: 4322 },
   vite: {
     plugins: [tailwindcss(), ...stackPlugins],

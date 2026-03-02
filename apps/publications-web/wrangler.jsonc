@@ -19,6 +19,11 @@
       "service": "hotmetal-data-layer",
       "entrypoint": "DataLayer",
     },
+    {
+      "binding": "NOTIFICATIONS",
+      "service": "hotmetal-notifications",
+      "entrypoint": "NotificationsService",
+    },
   ],
   "r2_buckets": [
     {
@@ -28,6 +33,7 @@
   ],
   "vars": {
     "CMS_URL": "https://cms.hotmetalapp.com",
+    "TURNSTILE_SITE_KEY": "0x4AAAAAACk8MjvpV7HFhXQ9",
   },
   "observability": {
     "enabled": true,

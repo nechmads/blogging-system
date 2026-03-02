@@ -5,6 +5,7 @@ interface NotificationPreferencesRow {
 	new_ideas: number
 	draft_ready: number
 	post_published: number
+	new_comment: number
 	created_at: number
 	updated_at: number
 }
@@ -15,6 +16,7 @@ function mapRow(row: NotificationPreferencesRow): NotificationPreferences {
 		newIdeas: row.new_ideas === 1,
 		draftReady: row.draft_ready === 1,
 		postPublished: row.post_published === 1,
+		newComment: row.new_comment === 1,
 		createdAt: row.created_at,
 		updatedAt: row.updated_at,
 	}
@@ -71,6 +73,10 @@ export async function updatePreferences(
 	if (data.postPublished !== undefined) {
 		sets.push('post_published = ?')
 		bindings.push(data.postPublished ? 1 : 0)
+	}
+	if (data.newComment !== undefined) {
+		sets.push('new_comment = ?')
+		bindings.push(data.newComment ? 1 : 0)
 	}
 
 	if (sets.length === 0) return getOrCreatePreferences(db, userId)

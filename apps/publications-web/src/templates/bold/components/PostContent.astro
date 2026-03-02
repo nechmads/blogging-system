@@ -206,6 +206,9 @@ for (const heading of headings) {
   </div>
 </div>
 
+<!-- Comments (slot filled by PostPage.astro) -->
+<slot name="comments" />
+
 <!-- Mobile share/tags (visible only on mobile) -->
 <div class="lg:hidden max-w-[var(--max-width-prose)] mx-auto px-6 pb-12">
   {allLabels.length > 0 && (

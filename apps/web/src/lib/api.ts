@@ -2,7 +2,7 @@ import type {
   Session, Draft, DraftContent, SeoSuggestion, PublishInput, PublishResult,
   PublicationConfig, Topic, Idea, IdeaStatus, AutoPublishMode, ActivityItem,
   ScoutSchedule, GeneratedImage, WritingStyle, AnalyzeUrlResponse,
-  SocialConnection,
+  SocialConnection, AdminComment, CommentStatus,
 } from './types'
 
 const JSON_HEADERS = { 'Content-Type': 'application/json' }
@@ -274,6 +274,8 @@ export async function updatePublication(
     templateId: string
     feedFullEnabled: boolean
     feedPartialEnabled: boolean
+    commentsEnabled: boolean
+    commentsModeration: 'auto-approve' | 'pre-approve'
   }>,
 ): Promise<PublicationConfig> {
   return request<PublicationConfig>(`/api/publications/${id}`, {
@@ -484,6 +486,7 @@ export interface NotificationPreferences {
   newIdeas: boolean
   draftReady: boolean
   postPublished: boolean
+  newComment: boolean
 }
 
 export async function fetchNotificationPreferences(): Promise<NotificationPreferences> {
@@ -498,4 +501,22 @@ export async function updateNotificationPreferences(
     headers: JSON_HEADERS,
     body: JSON.stringify(data),
   })
+}
+
+// --- Comments ---
+
+export async function fetchComments(pubId: string, status?: CommentStatus): Promise<AdminComment[]> {
+  const params = status ? `?status=${status}` : ''
+  const result = await request<{ data: AdminComment[] }>(`/api/publications/${pubId}/comments${params}`)
+  return result.data
+}
+
+export async function approveComment(id: string): Promise<AdminComment> {
+  return request<AdminComment>(`/api/comments/${id}/approve`, {
+    method: 'PATCH',
+  })
+}
+
+export async function deleteComment(id: string): Promise<void> {
+  await request(`/api/comments/${id}`, { method: 'DELETE' })
 }

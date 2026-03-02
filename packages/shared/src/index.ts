@@ -3,6 +3,9 @@ export type { CreatePostInput, CreateRenditionInput } from './cms-api'
 
 export { AlexanderApi, AlexanderApiError } from './alexander-api'
 
+export { checkContent } from './content-filter'
+export type { ContentFilterResult } from './content-filter'
+
 export {
   computeNextRun,
   validateSchedule,

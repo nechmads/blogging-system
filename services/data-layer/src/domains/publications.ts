@@ -1,7 +1,7 @@
 import type { AutoPublishMode, ScoutSchedule } from '@hotmetal/content-core'
 import { DEFAULT_SCHEDULE, DEFAULT_TIMEZONE } from '@hotmetal/content-core'
 import { computeNextRun, parseSchedule } from '@hotmetal/shared'
-import type { Publication, CreatePublicationInput, UpdatePublicationInput, SocialLinks } from '../types'
+import type { CommentModeration, Publication, CreatePublicationInput, UpdatePublicationInput, SocialLinks } from '../types'
 
 interface PublicationRow {
 	id: string
@@ -26,6 +26,8 @@ interface PublicationRow {
 	header_image_url: string | null
 	accent_color: string | null
 	social_links: string | null
+	comments_enabled: number
+	comments_moderation: string
 	custom_domain: string | null
 	meta_description: string | null
 	created_at: number
@@ -65,6 +67,8 @@ function mapRow(row: PublicationRow): Publication {
 		headerImageUrl: row.header_image_url,
 		accentColor: row.accent_color,
 		socialLinks: parseSocialLinks(row.social_links),
+		commentsEnabled: row.comments_enabled === 1,
+		commentsModeration: row.comments_moderation as CommentModeration,
 		customDomain: row.custom_domain,
 		metaDescription: row.meta_description,
 		createdAt: row.created_at,
@@ -87,8 +91,8 @@ export async function createPublication(
 			 default_author, auto_publish_mode, cadence_posts_per_week, scout_schedule,
 			 timezone, next_scout_at, style_id, feed_full_enabled, feed_partial_enabled,
 			 template_id, tagline, logo_url, header_image_url, accent_color, social_links,
-			 meta_description, created_at, updated_at)
-			 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+			 comments_enabled, comments_moderation, meta_description, created_at, updated_at)
+			 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
 		)
 		.bind(
 			data.id,
@@ -112,6 +116,8 @@ export async function createPublication(
 			data.headerImageUrl ?? null,
 			data.accentColor ?? null,
 			data.socialLinks ? JSON.stringify(data.socialLinks) : null,
+			(data.commentsEnabled ?? true) ? 1 : 0,
+			data.commentsModeration ?? 'auto-approve',
 			data.metaDescription ?? null,
 			now,
 			now
@@ -141,6 +147,8 @@ export async function createPublication(
 		headerImageUrl: data.headerImageUrl ?? null,
 		accentColor: data.accentColor ?? null,
 		socialLinks: data.socialLinks ?? null,
+		commentsEnabled: data.commentsEnabled ?? true,
+		commentsModeration: data.commentsModeration ?? 'auto-approve',
 		customDomain: null,
 		metaDescription: data.metaDescription ?? null,
 		createdAt: now,
@@ -266,6 +274,14 @@ export async function updatePublication(
 	if (data.socialLinks !== undefined) {
 		sets.push('social_links = ?')
 		bindings.push(data.socialLinks ? JSON.stringify(data.socialLinks) : null)
+	}
+	if (data.commentsEnabled !== undefined) {
+		sets.push('comments_enabled = ?')
+		bindings.push(data.commentsEnabled ? 1 : 0)
+	}
+	if (data.commentsModeration !== undefined) {
+		sets.push('comments_moderation = ?')
+		bindings.push(data.commentsModeration)
 	}
 	if (data.customDomain !== undefined) {
 		sets.push('custom_domain = ?')

@@ -1,6 +1,6 @@
 import { WorkerEntrypoint } from 'cloudflare:workers'
 import type { NotificationsEnv } from './env'
-import { sendNewIdeasEmail, sendDraftReadyEmail, sendPostPublishedEmail } from './emails'
+import { sendNewIdeasEmail, sendDraftReadyEmail, sendPostPublishedEmail, sendNewCommentEmail } from './emails'
 
 export interface SendNewIdeasParams {
 	userId: string
@@ -12,6 +12,15 @@ export interface SendDraftReadyParams {
 	userId: string
 	publicationName: string
 	postTitle: string
+}
+
+export interface SendNewCommentParams {
+	userId: string
+	publicationName: string
+	postSlug: string
+	commenterName: string
+	commentPreview: string
+	postUrl: string
 }
 
 export interface SendPostPublishedParams {
@@ -81,6 +90,34 @@ export class NotificationsService extends WorkerEntrypoint<NotificationsEnv> {
 			})
 		} catch (err) {
 			console.error('[notifications] sendDraftReadyNotification failed:', err)
+		}
+	}
+
+	async sendNewCommentNotification(params: SendNewCommentParams): Promise<void> {
+		try {
+			const prefs = await this.env.DAL.getOrCreateNotificationPreferences(params.userId)
+			if (!prefs.newComment) {
+				console.log(`[notifications] User ${params.userId} has new-comment notifications disabled`)
+				return
+			}
+
+			const user = await this.env.DAL.getUserById(params.userId)
+			if (!user) {
+				console.warn(`[notifications] User ${params.userId} not found, skipping notification`)
+				return
+			}
+
+			await sendNewCommentEmail(this.env, {
+				userEmail: user.email,
+				userName: user.name,
+				publicationName: params.publicationName,
+				postSlug: params.postSlug,
+				commenterName: params.commenterName,
+				commentPreview: params.commentPreview,
+				postUrl: params.postUrl,
+			})
+		} catch (err) {
+			console.error('[notifications] sendNewCommentNotification failed:', err)
 		}
 	}
 

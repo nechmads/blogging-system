@@ -14,6 +14,7 @@ import * as publicationOutlets from './domains/publication-outlets'
 import * as publicationTokens from './domains/publication-tokens'
 import * as writingStyles from './domains/writing-styles'
 import * as notificationPreferences from './domains/notification-preferences'
+import * as comments from './domains/comments'
 
 import type {
 	CreateUserInput,
@@ -36,6 +37,9 @@ import type {
 	CreateWritingStyleInput,
 	UpdateWritingStyleInput,
 	UpdateNotificationPreferencesInput,
+	CreateCommentInput,
+	CommentStatus,
+	ListCommentsFilters,
 } from './types'
 
 // Re-export types for consumers
@@ -56,6 +60,7 @@ import type {
 	ScoutSchedule,
 	WritingStyle,
 	NotificationPreferences,
+	Comment,
 } from './types'
 
 /**
@@ -144,6 +149,13 @@ export interface DataLayerApi {
 	// Notification Preferences
 	getOrCreateNotificationPreferences(userId: string): Promise<NotificationPreferences>
 	updateNotificationPreferences(userId: string, data: UpdateNotificationPreferencesInput): Promise<NotificationPreferences>
+
+	// Comments
+	createComment(data: CreateCommentInput): Promise<Comment>
+	getCommentById(id: string): Promise<Comment | null>
+	listCommentsByPost(publicationId: string, postSlug: string, filters?: ListCommentsFilters): Promise<Comment[]>
+	listCommentsByPublication(publicationId: string, filters?: ListCommentsFilters): Promise<Comment[]>
+	updateCommentStatus(id: string, status: CommentStatus): Promise<Comment | null>
 
 	// Writing Styles
 	createWritingStyle(data: CreateWritingStyleInput): Promise<WritingStyle>
@@ -250,6 +262,13 @@ export class DataLayer extends WorkerEntrypoint<Env> {
 	// ─── Notification Preferences ──────────────────────────────────────
 	getOrCreateNotificationPreferences(userId: string) { return notificationPreferences.getOrCreatePreferences(this.env.DB, userId) }
 	updateNotificationPreferences(userId: string, data: UpdateNotificationPreferencesInput) { return notificationPreferences.updatePreferences(this.env.DB, userId, data) }
+
+	// ─── Comments ─────────────────────────────────────────────────────
+	createComment(data: CreateCommentInput) { return comments.createComment(this.env.DB, data) }
+	getCommentById(id: string) { return comments.getCommentById(this.env.DB, id) }
+	listCommentsByPost(publicationId: string, postSlug: string, filters?: ListCommentsFilters) { return comments.listCommentsByPost(this.env.DB, publicationId, postSlug, filters) }
+	listCommentsByPublication(publicationId: string, filters?: ListCommentsFilters) { return comments.listCommentsByPublication(this.env.DB, publicationId, filters) }
+	updateCommentStatus(id: string, status: CommentStatus) { return comments.updateCommentStatus(this.env.DB, id, status) }
 
 	// ─── Writing Styles ────────────────────────────────────────────────
 	createWritingStyle(data: CreateWritingStyleInput) { return writingStyles.createWritingStyle(this.env.DB, data) }

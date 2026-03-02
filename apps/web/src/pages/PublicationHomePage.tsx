@@ -1,14 +1,14 @@
 import { useCallback, useEffect, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router'
-import { ArrowLeftIcon, ArrowRightIcon, ArrowSquareOutIcon, GearSixIcon, MagnifyingGlassIcon, PencilSimpleIcon, RssIcon } from '@phosphor-icons/react'
+import { ArrowLeftIcon, ArrowRightIcon, ArrowSquareOutIcon, ChatCircleDotsIcon, GearSixIcon, MagnifyingGlassIcon, PencilSimpleIcon, RssIcon } from '@phosphor-icons/react'
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu'
 import { Loader } from '@/components/loader/Loader'
 import { IDEA_STATUS_COLORS } from '@/lib/constants'
 import { formatRelativeTime } from '@/lib/format'
 import { toast } from 'sonner'
-import { fetchPublication, fetchPublishedPosts, fetchIdeas, fetchIdeasCount, triggerScout, editPublishedPost } from '@/lib/api'
+import { fetchPublication, fetchPublishedPosts, fetchIdeas, fetchIdeasCount, fetchComments, triggerScout, editPublishedPost } from '@/lib/api'
 import { startScoutPolling } from '@/stores/scout-store'
-import type { PublicationConfig, Idea, Topic } from '@/lib/types'
+import type { PublicationConfig, Idea, Topic, AdminComment } from '@/lib/types'
 
 export function PublicationHomePage() {
   const { id } = useParams<{ id: string }>()
@@ -17,6 +17,7 @@ export function PublicationHomePage() {
   const [topics, setTopics] = useState<Topic[]>([])
   const [posts, setPosts] = useState<{ id: string; title: string; slug: string; createdAt: string; author: string }[]>([])
   const [ideas, setIdeas] = useState<Idea[]>([])
+  const [recentComments, setRecentComments] = useState<AdminComment[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [scouting, setScouting] = useState(false)
@@ -26,15 +27,17 @@ export function PublicationHomePage() {
     if (!id) return
     try {
       setError(null)
-      const [pub, publishedPosts, pubIdeas] = await Promise.all([
+      const [pub, publishedPosts, pubIdeas, pubComments] = await Promise.all([
         fetchPublication(id),
         fetchPublishedPosts(id).catch(() => [] as { id: string; title: string; slug: string; createdAt: string; author: string }[]),
         fetchIdeas(id).catch(() => [] as Idea[]),
+        fetchComments(id).catch(() => [] as AdminComment[]),
       ])
       setPublication(pub)
       setTopics(pub.topics ?? [])
       setPosts(publishedPosts.slice(0, 5))
       setIdeas(pubIdeas.slice(0, 5))
+      setRecentComments(pubComments.slice(0, 5))
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load')
     } finally {
@@ -245,6 +248,53 @@ export function PublicationHomePage() {
           </div>
         )}
       </section>
+
+      {/* Recent Comments */}
+      {publication.commentsEnabled && (
+        <section className="mt-8">
+          <SectionHeader
+            title="Recent Comments"
+            linkTo={`/publications/${id}/comments`}
+            showLink={recentComments.length > 0}
+          />
+          {recentComments.length === 0 ? (
+            <p className="mt-3 text-sm text-[var(--color-text-muted)]">
+              No comments yet
+            </p>
+          ) : (
+            <div className="mt-3 space-y-1">
+              {recentComments.map((comment) => (
+                <Link
+                  key={comment.id}
+                  to={`/publications/${id}/comments`}
+                  className="flex items-center gap-3 rounded-lg px-3 py-2.5 transition-colors hover:bg-[var(--color-bg-card)]"
+                >
+                  <ChatCircleDotsIcon size={16} className="shrink-0 text-[var(--color-text-muted)]" />
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm">
+                      <span className="font-medium">{comment.authorName}</span>
+                      {' on '}
+                      <span className="font-mono text-xs">{comment.postSlug}</span>
+                    </p>
+                    <p className="mt-0.5 truncate text-xs text-[var(--color-text-muted)]">
+                      {comment.content.length > 80 ? comment.content.slice(0, 80) + '...' : comment.content}
+                    </p>
+                  </div>
+                  <span
+                    className={`shrink-0 rounded-full px-2 py-0.5 text-xs font-medium ${
+                      comment.status === 'pending'
+                        ? 'bg-amber-100 text-amber-700'
+                        : 'bg-green-100 text-green-700'
+                    }`}
+                  >
+                    {comment.status}
+                  </span>
+                </Link>
+              ))}
+            </div>
+          )}
+        </section>
+      )}
 
     </div>
   )
