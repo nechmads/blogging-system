@@ -20,7 +20,7 @@ CREATE INDEX IF NOT EXISTS idx_comments_post
 CREATE INDEX IF NOT EXISTS idx_comments_parent
   ON comments (parent_id) WHERE parent_id IS NOT NULL;
 
-ALTER TABLE publications ADD COLUMN comments_enabled    INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE publications ADD COLUMN comments_enabled    INTEGER NOT NULL DEFAULT 1;
 ALTER TABLE publications ADD COLUMN comments_moderation TEXT    NOT NULL DEFAULT 'auto-approve';
 
 ALTER TABLE notification_preferences ADD COLUMN new_comment INTEGER NOT NULL DEFAULT 1;

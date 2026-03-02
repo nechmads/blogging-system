@@ -108,16 +108,18 @@ const contentProps = {
 {templateId === 'editorial' ? (
   <EditorialBaseLayout {...layoutProps}>
     <EditorialHeader publicationName={branding.name} logoUrl={branding.logoUrl} />
-    <EditorialPostContent {...contentProps} />
-    {commentsEnabled && (
-      <CommentSection
-        client:load
-        publicationSlug={publicationSlug}
-        postSlug={post.slug}
-        turnstileSiteKey={turnstileSiteKey}
-        commentsEnabled={commentsEnabled}
-      />
-    )}
+    <EditorialPostContent {...contentProps}>
+      {commentsEnabled && (
+        <CommentSection
+          slot="comments"
+          client:load
+          publicationSlug={publicationSlug}
+          postSlug={post.slug}
+          turnstileSiteKey={turnstileSiteKey}
+          commentsEnabled={commentsEnabled}
+        />
+      )}
+    </EditorialPostContent>
     <EditorialFooter
       publicationName={branding.name}
       publicationSlug={branding.slug}
@@ -127,16 +129,18 @@ const contentProps = {
 ) : templateId === 'bold' ? (
   <BoldBaseLayout {...layoutProps}>
     <BoldHeader publicationName={branding.name} logoUrl={branding.logoUrl} />
-    <BoldPostContent {...contentProps} />
-    {commentsEnabled && (
-      <CommentSection
-        client:load
-        publicationSlug={publicationSlug}
-        postSlug={post.slug}
-        turnstileSiteKey={turnstileSiteKey}
-        commentsEnabled={commentsEnabled}
-      />
-    )}
+    <BoldPostContent {...contentProps}>
+      {commentsEnabled && (
+        <CommentSection
+          slot="comments"
+          client:load
+          publicationSlug={publicationSlug}
+          postSlug={post.slug}
+          turnstileSiteKey={turnstileSiteKey}
+          commentsEnabled={commentsEnabled}
+        />
+      )}
+    </BoldPostContent>
     <BoldFooter
       publicationName={branding.name}
       publicationSlug={branding.slug}
@@ -146,16 +150,18 @@ const contentProps = {
 ) : (
   <StarterBaseLayout {...layoutProps}>
     <StarterHeader publicationName={branding.name} logoUrl={branding.logoUrl} />
-    <StarterPostContent {...contentProps} />
-    {commentsEnabled && (
-      <CommentSection
-        client:load
-        publicationSlug={publicationSlug}
-        postSlug={post.slug}
-        turnstileSiteKey={turnstileSiteKey}
-        commentsEnabled={commentsEnabled}
-      />
-    )}
+    <StarterPostContent {...contentProps}>
+      {commentsEnabled && (
+        <CommentSection
+          slot="comments"
+          client:load
+          publicationSlug={publicationSlug}
+          postSlug={post.slug}
+          turnstileSiteKey={turnstileSiteKey}
+          commentsEnabled={commentsEnabled}
+        />
+      )}
+    </StarterPostContent>
     <StarterFooter
       publicationName={branding.name}
       publicationSlug={branding.slug}
