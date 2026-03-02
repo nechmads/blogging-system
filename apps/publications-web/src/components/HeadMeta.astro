@@ -44,6 +44,10 @@ const pageTitle =
 {description && <meta name="description" content={description} />}
 <meta name="generator" content={Astro.generator} />
 
+<!-- Favicon -->
+<link rel="icon" href="/favicon.ico" sizes="48x48" />
+<link rel="icon" href="/favicon-96x96.png" type="image/png" sizes="96x96" />
+
 {canonicalUrl && <link rel="canonical" href={canonicalUrl} />}
 {rssUrl && (
   <link
