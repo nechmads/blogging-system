@@ -237,13 +237,24 @@ export default function CommentForm({
         </div>
       )}
 
-      <button
-        type="submit"
-        disabled={submitting || !turnstileToken}
-        className="inline-flex items-center gap-2 px-5 py-2.5 text-sm font-medium rounded-lg bg-accent text-white hover:bg-accent-hover transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
-      >
-        {submitting ? 'Submitting...' : parentId ? 'Post Reply' : 'Post Comment'}
-      </button>
+      <div className="flex items-center gap-3">
+        <button
+          type="submit"
+          disabled={submitting || !turnstileToken}
+          className="inline-flex items-center gap-2 px-5 py-2.5 text-sm font-medium rounded-lg bg-accent text-white hover:bg-accent-hover transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+        >
+          {submitting ? 'Submitting...' : parentId ? 'Post Reply' : 'Post Comment'}
+        </button>
+        {onCancel && (
+          <button
+            type="button"
+            onClick={onCancel}
+            className="px-4 py-2.5 text-sm font-medium text-text-muted hover:text-text transition-colors cursor-pointer"
+          >
+            Cancel
+          </button>
+        )}
+      </div>
     </form>
   )
 }

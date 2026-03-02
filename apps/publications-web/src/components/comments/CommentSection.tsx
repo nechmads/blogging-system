@@ -25,6 +25,7 @@ export default function CommentSection({ publicationSlug, postSlug, turnstileSit
   const [comments, setComments] = useState<CommentData[]>([])
   const [loading, setLoading] = useState(true)
   const [loadError, setLoadError] = useState(false)
+  const [showForm, setShowForm] = useState(false)
   const [replyingTo, setReplyingTo] = useState<string | null>(null)
   const [pendingMessage, setPendingMessage] = useState<string | null>(null)
 
@@ -64,6 +65,7 @@ export default function CommentSection({ publicationSlug, postSlug, turnstileSit
     } else if (comment) {
       setComments((prev) => [...prev, comment as unknown as CommentData])
     }
+    setShowForm(false)
     setReplyingTo(null)
   }
 
@@ -72,17 +74,29 @@ export default function CommentSection({ publicationSlug, postSlug, turnstileSit
 
   return (
     <section className="mx-auto max-w-[var(--max-width-prose)] px-6 mt-16">
-      <h2 className="text-xl font-bold text-text mb-8">
-        Comments{totalCount > 0 ? ` (${totalCount})` : ''}
-      </h2>
+      <div className="flex items-center justify-between mb-8">
+        <h2 className="text-xl font-bold text-text">
+          Comments{totalCount > 0 ? ` (${totalCount})` : ''}
+        </h2>
+        {!showForm && (
+          <button
+            type="button"
+            onClick={() => setShowForm(true)}
+            className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg bg-accent text-white hover:bg-accent-hover transition-colors cursor-pointer"
+          >
+            Add Comment
+          </button>
+        )}
+      </div>
 
-      {/* Comment form */}
-      <div className="mb-10">
+      {/* Comment form — kept mounted when opened so Turnstile widget state is preserved */}
+      <div className="mb-10" style={{ display: showForm ? 'block' : 'none' }}>
         <CommentForm
           publicationSlug={publicationSlug}
           postSlug={postSlug}
           turnstileSiteKey={turnstileSiteKey}
           onSubmitted={handleCommentSubmitted}
+          onCancel={() => setShowForm(false)}
         />
       </div>
 
