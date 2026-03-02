@@ -250,8 +250,6 @@ export function PublicationHomePage() {
   )
 }
 
-const FEEDS_BASE_URL = 'https://feeds.hotmetalapp.com'
-
 function FeedsDropdown({
   slug,
   feedPartialEnabled,
@@ -263,12 +261,12 @@ function FeedsDropdown({
 }) {
   const feeds: { label: string; url: string }[] = []
   if (feedPartialEnabled) {
-    feeds.push({ label: 'RSS', url: `${FEEDS_BASE_URL}/${slug}/rss` })
-    feeds.push({ label: 'Atom', url: `${FEEDS_BASE_URL}/${slug}/atom` })
+    feeds.push({ label: 'RSS', url: `https://${slug}.hotmetalapp.com/rss` })
+    feeds.push({ label: 'Atom', url: `https://${slug}.hotmetalapp.com/atom` })
   }
   if (feedFullEnabled) {
-    feeds.push({ label: 'RSS (full)', url: `${FEEDS_BASE_URL}/${slug}/rss/full` })
-    feeds.push({ label: 'Atom (full)', url: `${FEEDS_BASE_URL}/${slug}/atom/full` })
+    feeds.push({ label: 'RSS (full)', url: `https://${slug}.hotmetalapp.com/rss/full` })
+    feeds.push({ label: 'Atom (full)', url: `https://${slug}.hotmetalapp.com/atom/full` })
   }
 
   return (

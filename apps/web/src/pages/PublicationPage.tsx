@@ -407,6 +407,8 @@ export function PublicationPage() {
     )
   }
 
+  const publicationBaseUrl = `https://${publication.slug}.hotmetalapp.com`
+
   return (
     <div className="mx-auto max-w-2xl p-6">
       {/* Header */}
@@ -665,21 +667,21 @@ export function PublicationPage() {
             <div className="space-y-1.5 text-xs">
               {feedPartialEnabled && (
                 <>
-                  <a href={`https://feeds.hotmetalapp.com/${publication.slug}/rss`} target="_blank" rel="noopener noreferrer" className="block font-mono text-[var(--color-accent)] hover:underline">
-                    https://feeds.hotmetalapp.com/{publication.slug}/rss
+                  <a href={`${publicationBaseUrl}/rss`} target="_blank" rel="noopener noreferrer" className="block font-mono text-[var(--color-accent)] hover:underline">
+                    {publicationBaseUrl}/rss
                   </a>
-                  <a href={`https://feeds.hotmetalapp.com/${publication.slug}/atom`} target="_blank" rel="noopener noreferrer" className="block font-mono text-[var(--color-accent)] hover:underline">
-                    https://feeds.hotmetalapp.com/{publication.slug}/atom
+                  <a href={`${publicationBaseUrl}/atom`} target="_blank" rel="noopener noreferrer" className="block font-mono text-[var(--color-accent)] hover:underline">
+                    {publicationBaseUrl}/atom
                   </a>
                 </>
               )}
               {feedFullEnabled && (
                 <>
-                  <a href={`https://feeds.hotmetalapp.com/${publication.slug}/rss/full`} target="_blank" rel="noopener noreferrer" className="block font-mono text-[var(--color-accent)] hover:underline">
-                    https://feeds.hotmetalapp.com/{publication.slug}/rss/full
+                  <a href={`${publicationBaseUrl}/rss/full`} target="_blank" rel="noopener noreferrer" className="block font-mono text-[var(--color-accent)] hover:underline">
+                    {publicationBaseUrl}/rss/full
                   </a>
-                  <a href={`https://feeds.hotmetalapp.com/${publication.slug}/atom/full`} target="_blank" rel="noopener noreferrer" className="block font-mono text-[var(--color-accent)] hover:underline">
-                    https://feeds.hotmetalapp.com/{publication.slug}/atom/full
+                  <a href={`${publicationBaseUrl}/atom/full`} target="_blank" rel="noopener noreferrer" className="block font-mono text-[var(--color-accent)] hover:underline">
+                    {publicationBaseUrl}/atom/full
                   </a>
                 </>
               )}

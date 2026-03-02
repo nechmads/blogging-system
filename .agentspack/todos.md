@@ -235,5 +235,9 @@
   - Tiptap editor: `@tiptap/extension-image` registered (activates `tiptap-markdown` image serialization), toolbar "Image" button with file picker, clipboard paste handler, drag-and-drop handler, `uploading` state with "Uploading..." indicator, toast error feedback via `sonner`
   - Security: `X-Content-Type-Options: nosniff` and `Content-Security-Policy: default-src 'none'` headers on image serving route, `allowBase64: false` on Image extension
   - Images stored as `![alt](url)` markdown, survive full pipeline: Tiptap → tiptap-markdown → `marked.parse()` → `sanitize-html` → publication templates
+- [x] **Feed URL + Full Feed Route Fixes** — Fixed publication feed URLs shown in the web app settings/home pages to use publication domains (`https://{slug}.hotmetalapp.com/...`) instead of `feeds.hotmetalapp.com`, and added missing full-feed endpoints in publications frontend:
+  - Web app: Updated feed links in `PublicationPage` and `PublicationHomePage` (`/rss`, `/atom`, `/rss/full`, `/atom/full`)
+  - Publications frontend: Added `apps/publications-web/src/pages/rss/full.ts` and `apps/publications-web/src/pages/atom/full.ts` to serve full-content RSS/Atom feeds
+  - Validation: `pnpm typecheck` passes in both `apps/web` and `apps/publications-web`
 - [ ] Writer Agent — Phase 2: Voice input (transcription in `input-processor.ts`)
 - [ ] Writer Agent — Phase 2: D1 session sync (synchronize DO state back to D1 for listing accuracy)
