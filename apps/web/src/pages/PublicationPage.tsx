@@ -8,6 +8,7 @@ import {
   ToggleLeftIcon,
   ToggleRightIcon,
   RssIcon,
+  ChatCircleDotsIcon,
 } from '@phosphor-icons/react'
 import { Modal } from '@/components/modal/Modal'
 import { Loader } from '@/components/loader/Loader'
@@ -61,6 +62,8 @@ export function PublicationPage() {
   const [templateId, setTemplateId] = useState('starter')
   const [feedFullEnabled, setFeedFullEnabled] = useState(true)
   const [feedPartialEnabled, setFeedPartialEnabled] = useState(true)
+  const [commentsEnabled, setCommentsEnabled] = useState(false)
+  const [commentsModeration, setCommentsModeration] = useState<'auto-approve' | 'pre-approve'>('auto-approve')
 
   // Schedule form state (managed here, passed to ScheduleEditor)
   const [scheduleState, setScheduleState] = useState<ScheduleEditorState>({
@@ -187,6 +190,16 @@ export function PublicationPage() {
     if (id) AnalyticsManager.track(AnalyticsEvent.FeedToggled, { publicationId: id, feedType: 'partial', enabled: checked })
   }
 
+  const handleCommentsEnabledChange = (checked: boolean) => {
+    setCommentsEnabled(checked)
+    saveFields({ commentsEnabled: checked })
+  }
+
+  const handleCommentsModerationChange = (mode: 'auto-approve' | 'pre-approve') => {
+    setCommentsModeration(mode)
+    saveFields({ commentsModeration: mode })
+  }
+
   const handleAutoPublishModeChange = (mode: AutoPublishMode) => {
     setScheduleState((prev) => ({ ...prev, autoPublishMode: mode }))
     saveFields({ autoPublishMode: mode })
@@ -214,6 +227,8 @@ export function PublicationPage() {
       setTemplateId(data.templateId ?? 'starter')
       setFeedFullEnabled(data.feedFullEnabled ?? true)
       setFeedPartialEnabled(data.feedPartialEnabled ?? true)
+      setCommentsEnabled(data.commentsEnabled ?? false)
+      setCommentsModeration(data.commentsModeration ?? 'auto-approve')
       // Sync refs
       nameRef.current = data.name
       descriptionRef.current = data.description ?? ''
@@ -687,6 +702,63 @@ export function PublicationPage() {
               )}
             </div>
           </div>
+        )}
+      </section>
+
+      {/* Comments */}
+      <section className="mt-6 space-y-4 rounded-xl border border-[var(--color-border-default)] bg-[var(--color-bg-primary)] p-5">
+        <div className="flex items-center gap-2">
+          <ChatCircleDotsIcon size={20} className="text-[var(--color-accent)]" />
+          <h3 className="font-semibold">Comments</h3>
+        </div>
+
+        <label className="flex items-center gap-3">
+          <input
+            type="checkbox"
+            checked={commentsEnabled}
+            onChange={(e) => handleCommentsEnabledChange(e.target.checked)}
+            className="h-4 w-4 rounded accent-[var(--color-accent)]"
+          />
+          <div>
+            <span className="text-sm font-medium">Enable comments</span>
+            <p className="text-xs text-[var(--color-text-muted)]">
+              Allow readers to leave comments on your posts
+            </p>
+          </div>
+        </label>
+
+        {commentsEnabled && (
+          <>
+            <div>
+              <label className="mb-1 block text-sm font-medium">Moderation mode</label>
+              <select
+                value={commentsModeration}
+                onChange={(e) => handleCommentsModerationChange(e.target.value as 'auto-approve' | 'pre-approve')}
+                className="w-full rounded-lg border border-[var(--color-border-default)] bg-[var(--color-bg-primary)] px-3 py-2 text-sm focus:border-[var(--color-accent)] focus:outline-none focus:ring-1 focus:ring-[var(--color-accent)]"
+              >
+                <option value="auto-approve">Auto-approve</option>
+                <option value="pre-approve">Require approval</option>
+              </select>
+              <p className="mt-1 text-xs text-[var(--color-text-muted)]">
+                {commentsModeration === 'pre-approve'
+                  ? 'Comments will be held for your review before appearing on the site.'
+                  : 'Comments appear immediately after passing spam and content filters.'}
+              </p>
+            </div>
+
+            <div className="rounded-lg bg-[var(--color-bg-card)] p-3">
+              <p className="text-xs text-[var(--color-text-muted)]">
+                Manage comments from the{' '}
+                <button
+                  type="button"
+                  onClick={() => navigate(`/publications/${id}/comments`)}
+                  className="text-[var(--color-accent)] hover:underline"
+                >
+                  Comments page
+                </button>
+              </p>
+            </div>
+          </>
         )}
       </section>
 

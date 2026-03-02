@@ -117,7 +117,14 @@ publications.patch('/publications/:id', async (c) => {
     templateId?: string
     feedFullEnabled?: boolean
     feedPartialEnabled?: boolean
+    commentsEnabled?: boolean
+    commentsModeration?: string
   }>()
+
+  const VALID_MODERATION_MODES = ['auto-approve', 'pre-approve']
+  if (body.commentsModeration && !VALID_MODERATION_MODES.includes(body.commentsModeration)) {
+    return c.json({ error: `Invalid commentsModeration. Must be one of: ${VALID_MODERATION_MODES.join(', ')}` }, 400)
+  }
 
   const VALID_TEMPLATE_IDS = ['starter', 'editorial', 'bold']
   if (body.templateId && !VALID_TEMPLATE_IDS.includes(body.templateId)) {
@@ -171,6 +178,8 @@ publications.patch('/publications/:id', async (c) => {
     templateId: body.templateId,
     feedFullEnabled: body.feedFullEnabled,
     feedPartialEnabled: body.feedPartialEnabled,
+    commentsEnabled: body.commentsEnabled,
+    commentsModeration: body.commentsModeration as 'auto-approve' | 'pre-approve' | undefined,
     nextScoutAt,
   })
 

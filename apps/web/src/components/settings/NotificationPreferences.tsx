@@ -29,6 +29,11 @@ const NOTIFICATION_TYPES: NotificationToggle[] = [
 		label: 'Post auto-published',
 		description: 'When a post is automatically published to your blog',
 	},
+	{
+		key: 'newComment',
+		label: 'New comment',
+		description: 'When a reader leaves a comment on one of your posts',
+	},
 ]
 
 export function NotificationPreferences() {

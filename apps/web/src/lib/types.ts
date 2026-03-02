@@ -117,6 +117,8 @@ export interface PublicationConfig {
   templateId: string
   feedFullEnabled: boolean
   feedPartialEnabled: boolean
+  commentsEnabled: boolean
+  commentsModeration: 'auto-approve' | 'pre-approve'
   createdAt: number
   updatedAt: number
   topics?: Topic[]
@@ -244,6 +246,23 @@ export interface SocialConnection {
   externalId: string | null
   tokenExpiresAt: number | null
   scopes: string | null
+  createdAt: number
+  updatedAt: number
+}
+
+// --- Comments ---
+
+export type CommentStatus = 'pending' | 'approved' | 'deleted'
+
+export interface AdminComment {
+  id: string
+  publicationId: string
+  postSlug: string
+  parentId: string | null
+  authorName: string
+  authorEmail: string | null
+  content: string
+  status: CommentStatus
   createdAt: number
   updatedAt: number
 }

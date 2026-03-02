@@ -117,6 +117,8 @@ export interface Publication {
 	headerImageUrl: string | null
 	accentColor: string | null
 	socialLinks: SocialLinks | null
+	commentsEnabled: boolean
+	commentsModeration: CommentModeration
 	customDomain: string | null
 	metaDescription: string | null
 	createdAt: number
@@ -144,6 +146,8 @@ export interface CreatePublicationInput {
 	headerImageUrl?: string
 	accentColor?: string
 	socialLinks?: SocialLinks
+	commentsEnabled?: boolean
+	commentsModeration?: CommentModeration
 	metaDescription?: string
 }
 
@@ -168,6 +172,8 @@ export interface UpdatePublicationInput {
 	headerImageUrl?: string | null
 	accentColor?: string | null
 	socialLinks?: SocialLinks | null
+	commentsEnabled?: boolean
+	commentsModeration?: CommentModeration
 	customDomain?: string | null
 	metaDescription?: string | null
 }
@@ -431,6 +437,7 @@ export interface NotificationPreferences {
 	newIdeas: boolean
 	draftReady: boolean
 	postPublished: boolean
+	newComment: boolean
 	createdAt: number
 	updatedAt: number
 }
@@ -439,6 +446,40 @@ export interface UpdateNotificationPreferencesInput {
 	newIdeas?: boolean
 	draftReady?: boolean
 	postPublished?: boolean
+	newComment?: boolean
+}
+
+// ─── Comments ───────────────────────────────────────────────────────
+
+export type CommentStatus = 'pending' | 'approved' | 'deleted'
+export type CommentModeration = 'auto-approve' | 'pre-approve'
+
+export interface Comment {
+	id: string
+	publicationId: string
+	postSlug: string
+	parentId: string | null
+	authorName: string
+	authorEmail: string | null
+	content: string
+	status: CommentStatus
+	createdAt: number
+	updatedAt: number
+}
+
+export interface CreateCommentInput {
+	id: string
+	publicationId: string
+	postSlug: string
+	parentId?: string | null
+	authorName: string
+	authorEmail?: string | null
+	content: string
+	status?: CommentStatus
+}
+
+export interface ListCommentsFilters {
+	status?: CommentStatus
 }
 
 // ─── Publication Tokens ──────────────────────────────────────────────

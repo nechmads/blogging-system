@@ -7,6 +7,7 @@ import { sanitizeCmsContent } from '../lib/sanitize';
 import { formatDate } from '../lib/format';
 import PostPage from '../components/PostPage.astro';
 
+const turnstileSiteKey = env.TURNSTILE_SITE_KEY ?? '';
 const publication = await resolvePublication(Astro.request, env.DAL, env.DEV_PUBLICATION_SLUG);
 
 if (!publication) {
@@ -102,4 +103,7 @@ const linkedinShareUrl = `https://www.linkedin.com/sharing/share-offsite/?url=${
   articleModifiedTime={post.updatedAt}
   articleAuthor={post.author}
   articleTags={allLabels.length > 0 ? allLabels : undefined}
+  commentsEnabled={publication.commentsEnabled}
+  publicationSlug={publication.slug}
+  turnstileSiteKey={turnstileSiteKey}
 />

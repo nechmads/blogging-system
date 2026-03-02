@@ -6,6 +6,7 @@
  */
 import type { Post } from '@hotmetal/content-core';
 import type { PublicationBranding } from '../dl/publication';
+import CommentSection from './comments/CommentSection';
 
 // Starter template
 import StarterBaseLayout from '../templates/starter/layouts/BaseLayout.astro';
@@ -46,6 +47,9 @@ interface Props {
   articleModifiedTime?: string;
   articleAuthor?: string;
   articleTags?: string[];
+  commentsEnabled: boolean;
+  publicationSlug: string;
+  turnstileSiteKey: string;
 }
 
 const {
@@ -69,6 +73,9 @@ const {
   articleModifiedTime,
   articleAuthor,
   articleTags,
+  commentsEnabled,
+  publicationSlug,
+  turnstileSiteKey,
 } = Astro.props;
 
 const layoutProps = {
@@ -102,6 +109,15 @@ const contentProps = {
   <EditorialBaseLayout {...layoutProps}>
     <EditorialHeader publicationName={branding.name} logoUrl={branding.logoUrl} />
     <EditorialPostContent {...contentProps} />
+    {commentsEnabled && (
+      <CommentSection
+        client:load
+        publicationSlug={publicationSlug}
+        postSlug={post.slug}
+        turnstileSiteKey={turnstileSiteKey}
+        commentsEnabled={commentsEnabled}
+      />
+    )}
     <EditorialFooter
       publicationName={branding.name}
       publicationSlug={branding.slug}
@@ -112,6 +128,15 @@ const contentProps = {
   <BoldBaseLayout {...layoutProps}>
     <BoldHeader publicationName={branding.name} logoUrl={branding.logoUrl} />
     <BoldPostContent {...contentProps} />
+    {commentsEnabled && (
+      <CommentSection
+        client:load
+        publicationSlug={publicationSlug}
+        postSlug={post.slug}
+        turnstileSiteKey={turnstileSiteKey}
+        commentsEnabled={commentsEnabled}
+      />
+    )}
     <BoldFooter
       publicationName={branding.name}
       publicationSlug={branding.slug}
@@ -122,6 +147,15 @@ const contentProps = {
   <StarterBaseLayout {...layoutProps}>
     <StarterHeader publicationName={branding.name} logoUrl={branding.logoUrl} />
     <StarterPostContent {...contentProps} />
+    {commentsEnabled && (
+      <CommentSection
+        client:load
+        publicationSlug={publicationSlug}
+        postSlug={post.slug}
+        turnstileSiteKey={turnstileSiteKey}
+        commentsEnabled={commentsEnabled}
+      />
+    )}
     <StarterFooter
       publicationName={branding.name}
       publicationSlug={branding.slug}

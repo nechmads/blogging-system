@@ -99,6 +99,50 @@ export interface PostPublishedEmailParams {
 	postUrl: string
 }
 
+export interface NewCommentEmailParams {
+	userEmail: string
+	userName: string
+	publicationName: string
+	postSlug: string
+	commenterName: string
+	commentPreview: string
+	postUrl: string
+}
+
+export async function sendNewCommentEmail(
+	env: NotificationsEnv,
+	params: NewCommentEmailParams,
+): Promise<void> {
+	const resend = getResend(env)
+	if (!resend) return
+
+	const { userEmail, userName, publicationName, postSlug, commenterName, commentPreview, postUrl } = params
+
+	try {
+		await resend.emails.send({
+			from: env.FROM_EMAIL,
+			to: userEmail,
+			subject: `New comment on "${postSlug}" — ${publicationName}`,
+			text: [
+				`Hi ${userName},`,
+				'',
+				`${commenterName} left a comment on your post "${postSlug}" in ${publicationName}:`,
+				'',
+				`  "${commentPreview}"`,
+				'',
+				`View the post: ${postUrl}`,
+				'',
+				'— Hot Metal',
+				'',
+				`Manage your notification preferences: ${env.WEB_APP_URL}/settings`,
+			].join('\n'),
+		})
+		console.log(`[notifications] Sent new-comment email for "${postSlug}"`)
+	} catch (err) {
+		console.error('[notifications] Failed to send new-comment email:', err)
+	}
+}
+
 export async function sendPostPublishedEmail(
 	env: NotificationsEnv,
 	params: PostPublishedEmailParams,

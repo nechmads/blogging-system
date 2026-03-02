@@ -19,6 +19,11 @@
       "service": "hotmetal-data-layer",
       "entrypoint": "DataLayer",
     },
+    {
+      "binding": "NOTIFICATIONS",
+      "service": "hotmetal-notifications",
+      "entrypoint": "NotificationsService",
+    },
   ],
   "r2_buckets": [
     {
@@ -28,6 +33,9 @@
   ],
   "vars": {
     "CMS_URL": "https://cms.hotmetalapp.com",
+    "TURNSTILE_SITE_KEY": "1x00000000000000000000AA",
+    // TURNSTILE_SECRET_KEY must be set via `wrangler secret put TURNSTILE_SECRET_KEY`
+    // For local dev, set it in .dev.vars: TURNSTILE_SECRET_KEY=1x0000000000000000000000000000000AA
   },
   "observability": {
     "enabled": true,

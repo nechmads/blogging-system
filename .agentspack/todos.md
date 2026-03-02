@@ -239,5 +239,14 @@
   - Web app: Updated feed links in `PublicationPage` and `PublicationHomePage` (`/rss`, `/atom`, `/rss/full`, `/atom/full`)
   - Publications frontend: Added `apps/publications-web/src/pages/rss/full.ts` and `apps/publications-web/src/pages/atom/full.ts` to serve full-content RSS/Atom feeds
   - Validation: `pnpm typecheck` passes in both `apps/web` and `apps/publications-web`
+- [x] **Comments System** — Full reader comment system on every publication post page. Includes:
+  - D1 migration (`0015_comments.sql`): `comments` table with threading, `comments_enabled`/`comments_moderation` on publications, `new_comment` on notification_preferences
+  - Data layer: `comments.ts` domain (CRUD, list by post/publication with status filters), updated publications & notification-preferences domains
+  - Content filter (`packages/shared/src/content-filter.ts`): Zero-dependency profanity/spam word-list filter with leet-speak normalization (smart adjacency-based), word-boundary regex matching
+  - Public API (publications-web): GET `/api/comments` (approved only, email stripped), POST `/api/comments/submit` (Turnstile verification, content filter on name+content, threading validation with cross-post scope check, auto-approve/pre-approve moderation)
+  - Preact comment UI (publications-web): CommentSection island (client:load), CommentForm (Turnstile widget, char counter), CommentItem (timeAgo, reply button), single-level threading, pending message, error state
+  - Admin management (web app): Comments section in publication settings (enable/disable, moderation mode), CommentsPage with filter tabs (All/Pending/Approved), approve/delete actions
+  - Email notifications: `sendNewCommentEmail` in notifications service, fire-and-forget on auto-approved comments
+  - Security: TURNSTILE_SECRET_KEY via wrangler secret (not in vars), authorName length limit, content filter on names, parentId scoped to same publication/post
 - [ ] Writer Agent — Phase 2: Voice input (transcription in `input-processor.ts`)
 - [ ] Writer Agent — Phase 2: D1 session sync (synchronize DO state back to D1 for listing accuracy)

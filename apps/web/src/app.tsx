@@ -22,6 +22,7 @@ import { PublicationHomePage } from '@/pages/PublicationHomePage'
 import { PublishedPostsPage } from '@/pages/PublishedPostsPage'
 import { StylesPage } from '@/pages/StylesPage'
 import { SettingsPage } from '@/pages/SettingsPage'
+import { CommentsPage } from '@/pages/CommentsPage'
 
 export default function App() {
   return (
@@ -56,6 +57,7 @@ export default function App() {
           <Route path="/publications/:id" element={<PublicationHomePage />} />
           <Route path="/publications/:id/posts" element={<PublishedPostsPage />} />
           <Route path="/publications/:id/settings" element={<PublicationPage />} />
+          <Route path="/publications/:id/comments" element={<CommentsPage />} />
           <Route path="/styles" element={<StylesPage />} />
           <Route path="/settings" element={<SettingsPage />} />
         </Route>

@@ -7,6 +7,7 @@ export interface NotificationsApi {
   sendNewIdeasNotification(params: { userId: string; publicationName: string; ideasCount: number }): Promise<void>
   sendDraftReadyNotification(params: { userId: string; publicationName: string; postTitle: string }): Promise<void>
   sendPostPublishedNotification(params: { userId: string; publicationName: string; postTitle: string; postUrl: string }): Promise<void>
+  sendNewCommentNotification(params: { userId: string; publicationName: string; postSlug: string; commenterName: string; commentPreview: string; postUrl: string }): Promise<void>
 }
 
 export interface ScoutEnv extends Omit<Env, 'DAL' | 'NOTIFICATIONS' | 'PUBLICATIONS_BASE_DOMAIN'> {
