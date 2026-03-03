@@ -4,13 +4,19 @@ import type { AppEnv } from '../server'
 import type { WriterAgent } from '../agent/writer-agent'
 import { verifyPublicationOwnership } from '../middleware/ownership'
 import { AUTO_PUBLISH_MODES, type AutoPublishMode, type ScoutSchedule } from '@hotmetal/content-core'
-import { validateSchedule, validateTimezone, computeNextRun, CmsApi } from '@hotmetal/shared'
+import { validateSchedule, validateTimezone, computeNextRun, CmsApi, getTierLimits, isUnlimited } from '@hotmetal/shared'
+import { checkPublicationQuota, quotaExceededResponse } from '../lib/quota'
 
 const publications = new Hono<AppEnv>()
 
 /** Create a new publication. */
 publications.post('/publications', async (c) => {
   const userId = c.get('userId')
+
+  const user = await c.env.DAL.getUserById(userId)
+  if (!user) return c.json({ error: 'User not found' }, 401)
+  const quotaError = await checkPublicationQuota(c, userId, user.tier)
+  if (quotaError) return quotaError
 
   const body = await c.req.json<{
     name?: string
@@ -46,6 +52,19 @@ publications.post('/publications', async (c) => {
 
   if (body.timezone && !validateTimezone(body.timezone)) {
     return c.json({ error: 'Invalid timezone' }, 400)
+  }
+
+  // Enforce tier limit on cadencePostsPerWeek at creation time
+  if (body.cadencePostsPerWeek !== undefined) {
+    const limits = getTierLimits(user.tier)
+    if (!isUnlimited(limits.postsPerWeekPerPublication) && body.cadencePostsPerWeek > limits.postsPerWeekPerPublication) {
+      return quotaExceededResponse(
+        c,
+        `Free plan allows up to ${limits.postsPerWeekPerPublication} posts per week`,
+        limits.postsPerWeekPerPublication,
+        body.cadencePostsPerWeek,
+      )
+    }
   }
 
   const id = crypto.randomUUID()
@@ -133,6 +152,21 @@ publications.patch('/publications/:id', async (c) => {
 
   if (body.autoPublishMode && !AUTO_PUBLISH_MODES.includes(body.autoPublishMode as AutoPublishMode)) {
     return c.json({ error: `Invalid autoPublishMode. Must be one of: ${AUTO_PUBLISH_MODES.join(', ')}` }, 400)
+  }
+
+  // Enforce tier limit on cadencePostsPerWeek
+  if (body.cadencePostsPerWeek !== undefined) {
+    const user = await c.env.DAL.getUserById(c.get('userId'))
+    if (!user) return c.json({ error: 'User not found' }, 401)
+    const limits = getTierLimits(user.tier)
+    if (!isUnlimited(limits.postsPerWeekPerPublication) && body.cadencePostsPerWeek > limits.postsPerWeekPerPublication) {
+      return quotaExceededResponse(
+        c,
+        `Free plan allows up to ${limits.postsPerWeekPerPublication} posts per week`,
+        limits.postsPerWeekPerPublication,
+        body.cadencePostsPerWeek,
+      )
+    }
   }
 
   if (body.slug) {

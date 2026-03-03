@@ -2,8 +2,9 @@ import { useEffect, useState, useCallback } from 'react'
 import { CheckCircleIcon, GlobeIcon, ImageIcon, LinkedinLogoIcon, XLogoIcon, SparkleIcon, CaretDownIcon, LinkSimpleIcon } from '@phosphor-icons/react'
 import { Modal } from '@/components/modal/Modal'
 import { Loader } from '@/components/loader/Loader'
-import { fetchPublications, fetchDrafts, fetchDraft, fetchCmsPost, generateSeo, generateTweet, generateLinkedInPost, publishDraft, getLinkedInStatus, getTwitterStatus } from '@/lib/api'
+import { fetchPublications, fetchDrafts, fetchDraft, fetchCmsPost, generateSeo, generateTweet, generateLinkedInPost, publishDraft, getLinkedInStatus, getTwitterStatus, QuotaExceededError } from '@/lib/api'
 import { AnalyticsManager, AnalyticsEvent } from '@hotmetal/analytics'
+import { UpgradePrompt } from '@/components/upgrade/UpgradePrompt'
 import type { PublicationConfig } from '@/lib/types'
 
 const TCO_URL_LENGTH = 23
@@ -215,6 +216,10 @@ export function PublishModal({ isOpen, onClose, sessionId, draftTitle, draftVers
   const [generatingLinkedIn, setGeneratingLinkedIn] = useState(false)
   const [linkedInFromAI, setLinkedInFromAI] = useState(false)
   const [loadingDraftBody, setLoadingDraftBody] = useState(false)
+
+  // Upgrade prompt
+  const [showUpgradePrompt, setShowUpgradePrompt] = useState(false)
+  const [upgradeMessage, setUpgradeMessage] = useState('')
 
   // Load publications + auto-generate slug/SEO when modal opens
   useEffect(() => {
@@ -526,9 +531,14 @@ export function PublishModal({ isOpen, onClose, sessionId, draftTitle, draftVers
         }
       }
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to publish'
-      setError(errorMessage)
-      AnalyticsManager.track(AnalyticsEvent.PublishFailed, { platform: 'blog', error: errorMessage })
+      if (err instanceof QuotaExceededError) {
+        setUpgradeMessage(err.message)
+        setShowUpgradePrompt(true)
+      } else {
+        const errorMessage = err instanceof Error ? err.message : 'Failed to publish'
+        setError(errorMessage)
+        AnalyticsManager.track(AnalyticsEvent.PublishFailed, { platform: 'blog', error: errorMessage })
+      }
     } finally {
       setPublishing(false)
     }
@@ -537,6 +547,12 @@ export function PublishModal({ isOpen, onClose, sessionId, draftTitle, draftVers
   const inputClass = 'w-full rounded-lg border border-[#e5e7eb] bg-white px-3 py-2 text-sm text-[#0a0a0a] placeholder:text-[#6b7280] focus:border-[#d97706] focus:outline-none focus:ring-1 focus:ring-[#d97706] dark:border-[#374151] dark:bg-[#1a1a1a] dark:text-[#fafafa]'
 
   return (
+    <>
+    <UpgradePrompt
+      isOpen={showUpgradePrompt}
+      onClose={() => setShowUpgradePrompt(false)}
+      message={upgradeMessage}
+    />
     <Modal isOpen={isOpen} onClose={onClose} className="max-w-lg">
         <div className="flex flex-col">
           {/* Fixed header */}
@@ -923,5 +939,6 @@ export function PublishModal({ isOpen, onClose, sessionId, draftTitle, draftVers
           </div>
         </div>
     </Modal>
+    </>
   )
 }

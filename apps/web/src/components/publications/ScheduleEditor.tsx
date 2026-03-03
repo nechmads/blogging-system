@@ -30,6 +30,7 @@ interface ScheduleEditorProps {
   scouting: boolean;
   topicsExist: boolean;
   onAutoPublishModeChange: (mode: AutoPublishMode) => void;
+  maxPostsPerWeek?: number;
 }
 
 export function ScheduleEditor({
@@ -42,6 +43,7 @@ export function ScheduleEditor({
   scouting,
   topicsExist,
   onAutoPublishModeChange,
+  maxPostsPerWeek = 14,
 }: ScheduleEditorProps) {
   return (
     <div className="space-y-6">
@@ -85,13 +87,13 @@ export function ScheduleEditor({
             <input
               type="number"
               min={1}
-              max={14}
+              max={maxPostsPerWeek}
               value={state.cadencePostsPerWeek}
               onChange={(e) => {
                 const parsed = parseInt(e.target.value, 10);
                 if (!Number.isNaN(parsed))
                   onChange({
-                    cadencePostsPerWeek: Math.max(1, Math.min(14, parsed)),
+                    cadencePostsPerWeek: Math.max(1, Math.min(maxPostsPerWeek, parsed)),
                   });
               }}
               className="w-24 rounded-lg border border-[var(--color-border-default)] bg-[var(--color-bg-primary)] px-3 py-2 text-sm focus:border-[var(--color-accent)] focus:outline-none focus:ring-1 focus:ring-[var(--color-accent)]"

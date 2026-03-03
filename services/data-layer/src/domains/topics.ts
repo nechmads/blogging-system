@@ -112,6 +112,14 @@ export async function updateTopic(
 	return getTopicById(db, id)
 }
 
+export async function countTopicsByPublication(db: D1Database, publicationId: string): Promise<number> {
+	const row = await db
+		.prepare('SELECT COUNT(*) as cnt FROM topics WHERE publication_id = ? AND is_active = 1')
+		.bind(publicationId)
+		.first<{ cnt: number }>()
+	return row?.cnt ?? 0
+}
+
 export async function deleteTopic(db: D1Database, id: string): Promise<void> {
 	await db.prepare('DELETE FROM topics WHERE id = ?').bind(id).run()
 }

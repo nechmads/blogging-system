@@ -2,6 +2,7 @@ import { Hono } from 'hono'
 import type { AppEnv } from '../server'
 import { verifyPublicationOwnership } from '../middleware/ownership'
 import type { TopicPriority } from '@hotmetal/content-core'
+import { checkTopicQuota } from '../lib/quota'
 
 const topics = new Hono<AppEnv>()
 
@@ -9,6 +10,11 @@ const topics = new Hono<AppEnv>()
 topics.post('/publications/:pubId/topics', async (c) => {
   const pub = await verifyPublicationOwnership(c, c.req.param('pubId'))
   if (!pub) return c.json({ error: 'Publication not found' }, 404)
+
+  const user = await c.env.DAL.getUserById(c.get('userId'))
+  if (!user) return c.json({ error: 'User not found' }, 401)
+  const quotaError = await checkTopicQuota(c, pub.id, user.tier)
+  if (quotaError) return quotaError
 
   const body = await c.req.json<{
     name?: string

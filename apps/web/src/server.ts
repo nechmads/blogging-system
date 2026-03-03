@@ -35,6 +35,7 @@ import images from './api/images'
 import connections from './api/connections'
 import notifications from './api/notifications'
 import comments from './api/comments'
+import me from './api/me'
 import internal from './api/internal'
 import admin from './api/admin'
 import webhooks from './api/webhooks'
@@ -92,6 +93,7 @@ app.route('/admin', admin)
 app.use('/api/*', clerkAuth, ensureUser)
 
 // ─── User-facing API routes ─────────────────────────────────────────
+app.route('/api', me)
 app.route('/api', sessions)
 app.route('/api', publications)
 app.route('/api', topics)

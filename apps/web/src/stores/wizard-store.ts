@@ -5,6 +5,7 @@ import {
   updatePublication,
   createTopic,
   fetchStyles,
+  QuotaExceededError,
 } from '@/lib/api'
 import { AnalyticsManager, AnalyticsEvent } from '@hotmetal/analytics'
 import type { AutoPublishMode, PublicationConfig, WritingStyle } from '@/lib/types'
@@ -128,7 +129,11 @@ export async function handleBasicsNext(): Promise<void> {
     }
     wizardStore$.currentStep.set(2)
   } catch (err) {
-    wizardStore$.error.set(err instanceof Error ? err.message : 'Failed to create publication')
+    if (err instanceof QuotaExceededError) {
+      wizardStore$.error.set(err.message + '. Contact us to upgrade.')
+    } else {
+      wizardStore$.error.set(err instanceof Error ? err.message : 'Failed to create publication')
+    }
   } finally {
     wizardStore$.saving.set(false)
   }
@@ -177,7 +182,13 @@ export async function handleTopicsNext(): Promise<void> {
     wizardStore$.topics.set(updatedTopics)
 
     const failures = results.filter((r) => r.status === 'rejected')
-    if (failures.length > 0 && failures.length < unsaved.length) {
+    const quotaFailure = failures.find(
+      (r) => r.status === 'rejected' && r.reason instanceof QuotaExceededError,
+    ) as PromiseRejectedResult | undefined
+    if (quotaFailure) {
+      const qe = quotaFailure.reason as QuotaExceededError
+      toast.error(qe.message)
+    } else if (failures.length > 0 && failures.length < unsaved.length) {
       toast.warning(`${failures.length} topic(s) failed to save`)
     } else if (failures.length === unsaved.length) {
       toast.error('Failed to save topics — you can add them later in settings')

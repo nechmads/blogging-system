@@ -20,6 +20,7 @@ import { Hono } from 'hono'
 import type { ContentfulStatusCode } from 'hono/utils/http-status'
 import type { AppEnv } from '../server'
 import type { WriterAgent } from '../agent/writer-agent'
+import { checkPostsPerWeekQuota } from '../lib/quota'
 
 const internal = new Hono<AppEnv>()
 
@@ -121,6 +122,14 @@ internal.post('/sessions/:sessionId/publish', async (c) => {
 
   const session = await c.env.DAL.getSessionById(sessionId)
   if (!session || session.userId !== userId) return c.json({ error: 'Session not found' }, 404)
+
+  // Quota check: only for new publishes, not updates
+  if (!session.cmsPostId && session.publicationId) {
+    const user = await c.env.DAL.getUserById(userId)
+    if (!user) return c.json({ error: 'User not found' }, 401)
+    const quotaError = await checkPostsPerWeekQuota(c, session.publicationId, user.tier)
+    if (quotaError) return quotaError
+  }
 
   const agent = await getAgentByName<Env, WriterAgent>(c.env.WRITER_AGENT, sessionId)
 

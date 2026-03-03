@@ -3,6 +3,7 @@ import { Hono } from 'hono'
 import type { ContentfulStatusCode } from 'hono/utils/http-status'
 import type { AppEnv } from '../server'
 import type { WriterAgent } from '../agent/writer-agent'
+import { checkPostsPerWeekQuota } from '../lib/quota'
 
 interface SocialShareResult {
   platform: 'linkedin' | 'twitter'
@@ -223,6 +224,14 @@ publish.post('/sessions/:sessionId/publish', async (c) => {
     })
 
     return c.json({ success: true, results: [], socialResults })
+  }
+
+  // Quota check: only for new publishes, not updates
+  if (!session.cmsPostId && publicationId) {
+    const user = await c.env.DAL.getUserById(userId)
+    if (!user) return c.json({ error: 'User not found' }, 401)
+    const quotaError = await checkPostsPerWeekQuota(c, publicationId, user.tier)
+    if (quotaError) return quotaError
   }
 
   const agent = await getAgentByName<Env, WriterAgent>(c.env.WRITER_AGENT, sessionId)

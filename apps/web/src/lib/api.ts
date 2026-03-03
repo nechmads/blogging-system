@@ -7,6 +7,20 @@ import type {
 
 const JSON_HEADERS = { 'Content-Type': 'application/json' }
 
+export class QuotaExceededError extends Error {
+  limit: number
+  current: number
+  upgradeEmail: string
+
+  constructor(message: string, limit: number, current: number, upgradeEmail: string) {
+    super(message)
+    this.name = 'QuotaExceededError'
+    this.limit = limit
+    this.current = current
+    this.upgradeEmail = upgradeEmail
+  }
+}
+
 /**
  * Token provider function set by the auth layer.
  * Called on every API request to get a fresh Clerk session token,
@@ -59,11 +73,32 @@ async function request<T>(url: string, init?: RequestInit): Promise<T> {
   }
 
   if (!res.ok) {
-    const body = await res.json().catch(() => ({ error: 'Request failed' }))
-    throw new Error((body as { error?: string }).error || `HTTP ${res.status}`)
+    const body = await res.json().catch(() => ({ error: 'Request failed' })) as Record<string, unknown>
+    if (body.code === 'QUOTA_EXCEEDED') {
+      throw new QuotaExceededError(
+        (body.error as string) || 'Quota exceeded',
+        body.limit as number,
+        body.current as number,
+        (body.upgradeEmail as string) || '',
+      )
+    }
+    throw new Error((body.error as string) || `HTTP ${res.status}`)
   }
 
   return res.json() as Promise<T>
+}
+
+// --- Current User ---
+
+export interface CurrentUser {
+  id: string
+  email: string
+  name: string
+  tier: string
+}
+
+export async function fetchCurrentUser(): Promise<CurrentUser> {
+  return request<CurrentUser>('/api/me')
 }
 
 export async function fetchSessions(): Promise<Session[]> {

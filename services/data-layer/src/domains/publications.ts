@@ -356,6 +356,14 @@ export async function updatePublicationNextScoutAt(
 		.run()
 }
 
+export async function countPublicationsByUser(db: D1Database, userId: string): Promise<number> {
+	const row = await db
+		.prepare('SELECT COUNT(*) as cnt FROM publications WHERE user_id = ?')
+		.bind(userId)
+		.first<{ cnt: number }>()
+	return row?.cnt ?? 0
+}
+
 export async function getAllPublicationIds(db: D1Database): Promise<string[]> {
 	const result = await db
 		.prepare('SELECT id FROM publications')
