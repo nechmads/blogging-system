@@ -119,7 +119,7 @@ export function WizardStepTopics() {
         </div>
 
         {limitReached && (
-          <p className="text-sm text-[var(--color-text-muted)]">
+          <p className="text-sm font-semibold text-[var(--color-text-muted)]">
             Your plan allows up to {maxTopics} topics per publication. You can manage topics later in settings.
           </p>
         )}

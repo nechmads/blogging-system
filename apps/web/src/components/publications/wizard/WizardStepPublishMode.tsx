@@ -108,6 +108,11 @@ export function WizardStepPublishMode() {
               ? 'The system will aim to publish this many posts each week.'
               : 'The system will aim to write this many drafts each week.'}
           </p>
+          {cadencePostsPerWeek >= maxPostsPerWeek && !isUnlimited(limits.postsPerWeekPerPublication) && (
+            <p className="mt-2 text-sm font-semibold text-[var(--color-text-muted)]">
+              Your plan allows up to {maxPostsPerWeek} posts per week. You can upgrade your plan later to set a higher number.
+            </p>
+          )}
         </div>
       )}
     </div>

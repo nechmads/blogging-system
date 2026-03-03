@@ -16,7 +16,7 @@ export function UpgradePrompt({ isOpen, onClose, message }: UpgradePromptProps) 
           {message || "You've reached the limit of your current plan."}
         </p>
         <p className="text-sm text-[var(--color-text-muted)]">
-          To unlock higher limits, reach out to us and we'll get you upgraded.
+          To unlock higher limits, <a href={`mailto:${UPGRADE_EMAIL}?subject=Upgrade%20to%20Pro`} className="text-[var(--color-accent)] hover:underline">reach out to us</a> and we'll get you upgraded.
         </p>
         <div className="flex justify-end gap-2">
           <button

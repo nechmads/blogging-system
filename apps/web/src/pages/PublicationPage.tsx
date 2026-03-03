@@ -652,6 +652,7 @@ export function PublicationPage() {
             topicsExist={topics.length > 0}
             onAutoPublishModeChange={handleAutoPublishModeChange}
             maxPostsPerWeek={maxPostsPerWeek}
+            isPostsLimited={!isUnlimited(tierLimits.postsPerWeekPerPublication)}
           />
         ) : (
           <ScheduleSummary publication={publication} onEdit={() => setEditingSchedule(true)} />
