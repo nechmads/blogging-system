@@ -9,6 +9,7 @@
 import { SignedIn, SignedOut, RedirectToSignIn, useAuth, useClerk } from '@clerk/clerk-react'
 import { useCallback, useEffect, useState, type ReactNode } from 'react'
 import { setTokenProvider } from '@/lib/api'
+import { loadCurrentUser, clearUserStore } from '@/stores/user-store'
 
 function TokenSync({ children }: { children: ReactNode }) {
   const { getToken, isSignedIn } = useAuth()
@@ -17,6 +18,7 @@ function TokenSync({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (!isSignedIn) {
       setTokenProvider(null)
+      clearUserStore()
       setReady(true)
       return
     }
@@ -24,7 +26,8 @@ function TokenSync({ children }: { children: ReactNode }) {
     // Register Clerk's getToken as the provider — each API call
     // will invoke it to get a fresh (or cached-by-Clerk) JWT.
     setTokenProvider(() => getToken())
-    setReady(true)
+    // Fetch user data (including tier) once at auth time
+    loadCurrentUser().then(() => setReady(true))
 
     return () => setTokenProvider(null)
   }, [isSignedIn, getToken])

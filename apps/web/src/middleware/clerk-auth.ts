@@ -25,6 +25,7 @@ export interface AuthVariables {
 	userId: string
 	userEmail: string
 	userName: string
+	userTier: string
 }
 
 type AuthEnv = {

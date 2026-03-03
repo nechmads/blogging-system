@@ -1,5 +1,7 @@
 import { useValue } from '@legendapp/state/react'
 import { wizardStore$ } from '@/stores/wizard-store'
+import { userStore$ } from '@/stores/user-store'
+import { getTierLimits, isUnlimited } from '@hotmetal/shared'
 import type { AutoPublishMode } from '@/lib/types'
 
 const PUBLISH_MODES: {
@@ -32,6 +34,10 @@ const PUBLISH_MODES: {
 export function WizardStepPublishMode() {
   const autoPublishMode = useValue(wizardStore$.autoPublishMode)
   const cadencePostsPerWeek = useValue(wizardStore$.cadencePostsPerWeek)
+  const user = useValue(userStore$.user)
+
+  const limits = getTierLimits(user?.tier ?? 'free')
+  const maxPostsPerWeek = isUnlimited(limits.postsPerWeekPerPublication) ? 14 : limits.postsPerWeekPerPublication
 
   const handleModeChange = (mode: AutoPublishMode) => {
     wizardStore$.autoPublishMode.set(mode)
@@ -87,12 +93,12 @@ export function WizardStepPublishMode() {
           <input
             type="number"
             min={1}
-            max={14}
+            max={maxPostsPerWeek}
             value={cadencePostsPerWeek}
             onChange={(e) => {
               const parsed = parseInt(e.target.value, 10)
               if (!Number.isNaN(parsed)) {
-                wizardStore$.cadencePostsPerWeek.set(Math.max(1, Math.min(14, parsed)))
+                wizardStore$.cadencePostsPerWeek.set(Math.max(1, Math.min(maxPostsPerWeek, parsed)))
               }
             }}
             className="w-24 rounded-lg border border-[var(--color-border-default)] bg-[var(--color-bg-primary)] px-3 py-2 text-base focus:border-[var(--color-accent)] focus:outline-none focus:ring-1 focus:ring-[var(--color-accent)]"
@@ -102,6 +108,11 @@ export function WizardStepPublishMode() {
               ? 'The system will aim to publish this many posts each week.'
               : 'The system will aim to write this many drafts each week.'}
           </p>
+          {cadencePostsPerWeek >= maxPostsPerWeek && !isUnlimited(limits.postsPerWeekPerPublication) && (
+            <p className="mt-2 text-sm font-semibold text-[var(--color-text-muted)]">
+              Your plan allows up to {maxPostsPerWeek} posts per week. You can upgrade your plan later to set a higher number.
+            </p>
+          )}
         </div>
       )}
     </div>

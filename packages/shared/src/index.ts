@@ -1,3 +1,6 @@
+export { getTierLimits, isUnlimited, UPGRADE_EMAIL } from './tiers'
+export type { TierName, TierLimits } from './tiers'
+
 export { CmsApi, CmsApiError } from './cms-api'
 export type { CreatePostInput, CreateRenditionInput } from './cms-api'
 

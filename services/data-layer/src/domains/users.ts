@@ -4,6 +4,7 @@ interface UserRow {
 	id: string
 	email: string
 	name: string
+	tier: string
 	created_at: number
 	updated_at: number
 }
@@ -13,6 +14,7 @@ function mapRow(row: UserRow): User {
 		id: row.id,
 		email: row.email,
 		name: row.name,
+		tier: row.tier,
 		createdAt: row.created_at,
 		updatedAt: row.updated_at,
 	}
@@ -45,6 +47,7 @@ export async function createUser(db: D1Database, data: CreateUserInput): Promise
 		id: data.id,
 		email: data.email,
 		name: data.name,
+		tier: 'free',
 		createdAt: now,
 		updatedAt: now,
 	}

@@ -25,12 +25,22 @@ export const ensureUser = createMiddleware<AppEnv>(async (c, next) => {
 				email: email || `${userId}@placeholder.local`,
 				name: name || 'User',
 			})
-		} else if (email && name && (existing.email !== email || existing.name !== name)) {
-			await c.env.DAL.updateUser(userId, { email, name })
+			c.set('userTier', 'free') // new users are always free
+		} else {
+			// Set tier immediately so a profile-sync failure doesn't downgrade pro users
+			c.set('userTier', existing.tier)
+			try {
+				if (email && name && (existing.email !== email || existing.name !== name)) {
+					await c.env.DAL.updateUser(userId, { email, name })
+				}
+			} catch (syncErr) {
+				console.warn('ensureUser profile sync:', syncErr instanceof Error ? syncErr.message : syncErr)
+			}
 		}
 	} catch (err) {
 		// Don't block the request — the userId from the JWT is valid regardless
 		console.warn('ensureUser sync:', err instanceof Error ? err.message : err)
+		c.set('userTier', 'free') // safe fallback
 	}
 
 	await next()

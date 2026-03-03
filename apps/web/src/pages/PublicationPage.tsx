@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useParams, useNavigate } from 'react-router'
+import { useValue } from '@legendapp/state/react'
 import { toast } from 'sonner'
 import {
   ArrowLeftIcon,
@@ -26,7 +27,11 @@ import {
   triggerScout,
   fetchIdeasCount,
   fetchStyles,
+  QuotaExceededError,
 } from '@/lib/api'
+import { userStore$ } from '@/stores/user-store'
+import { getTierLimits, isUnlimited } from '@hotmetal/shared'
+import { UpgradePrompt } from '@/components/upgrade/UpgradePrompt'
 import { startScoutPolling } from '@/stores/scout-store'
 import { AnalyticsManager, AnalyticsEvent } from '@hotmetal/analytics'
 import type { PublicationConfig, Topic, WritingStyle, AutoPublishMode } from '@/lib/types'
@@ -92,6 +97,15 @@ export function PublicationPage() {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const [deleting, setDeleting] = useState(false)
   const [topicToDelete, setTopicToDelete] = useState<string | null>(null)
+
+  // Quota / upgrade
+  const [showUpgradePrompt, setShowUpgradePrompt] = useState(false)
+  const [upgradeMessage, setUpgradeMessage] = useState('')
+
+  // Tier-based limits from the user store
+  const currentUser = useValue(userStore$.user)
+  const tierLimits = getTierLimits(currentUser?.tier ?? 'free')
+  const maxPostsPerWeek = isUnlimited(tierLimits.postsPerWeekPerPublication) ? 14 : tierLimits.postsPerWeekPerPublication
 
   // Auto-save refs
   const initializedRef = useRef(false)
@@ -377,7 +391,13 @@ export function PublicationPage() {
       }
       closeTopicModal()
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to save topic')
+      if (err instanceof QuotaExceededError) {
+        closeTopicModal()
+        setUpgradeMessage(err.message)
+        setShowUpgradePrompt(true)
+      } else {
+        setError(err instanceof Error ? err.message : 'Failed to save topic')
+      }
     } finally {
       setSavingTopic(false)
     }
@@ -631,6 +651,8 @@ export function PublicationPage() {
             scouting={scouting}
             topicsExist={topics.length > 0}
             onAutoPublishModeChange={handleAutoPublishModeChange}
+            maxPostsPerWeek={maxPostsPerWeek}
+            isPostsLimited={!isUnlimited(tierLimits.postsPerWeekPerPublication)}
           />
         ) : (
           <ScheduleSummary publication={publication} onEdit={() => setEditingSchedule(true)} />
@@ -878,6 +900,13 @@ export function PublicationPage() {
           </div>
         </div>
       </Modal>
+
+      {/* Upgrade Prompt */}
+      <UpgradePrompt
+        isOpen={showUpgradePrompt}
+        onClose={() => setShowUpgradePrompt(false)}
+        message={upgradeMessage}
+      />
 
       {/* Delete Publication Confirmation */}
       <Modal isOpen={showDeleteConfirm} onClose={() => setShowDeleteConfirm(false)}>

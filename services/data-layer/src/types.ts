@@ -21,6 +21,7 @@ export interface User {
 	id: string
 	email: string
 	name: string
+	tier: string
 	createdAt: number
 	updatedAt: number
 }

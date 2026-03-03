@@ -2,6 +2,7 @@ import type { ScoutEnv } from '../env'
 import type { Publication, Idea } from '@hotmetal/data-layer'
 import type { IdeaBrief } from '../types'
 import { slugify, getWeekStartTimestamp } from '../utils'
+import { getTierLimits, isUnlimited } from '@hotmetal/shared'
 
 export interface AutoWriteResult {
   written: number
@@ -44,7 +45,20 @@ export async function autoWriteTopIdea(
 async function checkCadence(env: ScoutEnv, publication: Publication): Promise<boolean> {
   const weekStart = getWeekStartTimestamp()
   const count = await env.DAL.countCompletedSessionsForWeek(publication.id, weekStart)
-  return count < publication.cadencePostsPerWeek
+
+  // Check user-configured cadence
+  if (count >= publication.cadencePostsPerWeek) return false
+
+  // Also enforce tier hard limit
+  const user = await env.DAL.getUserById(publication.userId)
+  if (user) {
+    const limits = getTierLimits(user.tier)
+    if (!isUnlimited(limits.postsPerWeekPerPublication) && count >= limits.postsPerWeekPerPublication) {
+      return false
+    }
+  }
+
+  return true
 }
 
 /**

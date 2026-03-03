@@ -95,12 +95,14 @@ export interface DataLayerApi {
 	getDuePublications(now: number): Promise<Array<{ id: string; scoutSchedule: ScoutSchedule; timezone: string }>>
 	getPublicationsWithNullSchedule(): Promise<Array<{ id: string; scoutSchedule: ScoutSchedule; timezone: string }>>
 	updatePublicationNextScoutAt(id: string, nextRun: number): Promise<void>
+	countPublicationsByUser(userId: string): Promise<number>
 	getAllPublicationIds(): Promise<string[]>
 
 	// Topics
 	createTopic(data: CreateTopicInput): Promise<Topic>
 	getTopicById(id: string): Promise<Topic | null>
 	listTopicsByPublication(pubId: string): Promise<Topic[]>
+	countTopicsByPublication(pubId: string): Promise<number>
 	updateTopic(id: string, data: UpdateTopicInput): Promise<Topic | null>
 	deleteTopic(id: string): Promise<void>
 
@@ -202,12 +204,14 @@ export class DataLayer extends WorkerEntrypoint<Env> {
 	getDuePublications(now: number) { return publications.getDuePublications(this.env.DB, now) }
 	getPublicationsWithNullSchedule() { return publications.getPublicationsWithNullSchedule(this.env.DB) }
 	updatePublicationNextScoutAt(id: string, nextRun: number) { return publications.updatePublicationNextScoutAt(this.env.DB, id, nextRun) }
+	countPublicationsByUser(userId: string) { return publications.countPublicationsByUser(this.env.DB, userId) }
 	getAllPublicationIds() { return publications.getAllPublicationIds(this.env.DB) }
 
 	// ─── Topics ────────────────────────────────────────────────────────
 	createTopic(data: CreateTopicInput) { return topics.createTopic(this.env.DB, data) }
 	getTopicById(id: string) { return topics.getTopicById(this.env.DB, id) }
 	listTopicsByPublication(pubId: string) { return topics.listTopicsByPublication(this.env.DB, pubId) }
+	countTopicsByPublication(pubId: string) { return topics.countTopicsByPublication(this.env.DB, pubId) }
 	updateTopic(id: string, data: UpdateTopicInput) { return topics.updateTopic(this.env.DB, id, data) }
 	deleteTopic(id: string) { return topics.deleteTopic(this.env.DB, id) }
 
