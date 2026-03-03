@@ -1,7 +1,9 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useValue } from '@legendapp/state/react'
 import { PlusIcon, XIcon } from '@phosphor-icons/react'
 import { wizardStore$, addTopic, removeTopic } from '@/stores/wizard-store'
+import { fetchCurrentUser } from '@/lib/api'
+import { getTierLimits, isUnlimited } from '@hotmetal/shared'
 
 const TOPIC_EXAMPLES: { name: string; descPlaceholder: string }[] = [
   {
@@ -29,10 +31,24 @@ export function WizardStepTopics() {
   const [topicName, setTopicName] = useState('')
   const [topicDesc, setTopicDesc] = useState('')
   const [descPlaceholder, setDescPlaceholder] = useState(DEFAULT_DESC_PLACEHOLDER)
+  const [maxTopics, setMaxTopics] = useState<number | null>(null)
+
+  useEffect(() => {
+    fetchCurrentUser()
+      .then((user) => {
+        const limits = getTierLimits(user.tier)
+        if (!isUnlimited(limits.topicsPerPublication)) {
+          setMaxTopics(limits.topicsPerPublication)
+        }
+      })
+      .catch(() => {})
+  }, [])
+
+  const limitReached = maxTopics !== null && topics.length >= maxTopics
 
   const handleAdd = () => {
     const name = topicName.trim()
-    if (!name) return
+    if (!name || limitReached) return
     addTopic(name, topicDesc.trim())
     setTopicName('')
     setTopicDesc('')
@@ -103,13 +119,19 @@ export function WizardStepTopics() {
           <button
             type="button"
             onClick={handleAdd}
-            disabled={!topicName.trim()}
+            disabled={!topicName.trim() || limitReached}
             className="flex shrink-0 items-center gap-1.5 rounded-lg bg-[var(--color-accent)] px-3 py-2 text-base font-medium text-white transition-colors hover:bg-[var(--color-accent-hover)] disabled:opacity-50"
           >
             <PlusIcon size={14} />
             Add topic
           </button>
         </div>
+
+        {limitReached && (
+          <p className="text-sm text-[var(--color-text-muted)]">
+            Your plan allows up to {maxTopics} topics per publication. You can manage topics later in settings.
+          </p>
+        )}
       </div>
 
       {/* Topic list */}
