@@ -1,8 +1,8 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { useValue } from '@legendapp/state/react'
 import { PlusIcon, XIcon } from '@phosphor-icons/react'
 import { wizardStore$, addTopic, removeTopic } from '@/stores/wizard-store'
-import { fetchCurrentUser } from '@/lib/api'
+import { userStore$ } from '@/stores/user-store'
 import { getTierLimits, isUnlimited } from '@hotmetal/shared'
 
 const TOPIC_EXAMPLES: { name: string; descPlaceholder: string }[] = [
@@ -28,22 +28,13 @@ const DEFAULT_DESC_PLACEHOLDER =
 
 export function WizardStepTopics() {
   const topics = useValue(wizardStore$.topics)
+  const user = useValue(userStore$.user)
   const [topicName, setTopicName] = useState('')
   const [topicDesc, setTopicDesc] = useState('')
   const [descPlaceholder, setDescPlaceholder] = useState(DEFAULT_DESC_PLACEHOLDER)
-  const [maxTopics, setMaxTopics] = useState<number | null>(null)
 
-  useEffect(() => {
-    fetchCurrentUser()
-      .then((user) => {
-        const limits = getTierLimits(user.tier)
-        if (!isUnlimited(limits.topicsPerPublication)) {
-          setMaxTopics(limits.topicsPerPublication)
-        }
-      })
-      .catch(() => {})
-  }, [])
-
+  const limits = getTierLimits(user?.tier ?? 'free')
+  const maxTopics = isUnlimited(limits.topicsPerPublication) ? null : limits.topicsPerPublication
   const limitReached = maxTopics !== null && topics.length >= maxTopics
 
   const handleAdd = () => {

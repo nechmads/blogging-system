@@ -1,7 +1,6 @@
-import { useEffect, useState } from 'react'
 import { useValue } from '@legendapp/state/react'
 import { wizardStore$ } from '@/stores/wizard-store'
-import { fetchCurrentUser } from '@/lib/api'
+import { userStore$ } from '@/stores/user-store'
 import { getTierLimits, isUnlimited } from '@hotmetal/shared'
 import type { AutoPublishMode } from '@/lib/types'
 
@@ -35,18 +34,10 @@ const PUBLISH_MODES: {
 export function WizardStepPublishMode() {
   const autoPublishMode = useValue(wizardStore$.autoPublishMode)
   const cadencePostsPerWeek = useValue(wizardStore$.cadencePostsPerWeek)
-  const [maxPostsPerWeek, setMaxPostsPerWeek] = useState(14)
+  const user = useValue(userStore$.user)
 
-  useEffect(() => {
-    fetchCurrentUser()
-      .then((user) => {
-        const limits = getTierLimits(user.tier)
-        if (!isUnlimited(limits.postsPerWeekPerPublication)) {
-          setMaxPostsPerWeek(limits.postsPerWeekPerPublication)
-        }
-      })
-      .catch(() => {})
-  }, [])
+  const limits = getTierLimits(user?.tier ?? 'free')
+  const maxPostsPerWeek = isUnlimited(limits.postsPerWeekPerPublication) ? 14 : limits.postsPerWeekPerPublication
 
   const handleModeChange = (mode: AutoPublishMode) => {
     wizardStore$.autoPublishMode.set(mode)

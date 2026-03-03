@@ -125,9 +125,7 @@ internal.post('/sessions/:sessionId/publish', async (c) => {
 
   // Quota check: only for new publishes, not updates
   if (!session.cmsPostId && session.publicationId) {
-    const user = await c.env.DAL.getUserById(userId)
-    if (!user) return c.json({ error: 'User not found' }, 401)
-    const quotaError = await checkPostsPerWeekQuota(c, session.publicationId, user.tier)
+    const quotaError = await checkPostsPerWeekQuota(c, session.publicationId, c.get('userTier'))
     if (quotaError) return quotaError
   }
 

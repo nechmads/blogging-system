@@ -3,17 +3,20 @@ import type { AppEnv } from '../server'
 
 const me = new Hono<AppEnv>()
 
-/** Return the authenticated user's profile. */
+/**
+ * Return the authenticated user's profile.
+ *
+ * Data sources: userId/email/name come from the Clerk JWT (set by clerkAuth),
+ * while tier comes from D1 (set by ensureUser). Clerk refreshes JWT claims
+ * frequently, so this is effectively consistent. If database-only fields are
+ * added in the future, this endpoint should fetch the full user record.
+ */
 me.get('/me', async (c) => {
-  const userId = c.get('userId')
-  const user = await c.env.DAL.getUserById(userId)
-  if (!user) return c.json({ error: 'User not found' }, 404)
-
   return c.json({
-    id: user.id,
-    email: user.email,
-    name: user.name,
-    tier: user.tier,
+    id: c.get('userId'),
+    email: c.get('userEmail'),
+    name: c.get('userName'),
+    tier: c.get('userTier'),
   })
 })
 

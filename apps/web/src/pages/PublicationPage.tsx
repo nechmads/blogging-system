@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useParams, useNavigate } from 'react-router'
+import { useValue } from '@legendapp/state/react'
 import { toast } from 'sonner'
 import {
   ArrowLeftIcon,
@@ -26,9 +27,9 @@ import {
   triggerScout,
   fetchIdeasCount,
   fetchStyles,
-  fetchCurrentUser,
   QuotaExceededError,
 } from '@/lib/api'
+import { userStore$ } from '@/stores/user-store'
 import { getTierLimits, isUnlimited } from '@hotmetal/shared'
 import { UpgradePrompt } from '@/components/upgrade/UpgradePrompt'
 import { startScoutPolling } from '@/stores/scout-store'
@@ -100,7 +101,11 @@ export function PublicationPage() {
   // Quota / upgrade
   const [showUpgradePrompt, setShowUpgradePrompt] = useState(false)
   const [upgradeMessage, setUpgradeMessage] = useState('')
-  const [maxPostsPerWeek, setMaxPostsPerWeek] = useState(14)
+
+  // Tier-based limits from the user store
+  const currentUser = useValue(userStore$.user)
+  const tierLimits = getTierLimits(currentUser?.tier ?? 'free')
+  const maxPostsPerWeek = isUnlimited(tierLimits.postsPerWeekPerPublication) ? 14 : tierLimits.postsPerWeekPerPublication
 
   // Auto-save refs
   const initializedRef = useRef(false)
@@ -220,15 +225,10 @@ export function PublicationPage() {
     if (!id) return
     try {
       setError(null)
-      const [data, stylesData, currentUser] = await Promise.all([
+      const [data, stylesData] = await Promise.all([
         fetchPublication(id),
         fetchStyles(),
-        fetchCurrentUser().catch(() => null),
       ])
-      if (currentUser) {
-        const limits = getTierLimits(currentUser.tier)
-        setMaxPostsPerWeek(isUnlimited(limits.postsPerWeekPerPublication) ? 14 : limits.postsPerWeekPerPublication)
-      }
       setPublication(data)
       setTopics(data.topics ?? [])
       setAvailableStyles(stylesData)

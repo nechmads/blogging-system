@@ -12,10 +12,9 @@ const publications = new Hono<AppEnv>()
 /** Create a new publication. */
 publications.post('/publications', async (c) => {
   const userId = c.get('userId')
+  const userTier = c.get('userTier')
 
-  const user = await c.env.DAL.getUserById(userId)
-  if (!user) return c.json({ error: 'User not found' }, 401)
-  const quotaError = await checkPublicationQuota(c, userId, user.tier)
+  const quotaError = await checkPublicationQuota(c, userId, userTier)
   if (quotaError) return quotaError
 
   const body = await c.req.json<{
@@ -56,7 +55,7 @@ publications.post('/publications', async (c) => {
 
   // Enforce tier limit on cadencePostsPerWeek at creation time
   if (body.cadencePostsPerWeek !== undefined) {
-    const limits = getTierLimits(user.tier)
+    const limits = getTierLimits(userTier)
     if (!isUnlimited(limits.postsPerWeekPerPublication) && body.cadencePostsPerWeek > limits.postsPerWeekPerPublication) {
       return quotaExceededResponse(
         c,
@@ -156,9 +155,7 @@ publications.patch('/publications/:id', async (c) => {
 
   // Enforce tier limit on cadencePostsPerWeek
   if (body.cadencePostsPerWeek !== undefined) {
-    const user = await c.env.DAL.getUserById(c.get('userId'))
-    if (!user) return c.json({ error: 'User not found' }, 401)
-    const limits = getTierLimits(user.tier)
+    const limits = getTierLimits(c.get('userTier'))
     if (!isUnlimited(limits.postsPerWeekPerPublication) && body.cadencePostsPerWeek > limits.postsPerWeekPerPublication) {
       return quotaExceededResponse(
         c,

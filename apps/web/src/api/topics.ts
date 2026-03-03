@@ -11,9 +11,7 @@ topics.post('/publications/:pubId/topics', async (c) => {
   const pub = await verifyPublicationOwnership(c, c.req.param('pubId'))
   if (!pub) return c.json({ error: 'Publication not found' }, 404)
 
-  const user = await c.env.DAL.getUserById(c.get('userId'))
-  if (!user) return c.json({ error: 'User not found' }, 401)
-  const quotaError = await checkTopicQuota(c, pub.id, user.tier)
+  const quotaError = await checkTopicQuota(c, pub.id, c.get('userTier'))
   if (quotaError) return quotaError
 
   const body = await c.req.json<{
