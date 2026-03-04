@@ -97,7 +97,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       appearance={buildAppearance(isDark)}
       signInUrl="/sign-in"
       signUpUrl="/sign-up"
-      waitlistUrl="/waitlist"
       afterSignOutUrl="/"
       signInFallbackRedirectUrl="/writing"
       signUpFallbackRedirectUrl="/writing"

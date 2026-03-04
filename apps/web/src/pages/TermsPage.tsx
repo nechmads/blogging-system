@@ -636,8 +636,8 @@ export function TermsPage() {
           Terms
         </Link>
         <span className="mx-2">·</span>
-        <Link to="/waitlist" className="hover:underline">
-          Waitlist
+        <Link to="/sign-up" className="hover:underline">
+          Sign Up
         </Link>
       </footer>
     </div>

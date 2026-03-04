@@ -5,7 +5,6 @@ import { ProtectedRoute } from '@/components/auth/ProtectedRoute'
 import { LandingPage } from '@/pages/LandingPage'
 import { SignInPage } from '@/pages/SignInPage'
 import { SignUpPage } from '@/pages/SignUpPage'
-import { WaitlistPage } from '@/pages/WaitlistPage'
 import { FaqPage } from '@/pages/FaqPage'
 import { AboutPage } from '@/pages/AboutPage'
 import { PrivacyPage } from '@/pages/PrivacyPage'
@@ -33,7 +32,7 @@ export default function App() {
         <Route path="/" element={<LandingPage />} />
         <Route path="/sign-in/*" element={<SignInPage />} />
         <Route path="/sign-up/*" element={<SignUpPage />} />
-        <Route path="/waitlist/*" element={<WaitlistPage />} />
+        <Route path="/waitlist/*" element={<Navigate to="/sign-up" replace />} />
         <Route path="/faq/*" element={<FaqPage />} />
         <Route path="/about/*" element={<AboutPage />} />
         <Route path="/privacy/*" element={<PrivacyPage />} />

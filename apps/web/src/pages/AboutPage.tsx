@@ -165,15 +165,15 @@ export function AboutPage() {
             Want to try it?
           </h2>
           <p className="mx-auto mt-2 max-w-2xl text-base leading-relaxed text-[var(--color-text-muted)]">
-            Join the waitlist and we’ll onboard you in small batches. If Hot Metal can save you one
+            Sign up free and start publishing. If Hot Metal can save you one
             Sunday night of “I should really post more,” it’s already worth it.
           </p>
           <div className="mt-6 flex flex-col items-center justify-center gap-3 sm:flex-row">
             <Link
-              to="/waitlist"
+              to="/sign-up"
               className="rounded-lg bg-[var(--color-accent)] px-6 py-3 text-base font-semibold text-white transition-colors hover:bg-[var(--color-accent-hover)]"
             >
-              Join the waitlist
+              Get Started Free
             </Link>
             <Link
               to="/faq"
@@ -208,8 +208,8 @@ export function AboutPage() {
           Terms
         </Link>
         <span className="mx-2">·</span>
-        <Link to="/waitlist" className="hover:underline">
-          Waitlist
+        <Link to="/sign-up" className="hover:underline">
+          Sign Up
         </Link>
       </footer>
     </div>

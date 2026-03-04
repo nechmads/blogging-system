@@ -310,8 +310,7 @@ export function FaqPage() {
           question: "How do I get access?",
           answer: (
             <>
-              Join the waitlist. We onboard in small batches so we can support
-              people properly.
+              Sign up for free and start publishing right away.
             </>
           ),
         },
@@ -319,8 +318,8 @@ export function FaqPage() {
           question: "Is there pricing information?",
           answer: (
             <>
-              Not yet in-app. We’ll share pricing during early access as we
-              learn what different user types actually need.
+              Hot Metal is free to start. We’ll introduce paid plans as we add
+              more advanced features.
             </>
           ),
         },
@@ -390,18 +389,18 @@ export function FaqPage() {
 
         <div className="mt-12 rounded-2xl border border-[var(--color-border-default)] bg-[var(--color-bg-card)] p-8 text-center">
           <h3 className="text-xl font-bold tracking-tight text-[var(--color-text-primary)] md:text-2xl">
-            Want early access?
+            Ready to get started?
           </h3>
           <p className="mx-auto mt-2 max-w-2xl text-base leading-relaxed text-[var(--color-text-muted)]">
-            Join the waitlist and we’ll onboard you in small batches.
+            Sign up free and start building your content engine today.
             Consistency loves company.
           </p>
           <div className="mt-6 flex flex-col items-center justify-center gap-3 sm:flex-row">
             <Link
-              to="/waitlist"
+              to="/sign-up"
               className="rounded-lg bg-[var(--color-accent)] px-6 py-3 text-base font-semibold text-white transition-colors hover:bg-[var(--color-accent-hover)]"
             >
-              Join the waitlist
+              Get Started Free
             </Link>
             <Link
               to="/"
@@ -438,8 +437,8 @@ export function FaqPage() {
           Terms
         </Link>
         <span className="mx-2">·</span>
-        <Link to="/waitlist" className="hover:underline">
-          Waitlist
+        <Link to="/sign-up" className="hover:underline">
+          Sign Up
         </Link>
       </footer>
     </div>

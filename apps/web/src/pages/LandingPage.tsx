@@ -32,7 +32,7 @@ export function LandingPage() {
 export function LandingContent() {
   return (
     <div className="min-h-screen bg-[var(--color-bg-primary)]">
-      <PublicNavbar showWaitlistCta={false} />
+      <PublicNavbar showSignUpCta={false} />
 
       {/* Hero */}
       <section className="mx-auto max-w-3xl px-6 py-24 text-center md:py-32">
@@ -51,10 +51,10 @@ export function LandingContent() {
 
         <div className="mt-10 flex flex-col items-center gap-4 sm:flex-row sm:justify-center">
           <Link
-            to="/waitlist"
+            to="/sign-up"
             className="rounded-lg bg-[var(--color-accent)] px-6 py-3 text-base font-semibold text-white transition-colors hover:bg-[var(--color-accent-hover)]"
           >
-            Join the Waitlist
+            Get Started Free
           </Link>
           <a
             href="#workflow"
@@ -65,8 +65,7 @@ export function LandingContent() {
         </div>
 
         <p className="mx-auto mt-4 max-w-xl text-base text-[var(--color-text-muted)]">
-          Early access invites + founder onboarding. No spam. No “post more on
-          LinkedIn” guilt trips.
+          Free to start. No spam. No “post more on LinkedIn” guilt trips.
         </p>
       </section>
 
@@ -209,14 +208,14 @@ export function LandingContent() {
 
           <div className="mt-8 flex flex-col items-center gap-3 sm:flex-row sm:justify-between">
             <p className="text-base text-[var(--color-text-muted)]">
-              Want early access? Join the waitlist and we’ll onboard you
-              personally.
+              Ready to build your content engine? Sign up and start publishing
+              today.
             </p>
             <Link
-              to="/waitlist"
+              to="/sign-up"
               className="rounded-lg bg-[var(--color-accent)] px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[var(--color-accent-hover)]"
             >
-              Join the Waitlist
+              Get Started Free
             </Link>
           </div>
         </div>
@@ -297,7 +296,7 @@ export function LandingContent() {
           />
           <FaqItem
             question="When do I get access?"
-            answer="We’re onboarding in small batches so we can support people properly. Join the waitlist and you’ll get an invite as soon as your spot opens."
+            answer="Sign up for free and start creating right away. Pick your topics, set your schedule, and publish your first post in minutes."
           />
         </div>
 
@@ -306,15 +305,14 @@ export function LandingContent() {
             Ready to build authority without burning out?
           </h4>
           <p className="mx-auto mt-2 max-w-2xl text-base leading-relaxed text-[var(--color-text-muted)]">
-            Join the waitlist. We’ll get you set up with a workflow you can
-            actually stick to.
+            Sign up free and get a workflow you can actually stick to.
           </p>
           <div className="mt-6 flex flex-col items-center justify-center gap-3 sm:flex-row">
             <Link
-              to="/waitlist"
+              to="/sign-up"
               className="rounded-lg bg-[var(--color-accent)] px-6 py-3 text-base font-semibold text-white transition-colors hover:bg-[var(--color-accent-hover)]"
             >
-              Join the Waitlist
+              Get Started Free
             </Link>
             <a
               href="#workflow"
@@ -352,8 +350,8 @@ export function LandingContent() {
           Terms
         </Link>
         <span className="mx-2">·</span>
-        <Link to="/waitlist" className="hover:underline">
-          Waitlist
+        <Link to="/sign-up" className="hover:underline">
+          Sign Up
         </Link>
       </footer>
     </div>

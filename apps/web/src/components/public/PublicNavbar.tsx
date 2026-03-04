@@ -2,13 +2,13 @@ import { Link } from "react-router";
 
 type PublicNavbarProps = {
   /**
-   * Show the "Join the waitlist" primary CTA.
+   * Show the "Get Started" primary CTA.
    * Per product requirement: show on all public pages except the home page.
    */
-  showWaitlistCta?: boolean;
+  showSignUpCta?: boolean;
 };
 
-export function PublicNavbar({ showWaitlistCta = true }: PublicNavbarProps) {
+export function PublicNavbar({ showSignUpCta = true }: PublicNavbarProps) {
   return (
     <header className="flex items-center justify-between px-6 py-4 md:px-12">
       <Link to="/" className="text-xl font-bold tracking-tight">
@@ -35,12 +35,12 @@ export function PublicNavbar({ showWaitlistCta = true }: PublicNavbarProps) {
           Blog
         </Link>
 
-        {showWaitlistCta ? (
+        {showSignUpCta ? (
           <Link
-            to="/waitlist"
+            to="/sign-up"
             className="ml-2 rounded-lg bg-[var(--color-accent)] px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-[var(--color-accent-hover)]"
           >
-            Join the waitlist
+            Get Started Free
           </Link>
         ) : null}
 
