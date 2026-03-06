@@ -32,6 +32,7 @@
   // Non-secret environment variables
   "vars": {
     "FROM_EMAIL": "Hot Metal <subscriptions@mail.hotmetalapp.com>",
+    "WELCOME_FROM_EMAIL": "Shahar Nechmad <founder@hotmetalapp.com>",
     "WEB_APP_URL": "https://hotmetalapp.com",
   },
 

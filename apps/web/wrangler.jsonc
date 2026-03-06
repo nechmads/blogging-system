@@ -56,6 +56,11 @@
       "binding": "PUBLISHER",
       "service": "hotmetal-publisher",
     },
+    {
+      "binding": "NOTIFICATIONS",
+      "service": "hotmetal-notifications",
+      "entrypoint": "NotificationsService",
+    },
   ],
 
   // Workers AI binding (for image generation)

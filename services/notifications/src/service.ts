@@ -1,6 +1,6 @@
 import { WorkerEntrypoint } from 'cloudflare:workers'
 import type { NotificationsEnv } from './env'
-import { sendNewIdeasEmail, sendDraftReadyEmail, sendPostPublishedEmail, sendNewCommentEmail } from './emails'
+import { sendNewIdeasEmail, sendDraftReadyEmail, sendPostPublishedEmail, sendNewCommentEmail, sendWelcomeEmail } from './emails'
 
 export interface SendNewIdeasParams {
 	userId: string
@@ -28,6 +28,12 @@ export interface SendPostPublishedParams {
 	publicationName: string
 	postTitle: string
 	postUrl: string
+}
+
+export interface SendWelcomeParams {
+	userId: string
+	userEmail: string
+	userName: string
 }
 
 /**
@@ -118,6 +124,19 @@ export class NotificationsService extends WorkerEntrypoint<NotificationsEnv> {
 			})
 		} catch (err) {
 			console.error('[notifications] sendNewCommentNotification failed:', err)
+		}
+	}
+
+	// Welcome email is transactional — no preference check needed (new user, no prefs yet)
+	// and no user lookup needed (caller provides email/name directly from JWT).
+	async sendWelcomeNotification(params: SendWelcomeParams): Promise<void> {
+		try {
+			await sendWelcomeEmail(this.env, {
+				userEmail: params.userEmail,
+				userName: params.userName,
+			})
+		} catch (err) {
+			console.error('[notifications] sendWelcomeNotification failed:', err)
 		}
 	}
 

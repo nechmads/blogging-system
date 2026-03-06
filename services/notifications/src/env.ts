@@ -3,12 +3,13 @@
 
 import type { DataLayerApi } from '@hotmetal/data-layer'
 
-export interface NotificationsEnv extends Omit<Env, 'DAL' | 'FROM_EMAIL' | 'WEB_APP_URL'> {
+export interface NotificationsEnv extends Omit<Env, 'DAL' | 'FROM_EMAIL' | 'WELCOME_FROM_EMAIL' | 'WEB_APP_URL'> {
   // Data Access Layer (overrides base Fetcher with typed RPC interface)
   DAL: DataLayerApi
 
   // Non-secret env vars
   FROM_EMAIL: string
+  WELCOME_FROM_EMAIL?: string
   WEB_APP_URL: string
 
   // Secrets (set via `wrangler secret put`)
