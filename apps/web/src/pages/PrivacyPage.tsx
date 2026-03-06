@@ -12,7 +12,7 @@ export function PrivacyPage() {
             Privacy Policy
           </h1>
           <p className="mt-2 text-sm text-[var(--color-text-muted)]">
-            Last updated: February 15, 2026
+            Last updated: March 6, 2026
           </p>
 
           <div className="prose prose-slate mt-8 max-w-none">
@@ -21,7 +21,8 @@ export function PrivacyPage() {
                 1. Introduction
               </h2>
               <p className="leading-relaxed text-[var(--color-text-muted)]">
-                Welcome to Hot Metal, operated by Far Far Away Labs ("we," "us," or "our"). We are
+                Welcome to Hot Metal, operated by Far Far Away Labs LTD, a company registered in Israel
+                ("we," "us," or "our"). We are
                 committed to protecting your privacy and ensuring you understand how we collect, use,
                 and safeguard your information. This Privacy Policy applies to{" "}
                 <a
@@ -55,7 +56,7 @@ export function PrivacyPage() {
                 <li>Profile information and preferences</li>
                 <li>Content you create, draft, or publish through our platform</li>
                 <li>Communications with us (support requests, feedback)</li>
-                <li>Payment information (processed securely through third-party providers)</li>
+                <li>Payment information (billing details are processed securely by Paddle — we do not store your full card details)</li>
               </ul>
 
               <h3 className="mb-2 mt-4 text-lg font-semibold text-[var(--color-text-primary)]">
@@ -135,6 +136,7 @@ export function PrivacyPage() {
                 <li>Communicate with you about your account and service updates</li>
                 <li>Respond to your support requests and feedback</li>
                 <li>Monitor and analyze usage patterns to improve user experience</li>
+                <li>Process subscription payments and manage billing through our payment processor, Paddle</li>
                 <li>Detect, prevent, and address technical issues or fraudulent activity</li>
                 <li>Comply with legal obligations</li>
               </ul>
@@ -194,7 +196,19 @@ export function PrivacyPage() {
                   Authentication services (Clerk, which facilitates sign-in via Google, Microsoft, and
                   other identity providers)
                 </li>
-                <li>Payment processors</li>
+                <li>
+                  Payment processing (Paddle — Paddle.com Market Limited handles all subscription
+                  billing and payment data on our behalf, subject to{" "}
+                  <a
+                    href="https://www.paddle.com/legal/privacy"
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-[var(--color-accent)] hover:underline"
+                  >
+                    Paddle's Privacy Policy
+                  </a>
+                  )
+                </li>
                 <li>AI and natural language processing services</li>
                 <li>Analytics and monitoring services</li>
               </ul>
@@ -217,7 +231,7 @@ export function PrivacyPage() {
                 5.4 Business Transfers
               </h3>
               <p className="leading-relaxed text-[var(--color-text-muted)]">
-                If Far Far Away Labs is involved in a merger, acquisition, or sale of assets, your
+                If Far Far Away Labs LTD is involved in a merger, acquisition, or sale of assets, your
                 information may be transferred as part of that transaction. We will notify you of any
                 such change and any choices you may have.
               </p>
@@ -305,11 +319,17 @@ export function PrivacyPage() {
                 9. International Data Transfers
               </h2>
               <p className="leading-relaxed text-[var(--color-text-muted)]">
-                Hot Metal is operated from the United States. If you are accessing our service from
-                outside the United States, your information may be transferred to, stored, and processed
-                in the United States or other countries. By using our service, you consent to this
-                transfer. We ensure appropriate safeguards are in place to protect your information in
-                accordance with this Privacy Policy.
+                Hot Metal is operated by Far Far Away Labs LTD, registered in Israel. Your information
+                may be transferred to, stored, and processed in Israel or in other countries where our
+                service providers (including Cloudflare, Clerk, and Paddle) operate. By using our
+                service, you consent to this transfer. We ensure appropriate safeguards are in place
+                to protect your information in accordance with this Privacy Policy and applicable data
+                protection laws.
+              </p>
+              <p className="mt-3 leading-relaxed text-[var(--color-text-muted)]">
+                Israel has been recognized by the European Commission as providing an adequate level of
+                data protection. Where we transfer data to other countries, we rely on standard
+                contractual clauses or other appropriate safeguards as required by applicable law.
               </p>
             </section>
 
@@ -422,10 +442,13 @@ export function PrivacyPage() {
               </p>
               <div className="mt-4 rounded-lg border border-[var(--color-border-default)] bg-[var(--color-bg-primary)] p-4">
                 <p className="font-semibold text-[var(--color-text-primary)]">
-                  Far Far Away Labs
+                  Far Far Away Labs LTD
                 </p>
                 <p className="mt-1 text-sm text-[var(--color-text-muted)]">
-                  Email:{" "}
+                  Registered in Israel
+                </p>
+                <p className="mt-2 text-sm text-[var(--color-text-muted)]">
+                  Privacy inquiries:{" "}
                   <a
                     href="mailto:privacy@farfarawaylabs.com"
                     className="text-[var(--color-accent)] hover:underline"

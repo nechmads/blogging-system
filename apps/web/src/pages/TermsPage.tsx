@@ -12,7 +12,7 @@ export function TermsPage() {
             Terms of Service
           </h1>
           <p className="mt-2 text-sm text-[var(--color-text-muted)]">
-            Last updated: February 15, 2026
+            Last updated: March 6, 2026
           </p>
 
           <div className="prose prose-slate mt-8 max-w-none">
@@ -30,7 +30,7 @@ export function TermsPage() {
                   hotmetal.app
                 </a>
                 , applications, and related services (collectively, the "Service"), operated by Far Far
-                Away Labs ("we," "us," or "our").
+                Away Labs LTD, a company registered in Israel ("we," "us," or "our").
               </p>
               <p className="mt-3 leading-relaxed text-[var(--color-text-muted)]">
                 By accessing or using the Service, you agree to be bound by these Terms and our Privacy
@@ -307,14 +307,14 @@ export function TermsPage() {
                 8. Intellectual Property
               </h2>
               <p className="leading-relaxed text-[var(--color-text-muted)]">
-                The Service and its original content (excluding Your Content), features, and
-                functionality are owned by Far Far Away Labs and are protected by international
-                copyright, trademark, patent, trade secret, and other intellectual property laws.
-              </p>
-              <p className="mt-3 leading-relaxed text-[var(--color-text-muted)]">
-                You may not copy, modify, distribute, sell, or lease any part of our Service without our
-                express written permission. The "Hot Metal" name, logo, and all related trademarks are
-                the property of Far Far Away Labs.
+              The Service and its original content (excluding Your Content), features, and
+              functionality are owned by Far Far Away Labs LTD and are protected by international
+              copyright, trademark, patent, trade secret, and other intellectual property laws.
+            </p>
+            <p className="mt-3 leading-relaxed text-[var(--color-text-muted)]">
+              You may not copy, modify, distribute, sell, or lease any part of our Service without our
+              express written permission. The "Hot Metal" name, logo, and all related trademarks are
+              the property of Far Far Away Labs LTD.
               </p>
             </section>
 
@@ -327,38 +327,107 @@ export function TermsPage() {
                 9.1 Paid Services
               </h3>
               <p className="leading-relaxed text-[var(--color-text-muted)]">
-                Some features of the Service may require a paid subscription. By purchasing a
-                subscription, you agree to pay all fees associated with your selected plan.
+                Some features of the Service require a paid subscription. By purchasing a subscription,
+                you agree to pay all fees associated with your selected plan and to these payment terms.
               </p>
 
               <h3 className="mb-2 mt-4 text-lg font-semibold text-[var(--color-text-primary)]">
-                9.2 Billing
+                9.2 Payment Processing
+              </h3>
+              <p className="leading-relaxed text-[var(--color-text-muted)]">
+                Payments are processed securely by{" "}
+                <a
+                  href="https://paddle.com"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="text-[var(--color-accent)] hover:underline"
+                >
+                  Paddle
+                </a>{" "}
+                (Paddle.com Market Limited). Paddle acts as our authorized reseller and payment processor
+                for all subscription transactions. By making a purchase, you also agree to{" "}
+                <a
+                  href="https://www.paddle.com/legal/terms"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="text-[var(--color-accent)] hover:underline"
+                >
+                  Paddle's Terms of Service
+                </a>{" "}
+                and{" "}
+                <a
+                  href="https://www.paddle.com/legal/privacy"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="text-[var(--color-accent)] hover:underline"
+                >
+                  Privacy Policy
+                </a>
+                . We do not store your full payment card details — these are handled exclusively by
+                Paddle in accordance with PCI-DSS standards.
+              </p>
+
+              <h3 className="mb-2 mt-4 text-lg font-semibold text-[var(--color-text-primary)]">
+                9.3 Billing
               </h3>
               <ul className="mt-2 list-disc space-y-1 pl-6 text-[var(--color-text-muted)]">
-                <li>Subscriptions are billed in advance on a recurring basis</li>
-                <li>You authorize us to charge your payment method for the subscription fees</li>
-                <li>Fees are non-refundable except as required by law</li>
-                <li>
-                  We reserve the right to change pricing with 30 days' notice
-                </li>
-                <li>You are responsible for all applicable taxes</li>
+                <li>Subscriptions are billed in advance on a recurring basis (monthly or annually, depending on your selected plan)</li>
+                <li>You authorize Paddle, on our behalf, to charge your payment method for the applicable subscription fees on each renewal date</li>
+                <li>All prices are listed in USD unless stated otherwise and are inclusive of any applicable taxes collected by Paddle</li>
+                <li>We reserve the right to change pricing with at least 30 days' prior notice</li>
+                <li>Failure to pay may result in suspension or termination of your subscription</li>
               </ul>
 
               <h3 className="mb-2 mt-4 text-lg font-semibold text-[var(--color-text-primary)]">
-                9.3 Cancellation
+                9.4 Cancellation
               </h3>
               <p className="leading-relaxed text-[var(--color-text-muted)]">
-                You may cancel your subscription at any time through your account settings. Cancellation
-                takes effect at the end of your current billing period. You will continue to have access
-                to paid features until the end of the period you've paid for.
+                You may cancel your subscription at any time through your account settings or by
+                contacting us at{" "}
+                <a
+                  href="mailto:hello@hotmetalapp.com"
+                  className="text-[var(--color-accent)] hover:underline"
+                >
+                  hello@hotmetalapp.com
+                </a>
+                . Cancellation takes effect at the end of your current billing period. You will
+                continue to have access to paid features until the billing period expires.
               </p>
 
               <h3 className="mb-2 mt-4 text-lg font-semibold text-[var(--color-text-primary)]">
-                9.4 Free Trials
+                9.5 Refund Policy
               </h3>
               <p className="leading-relaxed text-[var(--color-text-muted)]">
-                We may offer free trials. If you don't cancel before the trial ends, you will be charged
-                for the subscription. We reserve the right to determine free trial eligibility.
+                There are no refunds on unused subscription periods.
+              </p>
+              <p className="mt-3 leading-relaxed text-[var(--color-text-muted)]">
+                All other refund requests are handled by Paddle, our payment processor and Merchant of
+                Record. Refunds are provided at the sole discretion of Paddle, on a case-by-case basis,
+                and may be refused. Paddle will refuse a refund request if there is evidence of fraud,
+                refund abuse, or other manipulative behaviour.
+              </p>
+              <p className="mt-3 leading-relaxed text-[var(--color-text-muted)]">
+                To request a refund, please contact Paddle directly through their{" "}
+                <a
+                  href="https://www.paddle.com/legal/invoiced-consumer-terms"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="text-[var(--color-accent)] hover:underline"
+                >
+                  support channels
+                </a>
+                . This policy does not affect your rights as a consumer in relation to products that
+                are not as described, faulty, or not fit for purpose.
+              </p>
+
+              <h3 className="mb-2 mt-4 text-lg font-semibold text-[var(--color-text-primary)]">
+                9.6 Free Trials
+              </h3>
+              <p className="leading-relaxed text-[var(--color-text-muted)]">
+                We may offer free trials of paid features. If you do not cancel before the trial period
+                ends, your payment method will be charged automatically for the applicable subscription
+                fee. We reserve the right to modify or discontinue free trial offers at any time and to
+                determine eligibility.
               </p>
             </section>
 
@@ -391,7 +460,7 @@ export function TermsPage() {
                 11. Limitation of Liability
               </h2>
               <p className="leading-relaxed text-[var(--color-text-muted)]">
-                TO THE FULLEST EXTENT PERMITTED BY LAW, FAR FAR AWAY LABS AND ITS OFFICERS, DIRECTORS,
+                TO THE FULLEST EXTENT PERMITTED BY LAW, FAR FAR AWAY LABS LTD AND ITS OFFICERS, DIRECTORS,
                 EMPLOYEES, AND AGENTS WILL NOT BE LIABLE FOR:
               </p>
               <ul className="mt-2 list-disc space-y-1 pl-6 text-[var(--color-text-muted)]">
@@ -427,7 +496,7 @@ export function TermsPage() {
                 12. Indemnification
               </h2>
               <p className="leading-relaxed text-[var(--color-text-muted)]">
-                You agree to indemnify, defend, and hold harmless Far Far Away Labs and its officers,
+                You agree to indemnify, defend, and hold harmless Far Far Away Labs LTD and its officers,
                 directors, employees, and agents from and against any claims, liabilities, damages,
                 losses, costs, or expenses (including reasonable attorneys' fees) arising out of or
                 related to:
@@ -473,7 +542,7 @@ export function TermsPage() {
               </h3>
               <p className="leading-relaxed text-[var(--color-text-muted)]">
                 These Terms are governed by and construed in accordance with the laws of the State of
-                California, United States, without regard to its conflict of law principles.
+                Israel, without regard to its conflict of law principles.
               </p>
 
               <h3 className="mb-2 mt-4 text-lg font-semibold text-[var(--color-text-primary)]">
@@ -488,25 +557,25 @@ export function TermsPage() {
                   legal@farfarawaylabs.com
                 </a>{" "}
                 and attempt to resolve the dispute informally. We will attempt to resolve disputes in
-                good faith.
+                good faith within 30 days of receiving your notice.
               </p>
 
               <h3 className="mb-2 mt-4 text-lg font-semibold text-[var(--color-text-primary)]">
-                14.3 Arbitration
+                14.3 Jurisdiction
               </h3>
               <p className="leading-relaxed text-[var(--color-text-muted)]">
-                If informal resolution fails, you agree that any dispute will be resolved through binding
-                arbitration in accordance with the American Arbitration Association's rules, rather than
-                in court. Arbitration will take place in San Francisco, California. You waive the right
-                to participate in class actions or class arbitrations.
+                If informal resolution fails, you agree that any dispute arising out of or related to
+                these Terms or the Service will be subject to the exclusive jurisdiction of the competent
+                courts located in Israel. Nothing in this clause limits your rights under applicable
+                consumer protection laws in your country of residence.
               </p>
 
               <h3 className="mb-2 mt-4 text-lg font-semibold text-[var(--color-text-primary)]">
                 14.4 Exceptions
               </h3>
               <p className="leading-relaxed text-[var(--color-text-muted)]">
-                Either party may bring a claim in small claims court, or seek injunctive or other
-                equitable relief in court to protect intellectual property rights.
+                Either party may seek injunctive or other equitable relief in any court of competent
+                jurisdiction to protect intellectual property rights or prevent irreparable harm.
               </p>
             </section>
 
@@ -520,7 +589,7 @@ export function TermsPage() {
               </h3>
               <p className="leading-relaxed text-[var(--color-text-muted)]">
                 These Terms, together with our Privacy Policy, constitute the entire agreement between
-                you and Far Far Away Labs regarding the Service.
+                you and Far Far Away Labs LTD regarding the Service.
               </p>
 
               <h3 className="mb-2 mt-4 text-lg font-semibold text-[var(--color-text-primary)]">
@@ -575,15 +644,27 @@ export function TermsPage() {
               </p>
               <div className="mt-4 rounded-lg border border-[var(--color-border-default)] bg-[var(--color-bg-primary)] p-4">
                 <p className="font-semibold text-[var(--color-text-primary)]">
-                  Far Far Away Labs
+                  Far Far Away Labs LTD
                 </p>
                 <p className="mt-1 text-sm text-[var(--color-text-muted)]">
-                  Email:{" "}
+                  Registered in Israel
+                </p>
+                <p className="mt-2 text-sm text-[var(--color-text-muted)]">
+                  General inquiries:{" "}
                   <a
                     href="mailto:legal@farfarawaylabs.com"
                     className="text-[var(--color-accent)] hover:underline"
                   >
                     legal@farfarawaylabs.com
+                  </a>
+                </p>
+                <p className="mt-1 text-sm text-[var(--color-text-muted)]">
+                  Billing &amp; refunds:{" "}
+                  <a
+                    href="mailto:hello@hotmetalapp.com"
+                    className="text-[var(--color-accent)] hover:underline"
+                  >
+                    hello@hotmetalapp.com
                   </a>
                 </p>
                 <p className="mt-1 text-sm text-[var(--color-text-muted)]">
