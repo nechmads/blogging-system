@@ -913,7 +913,7 @@ export function PublishModal({ isOpen, onClose, sessionId, draftTitle, draftVers
               onClick={onClose}
               className="rounded-lg border border-[#e5e7eb] px-4 py-2 text-sm font-medium text-[#0a0a0a] transition-colors hover:bg-[#f5f5f5] dark:border-[#374151] dark:text-[#fafafa] dark:hover:bg-[#1a1a1a]"
             >
-              Cancel
+              Close
             </button>
             <button
               type="button"
