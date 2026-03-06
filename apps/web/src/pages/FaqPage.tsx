@@ -10,6 +10,7 @@ import {
   SparkleIcon,
 } from "@phosphor-icons/react";
 import { PublicNavbar } from "@/components/public/PublicNavbar";
+import { PublicFooter } from "@/components/public/PublicFooter";
 
 type Faq = {
   question: string;
@@ -412,35 +413,7 @@ export function FaqPage() {
         </div>
       </main>
 
-      <footer className="border-t border-[var(--color-border-default)] px-6 py-8 text-center text-sm text-[var(--color-text-muted)]">
-        <span className="font-medium text-[var(--color-text-primary)]">
-          Hot Metal
-        </span>
-        <span className="mx-2">·</span>
-        <Link to="/about" className="hover:underline">
-          About
-        </Link>
-        <span className="mx-2">·</span>
-        <Link to="/blog" className="hover:underline">
-          Blog
-        </Link>
-        <span className="mx-2">·</span>
-        <Link to="/" className="hover:underline">
-          Home
-        </Link>
-        <span className="mx-2">·</span>
-        <Link to="/privacy" className="hover:underline">
-          Privacy
-        </Link>
-        <span className="mx-2">·</span>
-        <Link to="/terms" className="hover:underline">
-          Terms
-        </Link>
-        <span className="mx-2">·</span>
-        <Link to="/sign-up" className="hover:underline">
-          Sign Up
-        </Link>
-      </footer>
+      <PublicFooter />
     </div>
   );
 }

@@ -1,4 +1,6 @@
+import { useState } from "react";
 import { Link } from "react-router";
+import { ListIcon, XIcon } from "@phosphor-icons/react";
 
 type PublicNavbarProps = {
   /**
@@ -9,49 +11,112 @@ type PublicNavbarProps = {
 };
 
 export function PublicNavbar({ showSignUpCta = true }: PublicNavbarProps) {
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
   return (
-    <header className="flex items-center justify-between px-6 py-4 md:px-12">
-      <Link to="/" className="text-xl font-bold tracking-tight">
-        <span className="text-[var(--color-accent)]">Hot Metal</span>
-      </Link>
-
-      <nav className="flex items-center gap-4">
-        <Link
-          to="/about"
-          className="text-sm font-medium text-[var(--color-text-muted)] transition-colors hover:text-[var(--color-text-primary)] hover:underline"
-        >
-          About
-        </Link>
-        <Link
-          to="/faq"
-          className="text-sm font-medium text-[var(--color-text-muted)] transition-colors hover:text-[var(--color-text-primary)] hover:underline"
-        >
-          FAQ
-        </Link>
-        <Link
-          to="/blog"
-          className="text-sm font-medium text-[var(--color-text-muted)] transition-colors hover:text-[var(--color-text-primary)] hover:underline"
-        >
-          Blog
+    <header className="relative px-6 py-4 md:px-12">
+      <div className="flex items-center justify-between">
+        <Link to="/" className="text-xl font-bold tracking-tight">
+          <span className="text-[var(--color-accent)]">Hot Metal</span>
         </Link>
 
-        {showSignUpCta ? (
+        {/* Desktop nav */}
+        <nav className="hidden items-center gap-4 sm:flex">
           <Link
-            to="/sign-up"
-            className="ml-2 rounded-lg bg-[var(--color-accent)] px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-[var(--color-accent-hover)]"
+            to="/about"
+            className="text-sm font-medium text-[var(--color-text-muted)] transition-colors hover:text-[var(--color-text-primary)] hover:underline"
           >
-            Get Started Free
+            About
           </Link>
-        ) : null}
+          <Link
+            to="/faq"
+            className="text-sm font-medium text-[var(--color-text-muted)] transition-colors hover:text-[var(--color-text-primary)] hover:underline"
+          >
+            FAQ
+          </Link>
+          <Link
+            to="/blog"
+            className="text-sm font-medium text-[var(--color-text-muted)] transition-colors hover:text-[var(--color-text-primary)] hover:underline"
+          >
+            Blog
+          </Link>
 
-        <Link
-          to="/sign-in"
-          className="rounded-lg border border-[var(--color-border-default)] px-4 py-2 text-sm font-medium text-[var(--color-text-primary)] transition-colors hover:bg-[var(--color-bg-card)]"
+          {showSignUpCta ? (
+            <Link
+              to="/sign-up"
+              className="ml-2 rounded-lg bg-[var(--color-accent)] px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-[var(--color-accent-hover)]"
+            >
+              Get Started Free
+            </Link>
+          ) : null}
+
+          <Link
+            to="/sign-in"
+            className="rounded-lg border border-[var(--color-border-default)] px-4 py-2 text-sm font-medium text-[var(--color-text-primary)] transition-colors hover:bg-[var(--color-bg-card)]"
+          >
+            Sign in
+          </Link>
+        </nav>
+
+        {/* Mobile hamburger button */}
+        <button
+          type="button"
+          className="flex items-center justify-center rounded-lg p-2 text-[var(--color-text-muted)] transition-colors hover:bg-[var(--color-bg-card)] hover:text-[var(--color-text-primary)] sm:hidden"
+          aria-label={mobileMenuOpen ? "Close menu" : "Open menu"}
+          aria-expanded={mobileMenuOpen}
+          onClick={() => setMobileMenuOpen((prev) => !prev)}
         >
-          Sign in
-        </Link>
-      </nav>
+          {mobileMenuOpen ? <XIcon size={22} /> : <ListIcon size={22} />}
+        </button>
+      </div>
+
+      {/* Mobile menu dropdown */}
+      {mobileMenuOpen ? (
+        <nav className="absolute left-0 right-0 top-full z-50 border-b border-[var(--color-border-default)] bg-[var(--color-bg-primary)] px-6 pb-4 pt-2 shadow-md sm:hidden">
+          <div className="flex flex-col gap-1">
+            <Link
+              to="/about"
+              className="rounded-lg px-3 py-2.5 text-sm font-medium text-[var(--color-text-muted)] transition-colors hover:bg-[var(--color-bg-card)] hover:text-[var(--color-text-primary)]"
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              About
+            </Link>
+            <Link
+              to="/faq"
+              className="rounded-lg px-3 py-2.5 text-sm font-medium text-[var(--color-text-muted)] transition-colors hover:bg-[var(--color-bg-card)] hover:text-[var(--color-text-primary)]"
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              FAQ
+            </Link>
+            <Link
+              to="/blog"
+              className="rounded-lg px-3 py-2.5 text-sm font-medium text-[var(--color-text-muted)] transition-colors hover:bg-[var(--color-bg-card)] hover:text-[var(--color-text-primary)]"
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              Blog
+            </Link>
+
+            <div className="mt-2 flex flex-col gap-2 border-t border-[var(--color-border-default)] pt-2">
+              {showSignUpCta ? (
+                <Link
+                  to="/sign-up"
+                  className="rounded-lg bg-[var(--color-accent)] px-4 py-2.5 text-center text-sm font-semibold text-white transition-colors hover:bg-[var(--color-accent-hover)]"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  Get Started Free
+                </Link>
+              ) : null}
+              <Link
+                to="/sign-in"
+                className="rounded-lg border border-[var(--color-border-default)] px-4 py-2.5 text-center text-sm font-medium text-[var(--color-text-primary)] transition-colors hover:bg-[var(--color-bg-card)]"
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                Sign in
+              </Link>
+            </div>
+          </div>
+        </nav>
+      ) : null}
     </header>
   );
 }
-
