@@ -143,6 +143,50 @@ export async function sendNewCommentEmail(
 	}
 }
 
+export interface WelcomeEmailParams {
+	userEmail: string
+	userName: string
+}
+
+export async function sendWelcomeEmail(
+	env: NotificationsEnv,
+	params: WelcomeEmailParams,
+): Promise<void> {
+	const resend = getResend(env)
+	if (!resend) return
+
+	const { userEmail, userName } = params
+	const firstName = userName.split(' ')[0] || userName
+
+	try {
+		await resend.emails.send({
+			from: env.WELCOME_FROM_EMAIL || env.FROM_EMAIL,
+			to: userEmail,
+			subject: 'Welcome to Hot Metal!',
+			text: [
+				`Hi ${firstName},`,
+				'',
+				"I'm Shahar Nechmad, the creator of Hot Metal. Welcome aboard!",
+				'',
+				"Hot Metal is a work of passion — a tool I originally built for myself to make content creation easier and more consistent. I decided to make it public because I believe it can help others too.",
+				'',
+				"You can learn more about me and the story behind Hot Metal here: https://hotmetalapp.com/about",
+				'',
+				"I'd love to hear from you — whether it's a question, feedback, a bug you spotted, or just to say hi. You can reply directly to this email anytime.",
+				'',
+				"Also, you can follow new features and product updates on the Hot Metal blog: https://hot-metal-story.hotmetalapp.com/",
+				'',
+				'Thanks for giving Hot Metal a try. I hope it helps you build something great.',
+				'',
+				'Shahar',
+			].join('\n'),
+		})
+		console.log(`[notifications] Sent welcome email to user`)
+	} catch (err) {
+		console.error('[notifications] Failed to send welcome email:', err)
+	}
+}
+
 export async function sendPostPublishedEmail(
 	env: NotificationsEnv,
 	params: PostPublishedEmailParams,

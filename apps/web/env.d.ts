@@ -35,6 +35,10 @@ declare namespace Cloudflare {
 		RESEND_API_KEY: string;
 		// Email to receive waitlist notifications
 		NOTIFICATION_EMAIL: string;
+		// Notifications service binding (welcome email, etc.)
+		NOTIFICATIONS: {
+			sendWelcomeNotification(params: { userId: string; userEmail: string; userName: string }): Promise<void>;
+		};
 	}
 }
 interface Env extends Cloudflare.Env {}

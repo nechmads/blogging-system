@@ -20,12 +20,25 @@ export const ensureUser = createMiddleware<AppEnv>(async (c, next) => {
 		const existing = await c.env.DAL.getUserById(userId)
 
 		if (!existing) {
+			const userEmail = email || `${userId}@placeholder.local`
+			const userName = name || 'User'
 			await c.env.DAL.createUser({
 				id: userId,
-				email: email || `${userId}@placeholder.local`,
-				name: name || 'User',
+				email: userEmail,
+				name: userName,
 			})
 			c.set('userTier', 'free') // new users are always free
+
+			// Send welcome email (fire-and-forget, only if we have a real email)
+			if (email) {
+				c.env.NOTIFICATIONS.sendWelcomeNotification({
+					userId,
+					userEmail,
+					userName,
+				}).catch((err) => {
+					console.warn('ensureUser welcome email:', err instanceof Error ? err.message : err)
+				})
+			}
 		} else {
 			// Set tier immediately so a profile-sync failure doesn't downgrade pro users
 			c.set('userTier', existing.tier)
