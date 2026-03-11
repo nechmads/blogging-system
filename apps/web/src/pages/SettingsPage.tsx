@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useSearchParams } from 'react-router'
 import { toast } from 'sonner'
-import { LinkedinLogoIcon, XLogoIcon, LinkIcon, TrashIcon, PlugIcon, BellIcon } from '@phosphor-icons/react'
+import { LinkedinLogoIcon, XLogoIcon, LinkIcon, TrashIcon, PlugIcon, BellIcon, KeyIcon } from '@phosphor-icons/react'
 import { NotificationPreferences } from '@/components/settings/NotificationPreferences'
+import { ApiKeys } from '@/components/settings/ApiKeys'
 import { Loader } from '@/components/loader/Loader'
 import { Modal } from '@/components/modal/Modal'
 import { fetchConnections, deleteConnection, getLinkedInAuthUrl, getTwitterAuthUrl } from '@/lib/api'
@@ -282,6 +283,20 @@ export function SettingsPage() {
           </p>
         </div>
         <NotificationPreferences />
+      </section>
+
+      {/* API Keys Section */}
+      <section>
+        <div className="mb-4">
+          <h2 className="flex items-center gap-2 text-lg font-semibold text-[var(--color-text-primary)]">
+            <KeyIcon size={20} />
+            API Keys
+          </h2>
+          <p className="mt-0.5 text-sm text-[var(--color-text-muted)]">
+            Create API keys for agents and integrations to access your account programmatically.
+          </p>
+        </div>
+        <ApiKeys />
       </section>
 
       {/* Disconnect confirmation modal */}

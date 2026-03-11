@@ -15,6 +15,7 @@ import * as publicationTokens from './domains/publication-tokens'
 import * as writingStyles from './domains/writing-styles'
 import * as notificationPreferences from './domains/notification-preferences'
 import * as comments from './domains/comments'
+import * as userApiKeys from './domains/user-api-keys'
 
 import type {
 	CreateUserInput,
@@ -57,6 +58,8 @@ import type {
 	PublicationOutlet,
 	PublicationToken,
 	PublicationTokenWithRawToken,
+	UserApiKey,
+	UserApiKeyWithRawToken,
 	ScoutSchedule,
 	WritingStyle,
 	NotificationPreferences,
@@ -158,6 +161,12 @@ export interface DataLayerApi {
 	listCommentsByPost(publicationId: string, postSlug: string, filters?: ListCommentsFilters): Promise<Comment[]>
 	listCommentsByPublication(publicationId: string, filters?: ListCommentsFilters): Promise<Comment[]>
 	updateCommentStatus(id: string, status: CommentStatus): Promise<Comment | null>
+
+	// User API Keys
+	createUserApiKey(userId: string, label?: string): Promise<UserApiKeyWithRawToken>
+	validateUserApiKey(rawToken: string): Promise<string | null>
+	revokeUserApiKey(id: string, userId: string): Promise<boolean>
+	listUserApiKeys(userId: string): Promise<UserApiKey[]>
 
 	// Writing Styles
 	createWritingStyle(data: CreateWritingStyleInput): Promise<WritingStyle>
@@ -273,6 +282,12 @@ export class DataLayer extends WorkerEntrypoint<Env> {
 	listCommentsByPost(publicationId: string, postSlug: string, filters?: ListCommentsFilters) { return comments.listCommentsByPost(this.env.DB, publicationId, postSlug, filters) }
 	listCommentsByPublication(publicationId: string, filters?: ListCommentsFilters) { return comments.listCommentsByPublication(this.env.DB, publicationId, filters) }
 	updateCommentStatus(id: string, status: CommentStatus) { return comments.updateCommentStatus(this.env.DB, id, status) }
+
+	// ─── User API Keys ─────────────────────────────────────────────────
+	createUserApiKey(userId: string, label?: string) { return userApiKeys.createUserApiKey(this.env.DB, userId, label) }
+	validateUserApiKey(rawToken: string) { return userApiKeys.validateUserApiKey(this.env.DB, rawToken) }
+	revokeUserApiKey(id: string, userId: string) { return userApiKeys.revokeUserApiKey(this.env.DB, id, userId) }
+	listUserApiKeys(userId: string) { return userApiKeys.listUserApiKeys(this.env.DB, userId) }
 
 	// ─── Writing Styles ────────────────────────────────────────────────
 	createWritingStyle(data: CreateWritingStyleInput) { return writingStyles.createWritingStyle(this.env.DB, data) }

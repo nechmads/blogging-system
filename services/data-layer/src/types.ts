@@ -483,6 +483,25 @@ export interface ListCommentsFilters {
 	status?: CommentStatus
 }
 
+// ─── User API Keys ──────────────────────────────────────────────────
+
+export interface UserApiKey {
+	id: string
+	userId: string
+	tokenHash: string
+	label: string | null
+	lastFour: string
+	isActive: boolean
+	lastUsedAt: number | null
+	createdAt: number
+	revokedAt: number | null
+}
+
+export interface UserApiKeyWithRawToken {
+	key: UserApiKey
+	rawToken: string
+}
+
 // ─── Publication Tokens ──────────────────────────────────────────────
 
 export interface PublicationToken {

@@ -34,6 +34,7 @@ import publish from './api/publish'
 import images from './api/images'
 import connections from './api/connections'
 import notifications from './api/notifications'
+import apiKeys from './api/api-keys'
 import comments from './api/comments'
 import me from './api/me'
 import internal from './api/internal'
@@ -105,6 +106,7 @@ app.route('/api', chat)
 app.route('/api', publish)
 app.route('/api', connections)
 app.route('/api', notifications)
+app.route('/api', apiKeys)
 app.route('/api', comments)
 app.route('/api', images)
 
