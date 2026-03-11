@@ -40,12 +40,15 @@
   },
   "pnpm": {
     "onlyBuiltDependencies": [
+      "better-sqlite3",
       "esbuild",
       "sharp",
       "workerd"
     ]
   },
   "devDependencies": {
+    "@types/better-sqlite3": "^7.6.13",
+    "better-sqlite3": "^12.6.2",
     "rehype-parse": "^9.0.1",
     "rehype-remark": "^10.0.1",
     "remark-stringify": "^11.0.0",
