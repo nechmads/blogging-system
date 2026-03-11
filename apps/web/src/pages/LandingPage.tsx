@@ -11,6 +11,7 @@ import {
   PaintBrushIcon,
   RssIcon,
   LightningIcon,
+  RobotIcon,
 } from "@phosphor-icons/react";
 import { PublicNavbar } from "@/components/public/PublicNavbar";
 import { PublicFooter } from "@/components/public/PublicFooter";
@@ -38,16 +39,17 @@ export function LandingContent() {
       {/* Hero */}
       <section className="mx-auto max-w-3xl px-6 py-24 text-center md:py-32">
         <h2 className="text-4xl font-extrabold tracking-tight text-[var(--color-text-primary)] md:text-5xl">
-          Build authority—one great post at a time{" "}
+          The first content platform built for{" "}
           <span className="text-[var(--color-accent)]">
-            (or on autopilot if you want)
-          </span>
-          .
+            AI agents
+          </span>{" "}
+          and the humans who guide them.
         </h2>
         <p className="mx-auto mt-6 max-w-xl text-lg text-[var(--color-text-muted)]">
-          Build your personal brand by showing up consistently. Write faster,
-          keep your voice, and turn topics into publish-ready posts day after
-          day.
+          Let your AI agent discover topics, research sources, write drafts, and
+          publish across platforms — or do it yourself. Hot Metal handles the
+          entire content pipeline, from idea to published post, through a UI or
+          an API.
         </p>
 
         <div className="mt-10 flex flex-col items-center gap-4 sm:flex-row sm:justify-center">
@@ -66,7 +68,7 @@ export function LandingContent() {
         </div>
 
         <p className="mx-auto mt-4 max-w-xl text-base text-[var(--color-text-muted)]">
-          Free to start. No spam. No “post more on LinkedIn” guilt trips.
+          Free to start. Full REST API included. Works with any AI agent framework.
         </p>
       </section>
 
@@ -177,14 +179,14 @@ export function LandingContent() {
             — this is your home base.
           </p>
 
-          <div className="mt-6 grid gap-4 md:grid-cols-3">
+          <div className="mt-6 grid gap-4 md:grid-cols-2">
             <AudienceCard
               icon={<PencilLineIcon size={24} />}
               title="Creators"
               bullets={[
                 "Build your personal brand by showing up reliably.",
-                "Stay in your voice — not a generic “AI tone.”",
-                "Go from idea → post without the blank-page tax.",
+                "Stay in your voice — not a generic AI tone.",
+                "Go from idea to post without the blank-page tax.",
               ]}
             />
             <AudienceCard
@@ -203,6 +205,15 @@ export function LandingContent() {
                 "Build authority in your category over time.",
                 "Keep quality high with workflow + guardrails.",
                 "Create a content engine, not a one-off generator.",
+              ]}
+            />
+            <AudienceCard
+              icon={<RobotIcon size={24} />}
+              title="AI agent builders"
+              bullets={[
+                "Full REST API — your agents can publish autonomously.",
+                "Integrate content into any workflow or product.",
+                "OpenAPI spec + webhooks for seamless automation.",
               ]}
             />
           </div>
