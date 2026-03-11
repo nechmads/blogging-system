@@ -35,6 +35,7 @@ export interface CreateUserInput {
 export interface UpdateUserInput {
 	email?: string
 	name?: string
+	tier?: string
 }
 
 // ─── Sessions ────────────────────────────────────────────────────────
@@ -481,6 +482,55 @@ export interface CreateCommentInput {
 
 export interface ListCommentsFilters {
 	status?: CommentStatus
+}
+
+// ─── Subscriptions ──────────────────────────────────────────────────
+
+export type SubscriptionStatus = 'active' | 'trialing' | 'past_due' | 'paused' | 'canceled'
+
+export interface Subscription {
+	id: string
+	userId: string
+	paddleCustomerId: string
+	paddleSubscriptionId: string
+	paddlePriceId: string | null
+	tier: string
+	status: SubscriptionStatus
+	currentPeriodStart: string | null
+	currentPeriodEnd: string | null
+	canceledAt: string | null
+	createdAt: number
+	updatedAt: number
+}
+
+export interface CreateSubscriptionInput {
+	id: string
+	userId: string
+	paddleCustomerId: string
+	paddleSubscriptionId: string
+	paddlePriceId?: string
+	tier: string
+	status: SubscriptionStatus
+	currentPeriodStart?: string
+	currentPeriodEnd?: string
+}
+
+export interface UpdateSubscriptionInput {
+	paddleSubscriptionId?: string
+	paddlePriceId?: string | null
+	tier?: string
+	status?: SubscriptionStatus
+	currentPeriodStart?: string | null
+	currentPeriodEnd?: string | null
+	canceledAt?: string | null
+}
+
+// ─── Paddle Events ──────────────────────────────────────────────────
+
+export interface PaddleEvent {
+	eventId: string
+	eventType: string
+	processedAt: number
 }
 
 // ─── Publication Tokens ──────────────────────────────────────────────

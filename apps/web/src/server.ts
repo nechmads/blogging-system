@@ -36,9 +36,11 @@ import connections from './api/connections'
 import notifications from './api/notifications'
 import comments from './api/comments'
 import me from './api/me'
+import billing from './api/billing'
 import internal from './api/internal'
 import admin from './api/admin'
 import webhooks from './api/webhooks'
+import paddleWebhook from './api/paddle-webhook'
 
 // Re-export the WriterAgent DO class for wrangler registration
 export { WriterAgent } from './agent/writer-agent'
@@ -81,6 +83,9 @@ app.get('/api/images/*', async (c) => {
 // ─── Clerk webhooks (public — verified via Svix signature) ──────────
 app.route('/webhooks', webhooks)
 
+// ─── Paddle webhooks (public — verified via HMAC signature) ─────────
+app.route('/webhooks', paddleWebhook)
+
 // ─── Internal service-to-service routes (content-scout auto-write) ──
 app.use('/internal/*', internalAuth)
 app.route('/internal', internal)
@@ -106,6 +111,7 @@ app.route('/api', publish)
 app.route('/api', connections)
 app.route('/api', notifications)
 app.route('/api', comments)
+app.route('/api', billing)
 app.route('/api', images)
 
 // ─── Scout trigger (proxied to content-scout) ───────────────────────

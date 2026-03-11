@@ -33,7 +33,7 @@ export function WizardStepTopics() {
   const [topicDesc, setTopicDesc] = useState('')
   const [descPlaceholder, setDescPlaceholder] = useState(DEFAULT_DESC_PLACEHOLDER)
 
-  const limits = getTierLimits(user?.tier ?? 'free')
+  const limits = getTierLimits(user?.tier ?? 'creator')
   const maxTopics = isUnlimited(limits.topicsPerPublication) ? null : limits.topicsPerPublication
   const limitReached = maxTopics !== null && topics.length >= maxTopics
 

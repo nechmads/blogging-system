@@ -35,6 +35,10 @@ declare namespace Cloudflare {
 		RESEND_API_KEY: string;
 		// Email to receive waitlist notifications
 		NOTIFICATION_EMAIL: string;
+		// Paddle billing
+		PADDLE_API_KEY: string;
+		PADDLE_WEBHOOK_SECRET: string;
+		PADDLE_ENVIRONMENT: string;
 		// Notifications service binding (welcome email, etc.)
 		NOTIFICATIONS: {
 			sendWelcomeNotification(params: { userId: string; userEmail: string; userName: string }): Promise<void>;

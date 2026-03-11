@@ -15,7 +15,7 @@ const auxiliaryWorkers = process.env.STACK
   : [];
 
 export default defineConfig({
-  server: { port: 5173 },
+  server: { port: 5173, allowedHosts: true },
   plugins: [
     cloudflare({
       persistState: { path: "../../.wrangler/shared-state" },

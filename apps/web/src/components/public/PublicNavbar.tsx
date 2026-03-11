@@ -40,6 +40,12 @@ export function PublicNavbar({ showSignUpCta = true }: PublicNavbarProps) {
           >
             Blog
           </Link>
+          <Link
+            to="/pricing"
+            className="text-sm font-medium text-[var(--color-text-muted)] transition-colors hover:text-[var(--color-text-primary)] hover:underline"
+          >
+            Pricing
+          </Link>
 
           {showSignUpCta ? (
             <Link
@@ -94,6 +100,13 @@ export function PublicNavbar({ showSignUpCta = true }: PublicNavbarProps) {
               onClick={() => setMobileMenuOpen(false)}
             >
               Blog
+            </Link>
+            <Link
+              to="/pricing"
+              className="rounded-lg px-3 py-2.5 text-sm font-medium text-[var(--color-text-muted)] transition-colors hover:bg-[var(--color-bg-card)] hover:text-[var(--color-text-primary)]"
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              Pricing
             </Link>
 
             <div className="mt-2 flex flex-col gap-2 border-t border-[var(--color-border-default)] pt-2">

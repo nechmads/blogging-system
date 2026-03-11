@@ -248,5 +248,28 @@
   - Admin management (web app): Comments section in publication settings (enable/disable, moderation mode), CommentsPage with filter tabs (All/Pending/Approved), approve/delete actions
   - Email notifications: `sendNewCommentEmail` in notifications service, fire-and-forget on auto-approved comments
   - Security: TURNSTILE_SECRET_KEY via wrangler secret (not in vars), authorName length limit, content filter on names, parentId scoped to same publication/post
+- [x] **Subscription Tiers — Backend + Settings** — Three-tier subscription system (Creator/Growth/Enterprise) with Paddle integration planned. Includes:
+  - Tier definitions in `packages/shared/src/tiers.ts`: Creator (free, 2 pubs, 3 posts/week/pub, prebuilt styles only, no multi-scout), Growth (paid, 5 pubs, 10 posts/week/pub, 5 custom styles, multi-scout), Enterprise (unlimited)
+  - D1 migration (`0017_rename_tiers.sql`): renames `free` → `creator`, `pro` → `growth`
+  - DAL: `tier` field on `UpdateUserInput` with validation, `countCustomWritingStylesByUser()` method, explicit `tier = 'creator'` in INSERT
+  - Server-side quota enforcement: `checkScoutScheduleQuota()` (blocks `times_per_day` for Creator), `checkCustomStyleQuota()` (blocks custom styles for Creator, caps at 5 for Growth)
+  - Publications API: scout schedule type enforcement on POST/PATCH, tier-aware cadence messages
+  - Styles API: quota checks on create and duplicate endpoints
+  - Frontend ScheduleEditor: `isTimesPerDayAllowed` prop, disabled radio with "Growth plan" badge and upgrade hint
+  - Frontend StylesPage: `canCreateStyle` gate, QuotaExceededError handling, UpgradePrompt modal, style count indicator
+  - UpgradePrompt: generic mailto subject, works for all tiers
+  - All tier fallbacks updated from `'free'` to `'creator'` across middleware and frontend
+- [x] **Paddle Subscription Billing** — Full Paddle payment integration for Growth tier subscriptions. Includes:
+  - D1 migration (`0018_subscriptions.sql`): `subscriptions` table (UNIQUE on user_id, one sub per user) + `paddle_events` table for webhook idempotency
+  - Data layer: `subscriptions.ts` domain (CRUD by userId/paddleId, status validation), `hasPaddleEvent`/`recordPaddleEvent` for dedup
+  - Paddle webhook handler (`/webhooks/paddle`): HMAC-SHA256 signature verification via Web Crypto API, `waitUntil` async processing, handles subscription.created/activated/updated/canceled/paused/resumed/past_due events, deferred cancel respects billing period
+  - Billing API (`/api/billing/*`): subscription info, Paddle customer portal sessions, cancel at end of billing period, PADDLE_API_KEY guard middleware
+  - `usePaddle` React hook: Paddle.js initialization with `useRef` guard, `openCheckout()` with customData userId
+  - Shared `paddle-config.ts`: single source of truth for price IDs used across frontend and backend
+  - Pricing page (`/pricing`): 3-tier comparison cards, monthly/yearly toggle, `usePricePreview` hook for localized Paddle prices, auth guard on checkout, pre-renderable `PricingContent` shell
+  - UpgradePrompt redesign: replaced mailto with Paddle checkout overlay, monthly/yearly toggle, Growth features preview
+  - Settings billing section: current plan display with status badges (active/trialing/canceled/past_due/paused), manage billing (Paddle portal), cancel flow with confirmation modal
+  - Pricing link added to PublicNavbar and PublicFooter
+  - Pre-render config updated for `/pricing` page with SEO metadata
 - [ ] Writer Agent — Phase 2: Voice input (transcription in `input-processor.ts`)
 - [ ] Writer Agent — Phase 2: D1 session sync (synchronize DO state back to D1 for listing accuracy)

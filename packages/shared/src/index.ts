@@ -1,4 +1,4 @@
-export { getTierLimits, isUnlimited, UPGRADE_EMAIL } from './tiers'
+export { getTierLimits, getTierDisplayName, isUnlimited, UPGRADE_EMAIL, TIER_DISPLAY_NAMES } from './tiers'
 export type { TierName, TierLimits } from './tiers'
 
 export { CmsApi, CmsApiError } from './cms-api'

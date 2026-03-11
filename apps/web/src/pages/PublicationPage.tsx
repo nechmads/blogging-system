@@ -104,7 +104,7 @@ export function PublicationPage() {
 
   // Tier-based limits from the user store
   const currentUser = useValue(userStore$.user)
-  const tierLimits = getTierLimits(currentUser?.tier ?? 'free')
+  const tierLimits = getTierLimits(currentUser?.tier ?? 'creator')
   const maxPostsPerWeek = isUnlimited(tierLimits.postsPerWeekPerPublication) ? 14 : tierLimits.postsPerWeekPerPublication
 
   // Auto-save refs
@@ -653,6 +653,7 @@ export function PublicationPage() {
             onAutoPublishModeChange={handleAutoPublishModeChange}
             maxPostsPerWeek={maxPostsPerWeek}
             isPostsLimited={!isUnlimited(tierLimits.postsPerWeekPerPublication)}
+            isTimesPerDayAllowed={tierLimits.timesPerDayScheduleAllowed}
           />
         ) : (
           <ScheduleSummary publication={publication} onEdit={() => setEditingSchedule(true)} />

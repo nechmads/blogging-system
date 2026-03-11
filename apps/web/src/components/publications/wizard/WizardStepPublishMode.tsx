@@ -36,7 +36,7 @@ export function WizardStepPublishMode() {
   const cadencePostsPerWeek = useValue(wizardStore$.cadencePostsPerWeek)
   const user = useValue(userStore$.user)
 
-  const limits = getTierLimits(user?.tier ?? 'free')
+  const limits = getTierLimits(user?.tier ?? 'creator')
   const maxPostsPerWeek = isUnlimited(limits.postsPerWeekPerPublication) ? 14 : limits.postsPerWeekPerPublication
 
   const handleModeChange = (mode: AutoPublishMode) => {

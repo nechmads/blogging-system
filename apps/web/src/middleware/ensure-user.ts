@@ -27,7 +27,7 @@ export const ensureUser = createMiddleware<AppEnv>(async (c, next) => {
 				email: userEmail,
 				name: userName,
 			})
-			c.set('userTier', 'free') // new users are always free
+			c.set('userTier', 'creator') // new users start on Creator tier
 
 			// Send welcome email (fire-and-forget, only if we have a real email)
 			if (email) {
@@ -53,7 +53,7 @@ export const ensureUser = createMiddleware<AppEnv>(async (c, next) => {
 	} catch (err) {
 		// Don't block the request — the userId from the JWT is valid regardless
 		console.warn('ensureUser sync:', err instanceof Error ? err.message : err)
-		c.set('userTier', 'free') // safe fallback
+		c.set('userTier', 'creator') // safe fallback
 	}
 
 	await next()

@@ -10,6 +10,7 @@ import { AboutPage } from '@/pages/AboutPage'
 import { PrivacyPage } from '@/pages/PrivacyPage'
 import { TermsPage } from '@/pages/TermsPage'
 import { BlogPage } from '@/pages/BlogPage'
+import { PricingPage } from '@/pages/PricingPage'
 import { DashboardPage } from '@/pages/DashboardPage'
 import { SessionsPage } from '@/pages/SessionsPage'
 import { WorkspacePage } from '@/pages/WorkspacePage'
@@ -38,6 +39,7 @@ export default function App() {
         <Route path="/privacy/*" element={<PrivacyPage />} />
         <Route path="/terms/*" element={<TermsPage />} />
         <Route path="/blog/*" element={<BlogPage />} />
+        <Route path="/pricing/*" element={<PricingPage />} />
 
         {/* Protected routes — require Clerk auth */}
         <Route

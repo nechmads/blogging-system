@@ -4,8 +4,8 @@ import type { AppEnv } from '../server'
 import type { WriterAgent } from '../agent/writer-agent'
 import { verifyPublicationOwnership } from '../middleware/ownership'
 import { AUTO_PUBLISH_MODES, type AutoPublishMode, type ScoutSchedule } from '@hotmetal/content-core'
-import { validateSchedule, validateTimezone, computeNextRun, CmsApi, getTierLimits, isUnlimited } from '@hotmetal/shared'
-import { checkPublicationQuota, quotaExceededResponse } from '../lib/quota'
+import { validateSchedule, validateTimezone, computeNextRun, CmsApi, getTierLimits, getTierDisplayName, isUnlimited } from '@hotmetal/shared'
+import { checkPublicationQuota, checkScoutScheduleQuota, quotaExceededResponse } from '../lib/quota'
 
 const publications = new Hono<AppEnv>()
 
@@ -49,6 +49,12 @@ publications.post('/publications', async (c) => {
     return c.json({ error: 'Invalid scoutSchedule' }, 400)
   }
 
+  // Enforce tier restriction on scout schedule type
+  if (body.scoutSchedule) {
+    const scheduleQuotaError = checkScoutScheduleQuota(c, body.scoutSchedule.type, userTier)
+    if (scheduleQuotaError) return scheduleQuotaError
+  }
+
   if (body.timezone && !validateTimezone(body.timezone)) {
     return c.json({ error: 'Invalid timezone' }, 400)
   }
@@ -59,7 +65,7 @@ publications.post('/publications', async (c) => {
     if (!isUnlimited(limits.postsPerWeekPerPublication) && body.cadencePostsPerWeek > limits.postsPerWeekPerPublication) {
       return quotaExceededResponse(
         c,
-        `Free plan allows up to ${limits.postsPerWeekPerPublication} posts per week`,
+        `${getTierDisplayName(userTier)} plan allows up to ${limits.postsPerWeekPerPublication} posts per week`,
         limits.postsPerWeekPerPublication,
         body.cadencePostsPerWeek,
       )
@@ -155,11 +161,12 @@ publications.patch('/publications/:id', async (c) => {
 
   // Enforce tier limit on cadencePostsPerWeek
   if (body.cadencePostsPerWeek !== undefined) {
-    const limits = getTierLimits(c.get('userTier'))
+    const patchTier = c.get('userTier')
+    const limits = getTierLimits(patchTier)
     if (!isUnlimited(limits.postsPerWeekPerPublication) && body.cadencePostsPerWeek > limits.postsPerWeekPerPublication) {
       return quotaExceededResponse(
         c,
-        `Free plan allows up to ${limits.postsPerWeekPerPublication} posts per week`,
+        `${getTierDisplayName(patchTier)} plan allows up to ${limits.postsPerWeekPerPublication} posts per week`,
         limits.postsPerWeekPerPublication,
         body.cadencePostsPerWeek,
       )
@@ -175,6 +182,12 @@ publications.patch('/publications/:id', async (c) => {
 
   if (body.scoutSchedule && !validateSchedule(body.scoutSchedule)) {
     return c.json({ error: 'Invalid scoutSchedule' }, 400)
+  }
+
+  // Enforce tier restriction on scout schedule type
+  if (body.scoutSchedule) {
+    const scheduleQuotaError = checkScoutScheduleQuota(c, body.scoutSchedule.type, c.get('userTier'))
+    if (scheduleQuotaError) return scheduleQuotaError
   }
 
   if (body.timezone && !validateTimezone(body.timezone)) {
