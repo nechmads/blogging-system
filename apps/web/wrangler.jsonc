@@ -94,6 +94,7 @@
       "/api/*",
       "/admin/*",
       "/agents/*",
+      "/agents-api/*",
       "/health",
       "/internal/*",
       "/webhooks/*",

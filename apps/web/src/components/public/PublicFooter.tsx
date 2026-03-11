@@ -8,6 +8,10 @@ export function PublicFooter() {
           Hot Metal
         </span>
         <Dot />
+        <Link to="/ai-agents" className="whitespace-nowrap hover:underline">
+          AI Agents
+        </Link>
+        <Dot />
         <Link to="/about" className="whitespace-nowrap hover:underline">
           About
         </Link>

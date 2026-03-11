@@ -33,3 +33,6 @@ export type {
   QuestionSource,
   ToneGuideResponse,
 } from './alexander-api'
+
+export { validateWebhookUrl, deliverWebhook } from './webhook'
+export type { WebhookPayload } from './webhook'

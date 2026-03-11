@@ -8,6 +8,7 @@
  * - /api/images/*     — public image serving from R2
  * - /webhooks/*       — Clerk webhook receiver (Svix-verified, no auth)
  * - /internal/*       — service-to-service routes (content-scout auto-write)
+ * - /agents-api/v1/*  — public agents API (API key auth, CORS open)
  * - /api/*            — Clerk-authenticated user routes
  * - /agents/*         — WebSocket/HTTP agent connections (per-session chat token)
  */
@@ -15,10 +16,12 @@
 import { routeAgentRequest } from 'agents'
 import { Hono } from 'hono'
 
+import { cors } from 'hono/cors'
 import { clerkAuth, type AuthVariables } from './middleware/clerk-auth'
 import { ensureUser } from './middleware/ensure-user'
 import { internalAuth } from './middleware/internal-auth'
 import { adminAuth } from './middleware/admin-auth'
+import { apiKeyAuth } from './middleware/api-key-auth'
 import { errorHandler } from './middleware/error-handler'
 import { verifyPublicationOwnership } from './middleware/ownership'
 import { verifyChatToken } from './lib/chat-token'
@@ -40,6 +43,8 @@ import me from './api/me'
 import internal from './api/internal'
 import admin from './api/admin'
 import webhooks from './api/webhooks'
+import agentsApiV1 from './agents-api/v1'
+import { openapiSpec } from './agents-api/v1/openapi-spec'
 
 // Re-export the WriterAgent DO class for wrangler registration
 export { WriterAgent } from './agent/writer-agent'
@@ -89,6 +94,16 @@ app.route('/internal', internal)
 // ─── Admin routes (X-Internal-Key only, no user context) ────────────
 app.use('/admin/*', adminAuth)
 app.route('/admin', admin)
+
+// ─── Public Agents API (API key auth, CORS open) ────────────────────
+app.use('/agents-api/*', cors({ origin: '*' }))
+
+// Public discovery endpoint (no auth required) — also served as static
+// files at /.well-known/llms.txt and /.well-known/openapi.json
+app.get('/agents-api/v1/openapi.json', (c) => c.json(openapiSpec))
+
+app.use('/agents-api/*', apiKeyAuth)
+app.route('/agents-api/v1', agentsApiV1)
 
 // ─── Auth: Clerk JWT + user sync on all /api/* routes ───────────────
 app.use('/api/*', clerkAuth, ensureUser)
