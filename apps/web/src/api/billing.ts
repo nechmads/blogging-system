@@ -128,6 +128,12 @@ billing.post('/billing/cancel', async (c) => {
 		return c.json({ error: 'Failed to cancel subscription' }, 502)
 	}
 
+	// Update local DB so the UI reflects canceled state immediately
+	await c.env.DAL.updateSubscription(userId, {
+		status: 'canceled',
+		canceledAt: new Date().toISOString(),
+	})
+
 	return c.json({ success: true, message: 'Subscription will be canceled at end of billing period' })
 })
 
