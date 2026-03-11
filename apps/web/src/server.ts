@@ -98,44 +98,9 @@ app.route('/admin', admin)
 // ─── Public Agents API (API key auth, CORS open) ────────────────────
 app.use('/agents-api/*', cors({ origin: '*' }))
 
-// Public discovery endpoints (no auth required)
+// Public discovery endpoint (no auth required) — also served as static
+// files at /.well-known/llms.txt and /.well-known/openapi.json
 app.get('/agents-api/v1/openapi.json', (c) => c.json(openapiSpec))
-app.get('/.well-known/openapi.json', (c) => c.json(openapiSpec))
-app.get('/.well-known/llms.txt', (c) => {
-  const baseUrl = new URL(c.req.url).origin
-  return c.text(
-    `# Hot Metal — AI-powered content platform\n` +
-    `# https://hotmetalapp.com\n` +
-    `\n` +
-    `## Agents API\n` +
-    `> REST API for AI agents to manage publications, topics, ideas, drafts, and publishing.\n` +
-    `\n` +
-    `- OpenAPI spec: ${baseUrl}/agents-api/v1/openapi.json\n` +
-    `- Auth: Bearer token (hm_*) via Authorization header\n` +
-    `- Base URL: ${baseUrl}/agents-api/v1\n` +
-    `\n` +
-    `### Available operations\n` +
-    `- GET /me — current user info\n` +
-    `- GET /publications — list publications\n` +
-    `- POST /publications — create a publication\n` +
-    `- GET /publications/:id — get publication with topics\n` +
-    `- PATCH /publications/:id — update publication\n` +
-    `- DELETE /publications/:id — delete publication\n` +
-    `- GET /publications/:id/posts — list published posts\n` +
-    `- GET /publications/:pubId/topics — list topics\n` +
-    `- POST /publications/:pubId/topics — create topic\n` +
-    `- PATCH /topics/:id — update topic\n` +
-    `- DELETE /topics/:id — delete topic\n` +
-    `- GET /publications/:pubId/ideas — list ideas (filter by ?status=)\n` +
-    `- GET /ideas/:id — get idea\n` +
-    `- GET /styles — list writing styles\n` +
-    `- POST /publications/:id/drafts/generate — generate a draft (sync or async with webhook)\n` +
-    `- GET /sessions/:id — session status + draft summary\n` +
-    `- GET /sessions/:id/drafts/:version — get draft content\n` +
-    `- POST /sessions/:id/publish — publish to CMS + social media\n` +
-    `- POST /publications/:id/scout/run — trigger content scout\n`,
-  )
-})
 
 app.use('/agents-api/*', apiKeyAuth)
 app.route('/agents-api/v1', agentsApiV1)
