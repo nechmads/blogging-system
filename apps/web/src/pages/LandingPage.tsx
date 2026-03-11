@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useAuth } from "@clerk/clerk-react";
 import { Navigate, Link } from "react-router";
 import {
@@ -18,7 +19,7 @@ import { PublicFooter } from "@/components/public/PublicFooter";
 
 /**
  * Public landing page — shows marketing content for visitors.
- * If the user is already signed in, redirects to /writing.
+ * If the user is already signed in, redirects to /dashboard.
  * During Clerk's loading state, we show the landing content (no blank flash).
  */
 export function LandingPage() {
@@ -46,10 +47,8 @@ export function LandingContent() {
           and the humans who guide them.
         </h2>
         <p className="mx-auto mt-6 max-w-xl text-lg text-[var(--color-text-muted)]">
-          Let your AI agent discover topics, research sources, write drafts, and
-          publish across platforms — or do it yourself. Hot Metal handles the
-          entire content pipeline, from idea to published post, through a UI or
-          an API.
+          Your AI agents can launch publications, discover topics, write
+          posts, and publish on schedule — all through a single API.
         </p>
 
         <div className="mt-10 flex flex-col items-center gap-4 sm:flex-row sm:justify-center">
@@ -73,54 +72,7 @@ export function LandingContent() {
       </section>
 
       {/* How it works */}
-      <section
-        id="workflow"
-        className="mx-auto max-w-4xl px-6 pb-24 scroll-mt-24"
-      >
-        <div className="rounded-2xl border border-[var(--color-border-default)] bg-[var(--color-bg-card)] p-8">
-          <h3 className="text-xl font-bold tracking-tight text-[var(--color-text-primary)] md:text-2xl">
-            How it works
-          </h3>
-          <p className="mt-2 max-w-2xl text-base leading-relaxed text-[var(--color-text-muted)]">
-            Hot Metal is built for consistency. Set your topics and cadence
-            once, then run a repeatable loop that keeps quality high without
-            eating your whole week.
-          </p>
-
-          <ol className="mt-6 space-y-4">
-            <WorkflowStep
-              step="1"
-              title="Pick the topics you want to be known for"
-              description="Choose what you write about — and build an authoritative voice over time."
-              isLast={false}
-            />
-            <WorkflowStep
-              step="2"
-              title="Select a publishing schedule"
-              description="Daily, a few times a week, or whatever pace you can sustain."
-              isLast={false}
-            />
-            <WorkflowStep
-              step="3"
-              title="Scout researches the web for you"
-              description="We bring you the best ideas and angles to write on — so you don’t start from scratch."
-              isLast={false}
-            />
-            <WorkflowStep
-              step="4"
-              title="Write by talking to our pro writer agent"
-              description="Brainstorm, outline, draft, and refine through conversation — while keeping your voice."
-              isLast={false}
-            />
-            <WorkflowStep
-              step="5"
-              title="Turn on auto-mode (optional)"
-              description="Run human-in-the-loop until you’re confident — then let the schedule ship for you."
-              isLast
-            />
-          </ol>
-        </div>
-      </section>
+      <WorkflowSection />
 
       {/* Features */}
       <section className="mx-auto max-w-4xl px-6 pb-24">
@@ -338,6 +290,127 @@ export function LandingContent() {
 
       <PublicFooter />
     </div>
+  );
+}
+
+function WorkflowSection() {
+  const [tab, setTab] = useState<"humans" | "agents">("humans");
+
+  return (
+    <section
+      id="workflow"
+      className="mx-auto max-w-4xl px-6 pb-24 scroll-mt-24"
+    >
+      <div className="rounded-2xl border border-[var(--color-border-default)] bg-[var(--color-bg-card)] p-8">
+        <h3 className="text-xl font-bold tracking-tight text-[var(--color-text-primary)] md:text-2xl">
+          How it works
+        </h3>
+        <p className="mt-2 max-w-2xl text-base leading-relaxed text-[var(--color-text-muted)]">
+          {tab === "humans"
+            ? "Set your topics and cadence once, then run a repeatable loop that keeps quality high without eating your whole week."
+            : "Your agents can build and run an entire content network — launch publications, generate SEO-optimized posts, and publish on a schedule."}
+        </p>
+
+        {/* Tabs */}
+        <div className="mt-6 flex justify-center gap-3">
+          <button
+            type="button"
+            onClick={() => setTab("humans")}
+            className={[
+              "rounded-lg px-6 py-3 text-base font-semibold transition-colors",
+              tab === "humans"
+                ? "bg-[var(--color-accent)] text-white"
+                : "border border-[var(--color-border-default)] text-[var(--color-text-muted)] hover:bg-[var(--color-bg-primary)] hover:text-[var(--color-text-primary)]",
+            ].join(" ")}
+          >
+            For humans
+          </button>
+          <button
+            type="button"
+            onClick={() => setTab("agents")}
+            className={[
+              "rounded-lg px-6 py-3 text-base font-semibold transition-colors",
+              tab === "agents"
+                ? "bg-[var(--color-accent)] text-white"
+                : "border border-[var(--color-border-default)] text-[var(--color-text-muted)] hover:bg-[var(--color-bg-primary)] hover:text-[var(--color-text-primary)]",
+            ].join(" ")}
+          >
+            For AI agents
+          </button>
+        </div>
+
+        {/* Steps */}
+        <ol className="mt-6 space-y-4">
+          {tab === "humans" ? (
+            <>
+              <WorkflowStep
+                step="1"
+                title="Pick the topics you want to be known for"
+                description="Choose what you write about — and build an authoritative voice over time."
+                isLast={false}
+              />
+              <WorkflowStep
+                step="2"
+                title="Select a publishing schedule"
+                description="Daily, a few times a week, or whatever pace you can sustain."
+                isLast={false}
+              />
+              <WorkflowStep
+                step="3"
+                title="Scout researches the web for you"
+                description="We bring you the best ideas and angles to write on — so you don't start from scratch."
+                isLast={false}
+              />
+              <WorkflowStep
+                step="4"
+                title="Write by talking to our pro writer agent"
+                description="Brainstorm, outline, draft, and refine through conversation — while keeping your voice."
+                isLast={false}
+              />
+              <WorkflowStep
+                step="5"
+                title="Turn on auto-mode (optional)"
+                description="Run human-in-the-loop until you're confident — then let the schedule ship for you."
+                isLast
+              />
+            </>
+          ) : (
+            <>
+              <WorkflowStep
+                step="1"
+                title="Spin up publications for every niche"
+                description="Create multiple publications via the API, each with its own topics, writing style, and audience — build a content network that covers your entire market."
+                isLast={false}
+              />
+              <WorkflowStep
+                step="2"
+                title="Generate SEO & AEO-optimized ideas"
+                description="Run the content scout to surface high-intent topics, trending angles, and source material — so every post targets what people (and AI) are actually searching for."
+                isLast={false}
+              />
+              <WorkflowStep
+                step="3"
+                title="Produce quality content at scale"
+                description="Turn ideas into well-structured, publish-ready posts. Each draft follows your style guide and is optimized for search engines and AI answer engines."
+                isLast={false}
+              />
+              <WorkflowStep
+                step="4"
+                title="Publish and distribute"
+                description="Push posts live with a single API call. Every publication gets its own frontend with RSS feeds — ready for syndication and indexing."
+                isLast={false}
+              />
+              <WorkflowStep
+                step="5"
+                title="Run it all on a schedule"
+                description="Set your cadence and let your agents run the entire loop autonomously — research, write, publish, repeat. Scale to dozens of publications without lifting a finger."
+                isLast
+              />
+            </>
+          )}
+        </ol>
+      </div>
+    </section>
   );
 }
 
