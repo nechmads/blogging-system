@@ -16,6 +16,7 @@ import * as writingStyles from './domains/writing-styles'
 import * as notificationPreferences from './domains/notification-preferences'
 import * as comments from './domains/comments'
 import * as subscriptions from './domains/subscriptions'
+import * as userApiKeys from './domains/user-api-keys'
 
 import type {
 	CreateUserInput,
@@ -60,6 +61,8 @@ import type {
 	PublicationOutlet,
 	PublicationToken,
 	PublicationTokenWithRawToken,
+	UserApiKey,
+	UserApiKeyWithRawToken,
 	ScoutSchedule,
 	WritingStyle,
 	NotificationPreferences,
@@ -172,6 +175,11 @@ export interface DataLayerApi {
 	// Paddle Events
 	hasPaddleEvent(eventId: string): Promise<boolean>
 	recordPaddleEvent(eventId: string, eventType: string): Promise<void>
+	// User API Keys
+	createUserApiKey(userId: string, label?: string): Promise<UserApiKeyWithRawToken>
+	validateUserApiKey(rawToken: string): Promise<string | null>
+	revokeUserApiKey(id: string, userId: string): Promise<boolean>
+	listUserApiKeys(userId: string): Promise<UserApiKey[]>
 
 	// Writing Styles
 	createWritingStyle(data: CreateWritingStyleInput): Promise<WritingStyle>
@@ -298,6 +306,11 @@ export class DataLayer extends WorkerEntrypoint<Env> {
 	// ─── Paddle Events ────────────────────────────────────────────────
 	hasPaddleEvent(eventId: string) { return subscriptions.hasPaddleEvent(this.env.DB, eventId) }
 	recordPaddleEvent(eventId: string, eventType: string) { return subscriptions.recordPaddleEvent(this.env.DB, eventId, eventType) }
+	// ─── User API Keys ─────────────────────────────────────────────────
+	createUserApiKey(userId: string, label?: string) { return userApiKeys.createUserApiKey(this.env.DB, userId, label) }
+	validateUserApiKey(rawToken: string) { return userApiKeys.validateUserApiKey(this.env.DB, rawToken) }
+	revokeUserApiKey(id: string, userId: string) { return userApiKeys.revokeUserApiKey(this.env.DB, id, userId) }
+	listUserApiKeys(userId: string) { return userApiKeys.listUserApiKeys(this.env.DB, userId) }
 
 	// ─── Writing Styles ────────────────────────────────────────────────
 	createWritingStyle(data: CreateWritingStyleInput) { return writingStyles.createWritingStyle(this.env.DB, data) }

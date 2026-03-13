@@ -271,5 +271,20 @@
   - Settings billing section: current plan display with status badges (active/trialing/canceled/past_due/paused), manage billing (Paddle portal), cancel flow with confirmation modal
   - Pricing link added to PublicNavbar and PublicFooter
   - Pre-render config updated for `/pricing` page with SEO metadata
+- [x] **Public Agents API (Phases 0-5)** — Full REST API at `/agents-api/v1/` for AI agents and integrations. Includes:
+  - Action error types (`actions/errors.ts`): ActionError, NotFoundError, ValidationError, QuotaExceededError hierarchy
+  - API key auth middleware (`middleware/api-key-auth.ts`): validates `Bearer hm_*` tokens via DAL, sets same context vars as Clerk auth
+  - Router scaffold with centralized error handler catching ActionError subclasses, CORS open for all origins
+  - 7 route modules with consistent `{ data }` / `{ error, code }` response envelope:
+    - `GET /me` — user info from API key
+    - Publications CRUD: GET list, GET by id (with topics), GET posts (CMS), POST create (slug validation, quota, CMS sync), PATCH update, DELETE
+    - Topics CRUD: GET list, POST create (quota), PATCH update, DELETE — ownership verified through parent publication
+    - Ideas: GET list (filterable by status), GET by id — ownership verified through publication
+    - Styles: GET list (custom + prebuilt)
+    - Draft generation: POST `/publications/:id/drafts/generate` (sync blocking or async with webhookUrl → 202 + waitUntil), GET `/sessions/:id` (status + draft summary), GET `/sessions/:id/drafts/:version`
+    - Publish: POST `/sessions/:id/publish` (CMS publish via WriterAgent DO, social sharing LinkedIn/Twitter, feed regeneration)
+    - Scout trigger: POST `/publications/:id/scout/run` (proxied to content-scout service binding, optional webhookUrl passthrough)
+  - Webhook delivery utility (`packages/shared/src/webhook.ts`): HMAC-SHA256 signed POST, SSRF protection (HTTPS-only, private IPv4/IPv6 range blocking, hostname suffix blocking), retry with 1s/3s backoff
+  - Mounted in server.ts after admin routes, before Clerk-authenticated routes
 - [ ] Writer Agent — Phase 2: Voice input (transcription in `input-processor.ts`)
 - [ ] Writer Agent — Phase 2: D1 session sync (synchronize DO state back to D1 for listing accuracy)

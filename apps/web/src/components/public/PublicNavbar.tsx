@@ -23,6 +23,12 @@ export function PublicNavbar({ showSignUpCta = true }: PublicNavbarProps) {
         {/* Desktop nav */}
         <nav className="hidden items-center gap-4 sm:flex">
           <Link
+            to="/ai-agents"
+            className="text-sm font-medium text-[var(--color-text-muted)] transition-colors hover:text-[var(--color-text-primary)] hover:underline"
+          >
+            AI Agents
+          </Link>
+          <Link
             to="/about"
             className="text-sm font-medium text-[var(--color-text-muted)] transition-colors hover:text-[var(--color-text-primary)] hover:underline"
           >
@@ -80,6 +86,13 @@ export function PublicNavbar({ showSignUpCta = true }: PublicNavbarProps) {
       {mobileMenuOpen ? (
         <nav className="absolute left-0 right-0 top-full z-50 border-b border-[var(--color-border-default)] bg-[var(--color-bg-primary)] px-6 pb-4 pt-2 shadow-md sm:hidden">
           <div className="flex flex-col gap-1">
+            <Link
+              to="/ai-agents"
+              className="rounded-lg px-3 py-2.5 text-sm font-medium text-[var(--color-text-muted)] transition-colors hover:bg-[var(--color-bg-card)] hover:text-[var(--color-text-primary)]"
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              AI Agents
+            </Link>
             <Link
               to="/about"
               className="rounded-lg px-3 py-2.5 text-sm font-medium text-[var(--color-text-muted)] transition-colors hover:bg-[var(--color-bg-card)] hover:text-[var(--color-text-primary)]"

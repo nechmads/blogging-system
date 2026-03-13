@@ -538,6 +538,37 @@ export async function updateNotificationPreferences(
   })
 }
 
+// --- API Keys ---
+
+export interface ApiKeyInfo {
+  id: string
+  label: string | null
+  lastFour: string
+  lastUsedAt: number | null
+  createdAt: number
+}
+
+export interface ApiKeyCreateResult extends ApiKeyInfo {
+  rawToken: string
+}
+
+export async function fetchApiKeys(): Promise<ApiKeyInfo[]> {
+  const result = await request<{ data: ApiKeyInfo[] }>('/api/api-keys')
+  return result.data
+}
+
+export async function createApiKey(label?: string): Promise<ApiKeyCreateResult> {
+  return request<ApiKeyCreateResult>('/api/api-keys', {
+    method: 'POST',
+    headers: JSON_HEADERS,
+    body: JSON.stringify({ label }),
+  })
+}
+
+export async function revokeApiKey(id: string): Promise<void> {
+  await request(`/api/api-keys/${id}`, { method: 'DELETE' })
+}
+
 // --- Comments ---
 
 export async function fetchComments(pubId: string, status?: CommentStatus): Promise<AdminComment[]> {

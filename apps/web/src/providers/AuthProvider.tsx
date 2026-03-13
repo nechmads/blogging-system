@@ -98,8 +98,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       signInUrl="/sign-in"
       signUpUrl="/sign-up"
       afterSignOutUrl="/"
-      signInFallbackRedirectUrl="/writing"
-      signUpFallbackRedirectUrl="/writing"
+      signInFallbackRedirectUrl="/dashboard"
+      signUpFallbackRedirectUrl="/dashboard"
     >
       {children}
     </ClerkProvider>

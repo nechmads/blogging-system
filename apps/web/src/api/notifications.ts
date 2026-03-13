@@ -11,6 +11,7 @@ notifications.get('/notifications/preferences', async (c) => {
 		newIdeas: prefs.newIdeas,
 		draftReady: prefs.draftReady,
 		postPublished: prefs.postPublished,
+		newComment: prefs.newComment,
 	})
 })
 
