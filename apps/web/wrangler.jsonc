@@ -80,7 +80,7 @@
     "CLERK_PUBLISHABLE_KEY": "pk_live_Y2xlcmsuaG90bWV0YWxhcHAuY29tJA",
     "CLERK_ISSUER": "https://clerk.hotmetalapp.com",
     "NOTIFICATION_EMAIL": "shahar@hotmetalapp.com",
-    "PADDLE_ENVIRONMENT": "sandbox",
+    "PADDLE_ENVIRONMENT": "production",
   },
 
   // SPA fallback — serve index.html for unmatched routes (client-side routing)
