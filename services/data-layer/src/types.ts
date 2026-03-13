@@ -531,6 +531,8 @@ export interface PaddleEvent {
 	eventId: string
 	eventType: string
 	processedAt: number
+}
+
 // ─── User API Keys ──────────────────────────────────────────────────
 
 export interface UserApiKey {
