@@ -1,0 +1,55 @@
+---
+const APP_URL = 'https://app.hotmetalapp.com';
+---
+
+<header class="sticky top-0 z-40 w-full border-b border-[var(--color-border-default)] bg-[var(--color-bg-primary)]/95 backdrop-blur-sm">
+  <div class="mx-auto flex h-16 max-w-[90rem] items-center justify-between px-4 sm:px-6 lg:px-8">
+    <!-- Logo + title -->
+    <div class="flex items-center gap-6">
+      <a href="/" class="flex items-center gap-2.5 text-[var(--color-text-primary)] no-underline">
+        <svg width="28" height="28" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <rect width="32" height="32" rx="8" fill="var(--color-accent)" />
+          <path d="M8 10h6v12H8V10zm10 0h6v12h-6V10z" fill="white" />
+        </svg>
+        <span class="text-lg font-semibold">Hot Metal</span>
+        <span class="rounded-md bg-[var(--color-bg-code)] px-2 py-0.5 text-xs font-medium text-[var(--color-text-muted)]">Docs</span>
+      </a>
+    </div>
+
+    <!-- Right side nav -->
+    <div class="flex items-center gap-4">
+      <nav class="hidden items-center gap-4 text-sm md:flex">
+        <a
+          href={APP_URL}
+          class="text-[var(--color-text-muted)] transition-colors hover:text-[var(--color-text-primary)]"
+        >
+          Go to App
+        </a>
+        <a
+          href={`${APP_URL}/pricing`}
+          class="text-[var(--color-text-muted)] transition-colors hover:text-[var(--color-text-primary)]"
+        >
+          Pricing
+        </a>
+      </nav>
+      <a
+        href={`${APP_URL}/sign-up`}
+        class="rounded-lg bg-[var(--color-accent)] px-3.5 py-1.5 text-sm font-medium text-white transition-colors hover:bg-[var(--color-accent-hover)]"
+      >
+        Get Started
+      </a>
+
+      <!-- Mobile menu button -->
+      <button
+        id="mobile-menu-btn"
+        class="inline-flex items-center justify-center rounded-md p-2 text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)] md:hidden"
+        aria-label="Toggle sidebar"
+        aria-expanded="false"
+      >
+        <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+        </svg>
+      </button>
+    </div>
+  </div>
+</header>

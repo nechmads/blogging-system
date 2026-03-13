@@ -1,0 +1,67 @@
+---
+title: "RSS & Atom Feeds"
+description: "Offer RSS and Atom feeds so readers can subscribe to your publication."
+section: "Publications"
+order: 6
+---
+
+# RSS & Atom Feeds
+
+Hot Metal can generate RSS and Atom feeds for your publication, letting readers subscribe using their favorite feed reader. You control which feed types are available and whether they include full content or just excerpts.
+
+## Enabling feeds
+
+Feeds are configured in your publication's **Settings** page under the **RSS Feeds** section. There are two independent toggles:
+
+- **Partial content feed** -- Generates feeds that include the post title and an excerpt.
+- **Full content feed** -- Generates feeds that include the complete post content.
+
+You can enable both, one, or neither. Each toggle saves immediately when you change it.
+
+## Feed URLs
+
+When feeds are enabled, your publication provides the following URLs:
+
+### Partial content feeds
+
+| Format | URL |
+|--------|-----|
+| RSS    | `https://yourslug.hotmetalapp.com/rss` |
+| Atom   | `https://yourslug.hotmetalapp.com/atom` |
+
+### Full content feeds
+
+| Format | URL |
+|--------|-----|
+| RSS    | `https://yourslug.hotmetalapp.com/rss/full` |
+| Atom   | `https://yourslug.hotmetalapp.com/atom/full` |
+
+Replace `yourslug` with your publication's actual slug. You can find and copy these URLs directly from the publication settings page, where they're displayed as clickable links.
+
+The feed URLs are also accessible from the **Feeds** dropdown button on your publication's home page in the dashboard.
+
+## Partial vs. full feeds
+
+### Partial feeds
+
+Partial feeds include only the post title and a short excerpt. This encourages readers to click through to your blog to read the full article, which can be beneficial if you want to drive traffic to your site or if you rely on on-site analytics.
+
+### Full feeds
+
+Full feeds include the entire post content directly in the feed. Readers can consume your posts entirely within their feed reader without visiting your site. This is more convenient for readers and is preferred by many RSS enthusiasts.
+
+Offering both options lets your readers choose the experience they prefer.
+
+## Automatic regeneration
+
+You don't need to manually update your feeds. Hot Metal automatically regenerates all enabled feeds whenever you publish a new post or update an existing one. Your subscribers will see new content appear in their feed readers shortly after publication.
+
+## Sharing your feed URLs
+
+If you want to make it easy for readers to find your feeds, consider:
+
+- Adding a link to your RSS or Atom feed in your blog's footer or sidebar (if your template supports it).
+- Sharing the feed URL on your social media profiles.
+- Including the feed URL in your newsletter or welcome email.
+
+Most modern feed readers auto-discover feeds from a site's HTML, but providing a direct link ensures readers can always find and subscribe to your publication.

@@ -28,6 +28,10 @@ export function PublicFooter() {
           Pricing
         </Link>
         <Dot />
+        <a href="https://docs.hotmetalapp.com" target="_blank" rel="noopener noreferrer" className="whitespace-nowrap hover:underline">
+          Docs
+        </a>
+        <Dot />
         <Link to="/privacy" className="whitespace-nowrap hover:underline">
           Privacy
         </Link>

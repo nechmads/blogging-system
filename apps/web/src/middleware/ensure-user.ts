@@ -15,6 +15,8 @@ export const ensureUser = createMiddleware<AppEnv>(async (c, next) => {
 	const userId = c.get('userId')
 	const email = c.get('userEmail')
 	const name = c.get('userName')
+	const firstName = c.get('userFirstName')
+	const lastName = c.get('userLastName')
 
 	try {
 		const existing = await c.env.DAL.getUserById(userId)
@@ -26,6 +28,8 @@ export const ensureUser = createMiddleware<AppEnv>(async (c, next) => {
 				id: userId,
 				email: userEmail,
 				name: userName,
+				firstName: firstName || undefined,
+				lastName: lastName || undefined,
 			})
 			c.set('userTier', 'creator') // new users start on Creator tier
 
@@ -43,8 +47,19 @@ export const ensureUser = createMiddleware<AppEnv>(async (c, next) => {
 			// Set tier immediately so a profile-sync failure doesn't downgrade pro users
 			c.set('userTier', existing.tier)
 			try {
-				if (email && name && (existing.email !== email || existing.name !== name)) {
-					await c.env.DAL.updateUser(userId, { email, name })
+				const needsSync = email && name && (
+					existing.email !== email ||
+					existing.name !== name ||
+					(firstName && existing.firstName !== firstName) ||
+					(lastName && existing.lastName !== lastName)
+				)
+				if (needsSync) {
+					await c.env.DAL.updateUser(userId, {
+						email,
+						name,
+						firstName: firstName || undefined,
+						lastName: lastName || undefined,
+					})
 				}
 			} catch (syncErr) {
 				console.warn('ensureUser profile sync:', syncErr instanceof Error ? syncErr.message : syncErr)

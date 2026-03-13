@@ -286,5 +286,15 @@
     - Scout trigger: POST `/publications/:id/scout/run` (proxied to content-scout service binding, optional webhookUrl passthrough)
   - Webhook delivery utility (`packages/shared/src/webhook.ts`): HMAC-SHA256 signed POST, SSRF protection (HTTPS-only, private IPv4/IPv6 range blocking, hostname suffix blocking), retry with 1s/3s backoff
   - Mounted in server.ts after admin routes, before Clerk-authenticated routes
+- [x] **Platform Documentation Site** — Comprehensive docs site at `docs.hotmetalapp.com` built with Astro 6 + MDX + Tailwind v4. Includes:
+  - Static site with 28 documentation pages across 7 sections (Getting Started, Publications, Content Scout, Writing, Publishing, Settings & Billing, API Reference)
+  - DocsLayout with sticky header, sidebar navigation (7 collapsible sections, active page highlighting), table of contents, prev/next navigation
+  - Mobile responsive: hamburger sidebar with overlay, Escape key support
+  - SEO: OG/Twitter meta tags, canonical URLs, custom 404 page
+  - Reusable MDX components: Callout (info/warning/tip/note), Steps (numbered with accent circles)
+  - Hot Metal design tokens (amber accent, Inter font, dark mode via prefers-color-scheme)
+  - Content collection with frontmatter schema (title, description, section, order)
+  - Wrangler config for Cloudflare static asset deployment
+  - Docs links added to web app: PublicNavbar, PublicFooter, authenticated Sidebar (BookOpenIcon, opens in new tab)
 - [ ] Writer Agent — Phase 2: Voice input (transcription in `input-processor.ts`)
 - [ ] Writer Agent — Phase 2: D1 session sync (synchronize DO state back to D1 for listing accuracy)

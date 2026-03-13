@@ -78,7 +78,7 @@ echo "  Name:  $NAME"
 
 # ── Seed into local D1 ──────────────────────────────────────────────
 escape_sql() { printf '%s' "$1" | sed "s/'/''/g"; }
-SQL="INSERT OR REPLACE INTO users (id, email, name, created_at, updated_at) VALUES ('$(escape_sql "$USER_ID")', '$(escape_sql "$EMAIL")', '$(escape_sql "$NAME")', unixepoch(), unixepoch());"
+SQL="INSERT OR REPLACE INTO users (id, email, name, first_name, last_name, created_at, updated_at) VALUES ('$(escape_sql "$USER_ID")', '$(escape_sql "$EMAIL")', '$(escape_sql "$NAME")', '$(escape_sql "$FIRST_NAME")', '$(escape_sql "$LAST_NAME")', unixepoch(), unixepoch());"
 
 echo "Seeding into local D1..."
 

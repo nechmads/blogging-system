@@ -1,0 +1,88 @@
+---
+interface Props {
+  type?: 'info' | 'warning' | 'tip' | 'note';
+  title?: string;
+}
+
+const { type = 'info', title } = Astro.props;
+
+const icons = {
+  info: '<circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/>',
+  warning: '<path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>',
+  tip: '<path d="M9 18h6"/><path d="M10 22h4"/><path d="M15.09 14c.18-.98.65-1.74 1.41-2.5A4.65 4.65 0 0 0 18 8 6 6 0 0 0 6 8c0 1 .23 2.23 1.5 3.5A4.61 4.61 0 0 1 8.91 14"/>',
+  note: '<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/>',
+};
+
+const defaultTitles = { info: 'Info', warning: 'Warning', tip: 'Tip', note: 'Note' };
+const displayTitle = title ?? defaultTitles[type];
+---
+
+<div class:list={['callout my-4 rounded-lg border p-4', `callout-${type}`]}>
+  <div class="flex items-center gap-2 mb-2">
+    <svg class="callout-icon h-4 w-4 shrink-0" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <Fragment set:html={icons[type]} />
+    </svg>
+    <span class="callout-title text-sm font-semibold">{displayTitle}</span>
+  </div>
+  <div class="text-sm [&>p]:mb-1 [&>p:last-child]:mb-0">
+    <slot />
+  </div>
+</div>
+
+<style>
+  .callout-info {
+    background-color: color-mix(in srgb, var(--color-accent-light), transparent 50%);
+    border-color: var(--color-accent);
+  }
+  .callout-info .callout-icon,
+  .callout-info .callout-title {
+    color: var(--color-accent);
+  }
+
+  .callout-warning {
+    background-color: color-mix(in srgb, #fef3c7, transparent 50%);
+    border-color: #f59e0b;
+  }
+  .callout-warning .callout-icon,
+  .callout-warning .callout-title {
+    color: #d97706;
+  }
+
+  .callout-tip {
+    background-color: color-mix(in srgb, #d1fae5, transparent 50%);
+    border-color: #10b981;
+  }
+  .callout-tip .callout-icon,
+  .callout-tip .callout-title {
+    color: #059669;
+  }
+
+  .callout-note {
+    background-color: var(--color-bg-secondary);
+    border-color: var(--color-border-default);
+  }
+  .callout-note .callout-icon,
+  .callout-note .callout-title {
+    color: var(--color-text-muted);
+  }
+
+  @media (prefers-color-scheme: dark) {
+    .callout-warning {
+      background-color: color-mix(in srgb, #451a03, transparent 50%);
+      border-color: #b45309;
+    }
+    .callout-warning .callout-icon,
+    .callout-warning .callout-title {
+      color: #fbbf24;
+    }
+
+    .callout-tip {
+      background-color: color-mix(in srgb, #064e3b, transparent 50%);
+      border-color: #059669;
+    }
+    .callout-tip .callout-icon,
+    .callout-tip .callout-title {
+      color: #34d399;
+    }
+  }
+</style>

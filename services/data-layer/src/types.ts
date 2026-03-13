@@ -21,6 +21,8 @@ export interface User {
 	id: string
 	email: string
 	name: string
+	firstName: string | null
+	lastName: string | null
 	tier: string
 	createdAt: number
 	updatedAt: number
@@ -30,11 +32,15 @@ export interface CreateUserInput {
 	id: string
 	email: string
 	name: string
+	firstName?: string
+	lastName?: string
 }
 
 export interface UpdateUserInput {
 	email?: string
 	name?: string
+	firstName?: string | null
+	lastName?: string | null
 	tier?: string
 }
 

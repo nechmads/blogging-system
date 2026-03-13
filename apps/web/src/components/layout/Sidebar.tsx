@@ -1,5 +1,5 @@
 import { NavLink } from 'react-router'
-import { HouseIcon, LightbulbIcon, PencilLineIcon, NewspaperIcon, PaletteIcon, GearSixIcon, ListIcon, XIcon } from '@phosphor-icons/react'
+import { HouseIcon, LightbulbIcon, PencilLineIcon, NewspaperIcon, PaletteIcon, GearSixIcon, ListIcon, XIcon, BookOpenIcon } from '@phosphor-icons/react'
 import { UserButton } from '@clerk/clerk-react'
 import { useValue } from '@legendapp/state/react'
 import { scoutStore$ } from '@/stores/scout-store'
@@ -88,6 +88,18 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
               </li>
             ))}
           </ul>
+
+          <div className="mt-4 border-t border-[var(--color-border-default)] pt-4">
+            <a
+              href="https://docs.hotmetalapp.com"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-[var(--color-text-muted)] transition-colors hover:bg-[var(--color-bg-card)] hover:text-[var(--color-text-primary)]"
+            >
+              <BookOpenIcon size={20} />
+              <span>Docs</span>
+            </a>
+          </div>
         </nav>
 
         {/* User menu */}

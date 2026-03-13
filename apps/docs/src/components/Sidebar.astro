@@ -1,0 +1,88 @@
+---
+import { navigation } from '../lib/navigation';
+
+interface Props {
+  currentSlug: string;
+}
+
+const { currentSlug } = Astro.props;
+---
+
+<aside
+  id="docs-sidebar"
+  class="fixed left-0 top-16 z-30 hidden h-[calc(100vh-4rem)] w-72 shrink-0 overflow-y-auto border-r border-[var(--color-border-default)] bg-[var(--color-bg-primary)] px-4 py-6 md:block"
+>
+  <nav aria-label="Documentation">
+    {navigation.map((section) => (
+      <div class="mb-6">
+        <h3 class="mb-2 px-2 text-xs font-semibold uppercase tracking-wider text-[var(--color-text-muted)]">
+          {section.title}
+        </h3>
+        <ul class="space-y-0.5">
+          {section.items.map((item) => {
+            const isActive = currentSlug === item.slug;
+            return (
+              <li>
+                <a
+                  href={`/${item.slug}`}
+                  class:list={[
+                    'block rounded-md px-2 py-1.5 text-sm transition-colors',
+                    isActive
+                      ? 'bg-[var(--color-accent-light)] font-medium text-[var(--color-accent)]'
+                      : 'text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-secondary)] hover:text-[var(--color-text-primary)]',
+                  ]}
+                  aria-current={isActive ? 'page' : undefined}
+                >
+                  {item.title}
+                </a>
+              </li>
+            );
+          })}
+        </ul>
+      </div>
+    ))}
+  </nav>
+</aside>
+
+<!-- Mobile overlay -->
+<div
+  id="sidebar-overlay"
+  class="fixed inset-0 z-20 hidden bg-black/40 md:hidden"
+></div>
+
+<script>
+  const btn = document.getElementById('mobile-menu-btn');
+  const sidebar = document.getElementById('docs-sidebar');
+  const overlay = document.getElementById('sidebar-overlay');
+
+  function closeSidebar() {
+    sidebar?.classList.remove('translate-x-0');
+    sidebar?.classList.add('-translate-x-full');
+    overlay?.classList.add('hidden');
+    btn?.setAttribute('aria-expanded', 'false');
+  }
+
+  function openSidebar() {
+    sidebar?.classList.remove('hidden', '-translate-x-full');
+    sidebar?.classList.add('translate-x-0');
+    overlay?.classList.remove('hidden');
+    btn?.setAttribute('aria-expanded', 'true');
+  }
+
+  function toggleSidebar() {
+    const isOpen = sidebar?.classList.contains('translate-x-0');
+    if (isOpen) {
+      closeSidebar();
+    } else {
+      openSidebar();
+    }
+  }
+
+  btn?.addEventListener('click', toggleSidebar);
+  overlay?.addEventListener('click', closeSidebar);
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && sidebar?.classList.contains('translate-x-0')) {
+      closeSidebar();
+    }
+  });
+</script>

@@ -1,0 +1,57 @@
+---
+title: "API Keys"
+description: "Create and manage API keys for programmatic access."
+section: "Settings & Billing"
+order: 4
+---
+
+# API Keys
+
+API keys let external tools, AI agents, and custom integrations access your Hot Metal account programmatically. Each key acts as a Bearer token for the Hot Metal API.
+
+## Creating a key
+
+1. Go to **Settings** and scroll down to the **API Keys** section.
+2. Click **Create new API key**.
+3. Optionally, give the key a descriptive label (for example, "My AI agent" or "CI/CD pipeline"). This helps you remember what each key is used for.
+4. Click **Create key**.
+
+Your new key will appear in a highlighted banner at the top of the section. It starts with `hm_` followed by a random string.
+
+**Copy the key immediately.** For security reasons, the full key is only shown once. After you dismiss the banner or navigate away, you will only see a masked version (e.g., `hm_****abcd`).
+
+## Using a key
+
+Include your API key as a Bearer token in the `Authorization` header of your HTTP requests:
+
+```
+Authorization: Bearer hm_your_key_here
+```
+
+See the [API Reference](/api) docs for the full list of available endpoints.
+
+## Viewing your keys
+
+The API Keys section lists all of your active keys. For each key, you can see:
+
+- **Label** -- The name you gave it (or "Untitled key" if you did not set one).
+- **Masked key** -- The last four characters of the key, so you can identify it.
+- **Created date** -- When the key was generated.
+- **Last used** -- When the key was last used to make an API call (or "Never used" if it has not been used yet).
+
+## Revoking a key
+
+If you no longer need a key, or if you suspect it has been compromised:
+
+1. Find the key in the list and click **Revoke**.
+2. A confirmation modal will appear, showing the key label and last four characters so you can verify you are revoking the right one.
+3. Click **Revoke key** to confirm.
+
+Revocation is permanent and takes effect immediately. Any agent or integration using that key will lose access as soon as the key is revoked. You can always create a new key if needed.
+
+## Best practices
+
+- **Use one key per integration.** If you have multiple tools accessing your account, create a separate key for each one. That way you can revoke a single key without disrupting everything else.
+- **Label your keys clearly.** A good label makes it easy to audit which keys are in use and what they are for.
+- **Revoke unused keys.** If a key shows "Never used" and you do not remember creating it, it is safe to revoke.
+- **Never share keys in public repositories or logs.** Treat API keys like passwords.

@@ -1,0 +1,66 @@
+---
+title: "Draft Editor"
+description: "View, edit, and manage draft versions of your post."
+section: "Writing"
+order: 4
+---
+
+# Draft Editor
+
+The draft panel is the right side of the workspace. It shows the current state of your blog post and gives you tools to view, edit, copy, and publish your content.
+
+## Viewing your draft
+
+When the AI saves a draft during the conversation, it appears in the draft panel as formatted content -- headings, paragraphs, lists, code blocks, and images are all rendered so you can see what the final post will look like.
+
+If no draft exists yet, you'll see a message: "No drafts yet. Chat with the AI to generate your first draft."
+
+## Switching to edit mode
+
+By default, the draft panel is in **view mode** -- a read-only, formatted display of your content. To make direct changes, click the **Edit** button (pencil icon) in the toolbar at the top of the panel.
+
+In edit mode, you get:
+
+- **An editable title field** at the top of the draft where you can type or change the post title.
+- **A rich text editor** powered by Tiptap, where you can modify the body content directly.
+- **A floating toolbar** that appears when you select text, with formatting options for bold, italic, code, and strikethrough.
+- **An image button** in the toolbar above the editor for inserting inline images (more on this in the [Images](/writing/images) guide).
+
+To switch back to view mode, click the **View** button (eye icon). Any pending changes are saved automatically before the switch.
+
+## Auto-save
+
+While you're editing, your changes are saved automatically after a brief pause (2 seconds of inactivity). You don't need to click a save button.
+
+A save status indicator appears next to the edit toggle:
+
+- **Unsaved** -- You have changes that haven't been saved yet.
+- **Saving...** -- A save is in progress.
+- **Saved** -- Your changes were saved successfully.
+
+If the AI creates a new draft while you're editing, your pending changes are flushed and saved first, then the editor exits edit mode to show the new AI-generated version.
+
+## Draft versioning
+
+Every time the AI produces a new revision of your draft, it's saved as a separate **version**. This means you never lose previous iterations of your post.
+
+A **version selector** dropdown appears in the header of the draft panel, showing all available versions (e.g. "Draft v1," "Draft v2," "Draft v3"). Each version also shows the draft title if one was set.
+
+- The selector always jumps to the latest version when the AI creates a new one.
+- You can select any previous version to review what the draft looked like at that point.
+- Switching versions while in edit mode automatically saves your current changes and exits edit mode first.
+
+## Publishing any version
+
+You aren't limited to publishing only the latest draft. You can select any version from the version dropdown and click **Publish** to publish that particular revision. This is useful if the AI went in a direction you didn't love in a later version and you want to go back to an earlier one.
+
+If a post has already been published from this session, the button changes to **Publish Again**, and a green check icon appears to indicate that a published version exists.
+
+## Copying your draft
+
+Click the **copy** icon in the toolbar to copy the full draft (title and content) to your clipboard as Markdown. This is handy if you want to paste it into another tool or share it outside Hot Metal.
+
+## Next steps
+
+- [Learn about Images](/writing/images) to generate featured images and upload inline images.
+- [Explore Writing Styles](/writing/writing-styles) to customize the AI writer's voice and tone.

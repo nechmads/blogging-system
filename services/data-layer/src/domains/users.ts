@@ -6,6 +6,8 @@ interface UserRow {
 	id: string
 	email: string
 	name: string
+	first_name: string | null
+	last_name: string | null
 	tier: string
 	created_at: number
 	updated_at: number
@@ -16,6 +18,8 @@ function mapRow(row: UserRow): User {
 		id: row.id,
 		email: row.email,
 		name: row.name,
+		firstName: row.first_name,
+		lastName: row.last_name,
 		tier: row.tier,
 		createdAt: row.created_at,
 		updatedAt: row.updated_at,
@@ -41,14 +45,16 @@ export async function getUserByEmail(db: D1Database, email: string): Promise<Use
 export async function createUser(db: D1Database, data: CreateUserInput): Promise<User> {
 	const now = Math.floor(Date.now() / 1000)
 	await db
-		.prepare('INSERT OR IGNORE INTO users (id, email, name, tier, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)')
-		.bind(data.id, data.email, data.name, 'creator', now, now)
+		.prepare('INSERT OR IGNORE INTO users (id, email, name, first_name, last_name, tier, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)')
+		.bind(data.id, data.email, data.name, data.firstName ?? null, data.lastName ?? null, 'creator', now, now)
 		.run()
 
 	return {
 		id: data.id,
 		email: data.email,
 		name: data.name,
+		firstName: data.firstName ?? null,
+		lastName: data.lastName ?? null,
 		tier: 'creator',
 		createdAt: now,
 		updatedAt: now,
@@ -66,6 +72,14 @@ export async function updateUser(db: D1Database, id: string, data: UpdateUserInp
 	if (data.name !== undefined) {
 		sets.push('name = ?')
 		bindings.push(data.name)
+	}
+	if (data.firstName !== undefined) {
+		sets.push('first_name = ?')
+		bindings.push(data.firstName ?? '')
+	}
+	if (data.lastName !== undefined) {
+		sets.push('last_name = ?')
+		bindings.push(data.lastName ?? '')
 	}
 	if (data.tier !== undefined) {
 		if (!VALID_TIERS.has(data.tier)) {

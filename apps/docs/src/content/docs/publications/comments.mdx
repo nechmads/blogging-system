@@ -1,0 +1,75 @@
+---
+title: "Comments"
+description: "Manage reader comments on your publication."
+section: "Publications"
+order: 5
+---
+
+# Comments
+
+Hot Metal includes a built-in commenting system that lets readers leave feedback on your published posts. You control whether comments are enabled, how they're moderated, and can manage them from a dedicated page in the dashboard.
+
+## Enabling comments
+
+Comments are disabled by default. To turn them on:
+
+1. Open your publication and go to **Settings**.
+2. Scroll to the **Comments** section.
+3. Check the **Enable comments** checkbox.
+
+Once enabled, a comment form will appear at the bottom of every published post on your blog. You can disable comments at any time by unchecking the same box -- existing comments will be hidden from the blog but not deleted.
+
+## Moderation modes
+
+When comments are enabled, you choose how new comments are handled:
+
+### Auto-approve
+
+Comments appear on your blog immediately after passing automated spam and content filters. This is the default mode and works well if you want a low-friction experience for readers.
+
+### Require approval (pre-approve)
+
+Comments are held in a "pending" state and don't appear on your blog until you manually approve them. This gives you full control over what shows up on your site, and is recommended if you want to review every comment before it's published.
+
+You can switch between modes at any time from the Comments section of your publication settings. The change takes effect immediately for all new comments.
+
+## The Comments page
+
+To manage comments for a publication, navigate to the **Comments** page. You can get there from:
+
+- The publication home page (click **View all** next to Recent Comments).
+- The publication settings page (click the **Comments page** link in the Comments section).
+
+### Filtering comments
+
+The Comments page has three filter tabs at the top:
+
+- **All** -- Shows all comments that haven't been deleted.
+- **Pending** -- Shows only comments waiting for your review. A badge shows the count of pending comments.
+- **Approved** -- Shows only comments that have been approved and are visible on your blog.
+
+### Approving comments
+
+When using pre-approve moderation, pending comments show a checkmark button. Click it to approve the comment -- it will immediately become visible on your blog.
+
+### Deleting comments
+
+Every comment (pending or approved) has a trash icon button. Clicking it removes the comment. Deleted comments no longer appear on your blog or in the "All" filter.
+
+### Comment details
+
+Each comment in the list shows:
+
+- The **author's name** and email (if provided).
+- The **post** the comment was left on (shown as the post slug).
+- A **timestamp** showing when the comment was submitted.
+- The **status** badge (pending or approved).
+- A **preview** of the comment content.
+
+## Spam protection
+
+Hot Metal uses Cloudflare Turnstile to protect your comment forms from spam and bot submissions. Turnstile runs automatically in the background when readers submit a comment -- there's no CAPTCHA puzzle for your readers to solve. Comments that fail the Turnstile challenge are silently rejected.
+
+## Email notifications
+
+When a new comment is submitted on one of your posts, Hot Metal sends you an email notification so you can review it promptly. This is especially useful when you're using pre-approve moderation and want to stay on top of incoming comments.

@@ -1,0 +1,87 @@
+---
+import Header from '../components/Header.astro';
+import Sidebar from '../components/Sidebar.astro';
+import TableOfContents from '../components/TableOfContents.astro';
+import PrevNext from '../components/PrevNext.astro';
+import '../styles.css';
+
+interface TocHeading {
+  depth: number;
+  slug: string;
+  text: string;
+}
+
+interface Props {
+  title: string;
+  description: string;
+  slug: string;
+  headings: TocHeading[];
+}
+
+const { title, description, slug, headings } = Astro.props;
+const pageTitle = `${title} - Hot Metal Docs`;
+const canonicalUrl = new URL(Astro.url.pathname, 'https://docs.hotmetalapp.com');
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content={description} />
+    <link rel="canonical" href={canonicalUrl.href} />
+    <meta property="og:title" content={pageTitle} />
+    <meta property="og:description" content={description} />
+    <meta property="og:type" content="article" />
+    <meta property="og:url" content={canonicalUrl.href} />
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:title" content={pageTitle} />
+    <meta name="twitter:description" content={description} />
+    <title>{pageTitle}</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  </head>
+  <body class="min-h-screen bg-[var(--color-bg-primary)]">
+    <Header />
+    <Sidebar currentSlug={slug} />
+
+    <div class="md:pl-72">
+      <main class="mx-auto flex max-w-5xl gap-8 px-4 py-8 sm:px-6 lg:px-8">
+        <!-- Main content -->
+        <article class="min-w-0 flex-1">
+          <header class="mb-8">
+            <h1 class="text-3xl font-bold tracking-tight text-[var(--color-text-primary)] sm:text-4xl">
+              {title}
+            </h1>
+            <p class="mt-2 text-lg text-[var(--color-text-muted)]">
+              {description}
+            </p>
+          </header>
+
+          <div class="docs-prose">
+            <slot />
+          </div>
+
+          <PrevNext currentSlug={slug} />
+        </article>
+
+        <!-- Right sidebar: table of contents -->
+        <TableOfContents headings={headings} />
+      </main>
+
+      <!-- Footer -->
+      <footer class="border-t border-[var(--color-border-default)] md:pl-0">
+        <div class="mx-auto max-w-5xl px-4 py-6 sm:px-6 lg:px-8">
+          <p class="text-center text-sm text-[var(--color-text-muted)]">
+            &copy; {new Date().getFullYear()} Hot Metal. All rights reserved.
+          </p>
+        </div>
+      </footer>
+    </div>
+  </body>
+</html>

@@ -1,0 +1,948 @@
+---
+title: "Endpoint Reference"
+description: "Complete reference for all Hot Metal API endpoints."
+section: "API Reference"
+order: 2
+---
+
+# Endpoint Reference
+
+This page documents every endpoint in the Hot Metal API. All paths are relative to the base URL `https://app.hotmetalapp.com/agents-api/v1`.
+
+---
+
+## User
+
+### GET /me
+
+Returns the authenticated user's profile based on the API key.
+
+**Response**
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `id` | string | User ID |
+| `email` | string | Email address |
+| `name` | string | Display name |
+| `tier` | string | Subscription tier (e.g., `free`, `pro`) |
+
+**Example request**
+
+```bash
+curl https://app.hotmetalapp.com/agents-api/v1/me \
+  -H "Authorization: Bearer hm_your_api_key"
+```
+
+**Example response**
+
+```json
+{
+  "data": {
+    "id": "user_abc123",
+    "email": "you@example.com",
+    "name": "Jane Smith",
+    "tier": "pro"
+  }
+}
+```
+
+---
+
+## Publications
+
+### GET /publications
+
+Returns all publications owned by the authenticated user.
+
+**Response**
+
+Returns an array of publication objects in `data`.
+
+**Example request**
+
+```bash
+curl https://app.hotmetalapp.com/agents-api/v1/publications \
+  -H "Authorization: Bearer hm_your_api_key"
+```
+
+**Example response**
+
+```json
+{
+  "data": [
+    {
+      "id": "b3f1a2c4-5d6e-7f8a-9b0c-1d2e3f4a5b6c",
+      "name": "Looking Ahead",
+      "slug": "looking-ahead",
+      "description": "A blog about AI and the future of technology.",
+      "autoPublishMode": "draft",
+      "cadencePostsPerWeek": 3,
+      "timezone": "America/New_York",
+      "createdAt": 1710345600,
+      "updatedAt": 1710345600
+    }
+  ]
+}
+```
+
+### GET /publications/:id
+
+Returns a single publication along with its topics array.
+
+**Path parameters**
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `id` | string | Publication ID (UUID) |
+
+**Example request**
+
+```bash
+curl https://app.hotmetalapp.com/agents-api/v1/publications/b3f1a2c4-5d6e-7f8a-9b0c-1d2e3f4a5b6c \
+  -H "Authorization: Bearer hm_your_api_key"
+```
+
+**Example response**
+
+```json
+{
+  "data": {
+    "id": "b3f1a2c4-5d6e-7f8a-9b0c-1d2e3f4a5b6c",
+    "name": "Looking Ahead",
+    "slug": "looking-ahead",
+    "description": "A blog about AI and the future of technology.",
+    "autoPublishMode": "draft",
+    "cadencePostsPerWeek": 3,
+    "timezone": "America/New_York",
+    "createdAt": 1710345600,
+    "updatedAt": 1710345600,
+    "topics": [
+      {
+        "id": "d4e5f6a7-8b9c-0d1e-2f3a-4b5c6d7e8f9a",
+        "publicationId": "b3f1a2c4-5d6e-7f8a-9b0c-1d2e3f4a5b6c",
+        "name": "AI in Software Engineering",
+        "description": "LLMs in code review, testing, and developer tooling.",
+        "priority": 1,
+        "isActive": true,
+        "createdAt": 1710345600,
+        "updatedAt": 1710345600
+      }
+    ]
+  }
+}
+```
+
+### POST /publications
+
+Creates a new publication. Subject to tier limits on publication count.
+
+**Request body**
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `name` | string | Yes | Publication display name |
+| `slug` | string | Yes | URL slug (lowercase letters, numbers, and hyphens only) |
+| `description` | string | No | Brief summary of the publication's focus |
+| `writingTone` | string | No | Default writing tone description |
+| `defaultAuthor` | string | No | Default author name for published posts |
+| `autoPublishMode` | string | No | One of: `ideas-only`, `draft`, `full-auto` |
+| `cadencePostsPerWeek` | integer | No | Target posts per week (subject to tier limits) |
+| `scoutSchedule` | object | No | Content scout schedule configuration |
+| `timezone` | string | No | IANA timezone (e.g., `America/New_York`) |
+
+**Scout schedule formats**
+
+The `scoutSchedule` field accepts one of three formats:
+
+- Daily at a specific hour: `{ "type": "daily", "hour": 9 }`
+- Multiple times per day: `{ "type": "times_per_day", "count": 3 }`
+- Every N days: `{ "type": "every_n_days", "days": 2, "hour": 14 }`
+
+**Example request**
+
+```bash
+curl -X POST https://app.hotmetalapp.com/agents-api/v1/publications \
+  -H "Authorization: Bearer hm_your_api_key" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "Looking Ahead",
+    "slug": "looking-ahead",
+    "description": "A blog about AI and the future of technology.",
+    "autoPublishMode": "draft",
+    "cadencePostsPerWeek": 3,
+    "timezone": "America/New_York"
+  }'
+```
+
+**Example response** (HTTP 201)
+
+```json
+{
+  "data": {
+    "id": "b3f1a2c4-5d6e-7f8a-9b0c-1d2e3f4a5b6c",
+    "name": "Looking Ahead",
+    "slug": "looking-ahead",
+    "description": "A blog about AI and the future of technology.",
+    "autoPublishMode": "draft",
+    "cadencePostsPerWeek": 3,
+    "timezone": "America/New_York",
+    "cmsPublicationId": "f0a1b2c3-4d5e-6f7a-8b9c-0d1e2f3a4b5c",
+    "createdAt": 1710345600,
+    "updatedAt": 1710345600
+  }
+}
+```
+
+### PATCH /publications/:id
+
+Updates a publication's settings. All fields are optional -- only include the fields you want to change.
+
+**Path parameters**
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `id` | string | Publication ID (UUID) |
+
+**Request body**
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `name` | string | Publication display name |
+| `slug` | string | URL slug (lowercase letters, numbers, and hyphens only) |
+| `description` | string or null | Publication description (set to `null` to clear) |
+| `writingTone` | string or null | Writing tone description (set to `null` to clear) |
+| `defaultAuthor` | string | Default author name |
+| `autoPublishMode` | string | One of: `ideas-only`, `draft`, `full-auto` |
+| `cadencePostsPerWeek` | integer | Target posts per week |
+| `scoutSchedule` | object | Scout schedule configuration |
+| `timezone` | string | IANA timezone |
+| `styleId` | string or null | Writing style ID (set to `null` to use default) |
+| `templateId` | string | Site template: `starter`, `editorial`, or `bold` |
+| `feedFullEnabled` | boolean | Enable full-content RSS feed |
+| `feedPartialEnabled` | boolean | Enable excerpt RSS feed |
+| `commentsEnabled` | boolean | Enable comments on published posts |
+| `commentsModeration` | string | `auto-approve` or `pre-approve` |
+
+**Example request**
+
+```bash
+curl -X PATCH https://app.hotmetalapp.com/agents-api/v1/publications/b3f1a2c4-5d6e-7f8a-9b0c-1d2e3f4a5b6c \
+  -H "Authorization: Bearer hm_your_api_key" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "cadencePostsPerWeek": 5,
+    "autoPublishMode": "full-auto"
+  }'
+```
+
+**Example response**
+
+```json
+{
+  "data": {
+    "id": "b3f1a2c4-5d6e-7f8a-9b0c-1d2e3f4a5b6c",
+    "name": "Looking Ahead",
+    "slug": "looking-ahead",
+    "autoPublishMode": "full-auto",
+    "cadencePostsPerWeek": 5,
+    "updatedAt": 1710432000
+  }
+}
+```
+
+### DELETE /publications/:id
+
+Deletes a publication and all its associated data.
+
+**Path parameters**
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `id` | string | Publication ID (UUID) |
+
+**Example request**
+
+```bash
+curl -X DELETE https://app.hotmetalapp.com/agents-api/v1/publications/b3f1a2c4-5d6e-7f8a-9b0c-1d2e3f4a5b6c \
+  -H "Authorization: Bearer hm_your_api_key"
+```
+
+**Example response**
+
+```json
+{
+  "data": {
+    "deleted": true
+  }
+}
+```
+
+### GET /publications/:id/posts
+
+Returns up to 50 published posts for a publication from the CMS. Returns an empty array if the publication has no CMS link.
+
+**Path parameters**
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `id` | string | Publication ID (UUID) |
+
+**Example request**
+
+```bash
+curl https://app.hotmetalapp.com/agents-api/v1/publications/b3f1a2c4-5d6e-7f8a-9b0c-1d2e3f4a5b6c/posts \
+  -H "Authorization: Bearer hm_your_api_key"
+```
+
+**Example response**
+
+```json
+{
+  "data": [
+    {
+      "id": "post_001",
+      "title": "The Rise of AI Code Review",
+      "slug": "rise-of-ai-code-review",
+      "status": "published",
+      "createdAt": 1710345600,
+      "updatedAt": 1710345600
+    }
+  ]
+}
+```
+
+---
+
+## Topics
+
+### GET /publications/:pubId/topics
+
+Returns all topics for a publication.
+
+**Path parameters**
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `pubId` | string | Publication ID (UUID) |
+
+**Example request**
+
+```bash
+curl https://app.hotmetalapp.com/agents-api/v1/publications/b3f1a2c4-5d6e-7f8a-9b0c-1d2e3f4a5b6c/topics \
+  -H "Authorization: Bearer hm_your_api_key"
+```
+
+**Example response**
+
+```json
+{
+  "data": [
+    {
+      "id": "d4e5f6a7-8b9c-0d1e-2f3a-4b5c6d7e8f9a",
+      "publicationId": "b3f1a2c4-5d6e-7f8a-9b0c-1d2e3f4a5b6c",
+      "name": "AI in Software Engineering",
+      "description": "LLMs in code review, testing, and developer tooling.",
+      "priority": 1,
+      "isActive": true,
+      "createdAt": 1710345600,
+      "updatedAt": 1710345600
+    }
+  ]
+}
+```
+
+### POST /publications/:pubId/topics
+
+Creates a new topic under a publication. Subject to tier limits on topic count.
+
+**Path parameters**
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `pubId` | string | Publication ID (UUID) |
+
+**Request body**
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `name` | string | Yes | Topic name |
+| `description` | string | No | Description to guide the Content Scout's focus |
+| `priority` | integer | No | `1` (highest), `2`, or `3` (lowest). Defaults to `1`. |
+
+**Example request**
+
+```bash
+curl -X POST https://app.hotmetalapp.com/agents-api/v1/publications/b3f1a2c4-5d6e-7f8a-9b0c-1d2e3f4a5b6c/topics \
+  -H "Authorization: Bearer hm_your_api_key" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "AI in Software Engineering",
+    "description": "LLMs in code review, testing, and developer tooling.",
+    "priority": 1
+  }'
+```
+
+**Example response** (HTTP 201)
+
+```json
+{
+  "data": {
+    "id": "d4e5f6a7-8b9c-0d1e-2f3a-4b5c6d7e8f9a",
+    "publicationId": "b3f1a2c4-5d6e-7f8a-9b0c-1d2e3f4a5b6c",
+    "name": "AI in Software Engineering",
+    "description": "LLMs in code review, testing, and developer tooling.",
+    "priority": 1,
+    "isActive": true,
+    "createdAt": 1710345600,
+    "updatedAt": 1710345600
+  }
+}
+```
+
+### PATCH /topics/:id
+
+Updates an existing topic. Ownership is verified through the topic's parent publication.
+
+**Path parameters**
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `id` | string | Topic ID (UUID) |
+
+**Request body**
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `name` | string | Topic name |
+| `description` | string or null | Description (set to `null` to clear) |
+| `priority` | integer | `1`, `2`, or `3` |
+| `isActive` | boolean | Whether the topic is active for scouting |
+
+**Example request**
+
+```bash
+curl -X PATCH https://app.hotmetalapp.com/agents-api/v1/topics/d4e5f6a7-8b9c-0d1e-2f3a-4b5c6d7e8f9a \
+  -H "Authorization: Bearer hm_your_api_key" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "priority": 2,
+    "isActive": false
+  }'
+```
+
+**Example response**
+
+```json
+{
+  "data": {
+    "id": "d4e5f6a7-8b9c-0d1e-2f3a-4b5c6d7e8f9a",
+    "publicationId": "b3f1a2c4-5d6e-7f8a-9b0c-1d2e3f4a5b6c",
+    "name": "AI in Software Engineering",
+    "description": "LLMs in code review, testing, and developer tooling.",
+    "priority": 2,
+    "isActive": false,
+    "createdAt": 1710345600,
+    "updatedAt": 1710432000
+  }
+}
+```
+
+### DELETE /topics/:id
+
+Deletes a topic. Ownership is verified through the topic's parent publication.
+
+**Path parameters**
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `id` | string | Topic ID (UUID) |
+
+**Example request**
+
+```bash
+curl -X DELETE https://app.hotmetalapp.com/agents-api/v1/topics/d4e5f6a7-8b9c-0d1e-2f3a-4b5c6d7e8f9a \
+  -H "Authorization: Bearer hm_your_api_key"
+```
+
+**Example response**
+
+```json
+{
+  "data": {
+    "deleted": true
+  }
+}
+```
+
+---
+
+## Ideas
+
+### GET /publications/:pubId/ideas
+
+Returns ideas for a publication, optionally filtered by status.
+
+**Path parameters**
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `pubId` | string | Publication ID (UUID) |
+
+**Query parameters**
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `status` | string | Filter by status: `new`, `reviewed`, `promoted`, or `dismissed` |
+
+**Example request**
+
+```bash
+curl "https://app.hotmetalapp.com/agents-api/v1/publications/b3f1a2c4-5d6e-7f8a-9b0c-1d2e3f4a5b6c/ideas?status=new" \
+  -H "Authorization: Bearer hm_your_api_key"
+```
+
+**Example response**
+
+```json
+{
+  "data": [
+    {
+      "id": "a1b2c3d4-5e6f-7a8b-9c0d-1e2f3a4b5c6d",
+      "publicationId": "b3f1a2c4-5d6e-7f8a-9b0c-1d2e3f4a5b6c",
+      "topicId": "d4e5f6a7-8b9c-0d1e-2f3a-4b5c6d7e8f9a",
+      "title": "How AI Code Review Tools Are Changing Developer Workflows",
+      "angle": "Compare the top 3 AI code review tools and their impact on PR cycle time.",
+      "summary": "An analysis of how AI-powered code review is reducing PR turnaround...",
+      "sources": [
+        {
+          "url": "https://example.com/article",
+          "title": "AI Code Review in 2026",
+          "snippet": "A look at the latest developments...",
+          "publishedAt": "2026-03-10T12:00:00Z"
+        }
+      ],
+      "status": "new",
+      "relevanceScore": 0.92,
+      "createdAt": 1710345600,
+      "updatedAt": 1710345600
+    }
+  ]
+}
+```
+
+### GET /ideas/:id
+
+Returns a single idea by ID.
+
+**Path parameters**
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `id` | string | Idea ID (UUID) |
+
+**Example request**
+
+```bash
+curl https://app.hotmetalapp.com/agents-api/v1/ideas/a1b2c3d4-5e6f-7a8b-9c0d-1e2f3a4b5c6d \
+  -H "Authorization: Bearer hm_your_api_key"
+```
+
+**Example response**
+
+```json
+{
+  "data": {
+    "id": "a1b2c3d4-5e6f-7a8b-9c0d-1e2f3a4b5c6d",
+    "publicationId": "b3f1a2c4-5d6e-7f8a-9b0c-1d2e3f4a5b6c",
+    "topicId": "d4e5f6a7-8b9c-0d1e-2f3a-4b5c6d7e8f9a",
+    "title": "How AI Code Review Tools Are Changing Developer Workflows",
+    "angle": "Compare the top 3 AI code review tools and their impact on PR cycle time.",
+    "summary": "An analysis of how AI-powered code review is reducing PR turnaround...",
+    "sources": [
+      {
+        "url": "https://example.com/article",
+        "title": "AI Code Review in 2026",
+        "snippet": "A look at the latest developments...",
+        "publishedAt": "2026-03-10T12:00:00Z"
+      }
+    ],
+    "status": "new",
+    "sessionId": null,
+    "relevanceScore": 0.92,
+    "createdAt": 1710345600,
+    "updatedAt": 1710345600
+  }
+}
+```
+
+---
+
+## Styles
+
+### GET /styles
+
+Returns all writing styles available to you, including your custom styles and prebuilt system styles.
+
+**Example request**
+
+```bash
+curl https://app.hotmetalapp.com/agents-api/v1/styles \
+  -H "Authorization: Bearer hm_your_api_key"
+```
+
+**Example response**
+
+```json
+{
+  "data": [
+    {
+      "id": "c1d2e3f4-5a6b-7c8d-9e0f-1a2b3c4d5e6f",
+      "userId": null,
+      "name": "Professional",
+      "description": "Clear, authoritative tone suitable for business and technical content.",
+      "systemPrompt": "Write in a professional, well-structured tone...",
+      "isPrebuilt": true,
+      "createdAt": 1710000000,
+      "updatedAt": 1710000000
+    },
+    {
+      "id": "f6e5d4c3-b2a1-0f9e-8d7c-6b5a4c3d2e1f",
+      "userId": "user_abc123",
+      "name": "Conversational Tech",
+      "description": "Like explaining tech to a smart friend over coffee.",
+      "systemPrompt": "Write in a conversational, approachable tone...",
+      "isPrebuilt": false,
+      "createdAt": 1710345600,
+      "updatedAt": 1710345600
+    }
+  ]
+}
+```
+
+---
+
+## Draft Generation
+
+### POST /publications/:id/drafts/generate
+
+Instructs the AI writer agent to generate a draft for the publication. This endpoint supports two modes:
+
+- **Synchronous** (default): The request blocks until the draft is ready and returns the result directly.
+- **Asynchronous**: If you provide a `webhookUrl`, the request returns `202 Accepted` immediately and delivers the result to your webhook when generation completes.
+
+**Path parameters**
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `id` | string | Publication ID (UUID) |
+
+**Request body**
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `title` | string | Yes | Working title for the draft |
+| `instructions` | string | Yes | Detailed writing instructions for the AI agent |
+| `styleId` | string | No | Writing style ID (from `GET /styles`) |
+| `autoPublish` | boolean | No | If `true`, publish to CMS automatically after generation. Defaults to `false`. |
+| `webhookUrl` | string | No | HTTPS URL to receive the result asynchronously |
+
+**Example request (synchronous)**
+
+```bash
+curl -X POST https://app.hotmetalapp.com/agents-api/v1/publications/b3f1a2c4-5d6e-7f8a-9b0c-1d2e3f4a5b6c/drafts/generate \
+  -H "Authorization: Bearer hm_your_api_key" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "title": "The Rise of AI Code Review",
+    "instructions": "Write a comprehensive post about how AI is transforming code review. Cover the top tools, their impact on developer productivity, and what this means for engineering teams in 2026.",
+    "styleId": "c1d2e3f4-5a6b-7c8d-9e0f-1a2b3c4d5e6f"
+  }'
+```
+
+**Example response (synchronous, HTTP 200)**
+
+```json
+{
+  "data": {
+    "sessionId": "e7f8a9b0-c1d2-3e4f-5a6b-7c8d9e0f1a2b",
+    "draft": {
+      "version": 1,
+      "title": "The Rise of AI Code Review",
+      "content": "<h1>The Rise of AI Code Review</h1><p>In 2026, AI-powered code review...</p>",
+      "wordCount": 1842
+    },
+    "status": "draft_ready"
+  }
+}
+```
+
+**Example request (asynchronous)**
+
+```bash
+curl -X POST https://app.hotmetalapp.com/agents-api/v1/publications/b3f1a2c4-5d6e-7f8a-9b0c-1d2e3f4a5b6c/drafts/generate \
+  -H "Authorization: Bearer hm_your_api_key" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "title": "The Rise of AI Code Review",
+    "instructions": "Write a comprehensive post about how AI is transforming code review.",
+    "webhookUrl": "https://your-server.com/webhooks/hotmetal"
+  }'
+```
+
+**Example response (asynchronous, HTTP 202)**
+
+```json
+{
+  "data": {
+    "sessionId": "e7f8a9b0-c1d2-3e4f-5a6b-7c8d9e0f1a2b",
+    "status": "generating"
+  }
+}
+```
+
+When generation completes, your webhook receives a payload like:
+
+```json
+{
+  "event": "draft.ready",
+  "sessionId": "e7f8a9b0-c1d2-3e4f-5a6b-7c8d9e0f1a2b",
+  "publicationId": "b3f1a2c4-5d6e-7f8a-9b0c-1d2e3f4a5b6c",
+  "data": {
+    "draft": {
+      "version": 1,
+      "title": "The Rise of AI Code Review",
+      "content": "<h1>The Rise of AI Code Review</h1>...",
+      "wordCount": 1842
+    },
+    "status": "draft_ready"
+  },
+  "timestamp": "2026-03-13T15:30:00.000Z"
+}
+```
+
+### GET /sessions/:id
+
+Returns the status of a writing session and a summary of the current draft.
+
+**Path parameters**
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `id` | string | Session ID (UUID) |
+
+**Response**
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `id` | string | Session ID |
+| `title` | string or null | Session title |
+| `status` | string | `active`, `completed`, or `archived` |
+| `publicationId` | string or null | Associated publication ID |
+| `cmsPostId` | string or null | CMS post ID (set after publishing) |
+| `currentDraftVersion` | integer | Latest draft version number |
+| `currentDraft` | object or null | Summary of the latest draft |
+| `createdAt` | integer | Unix timestamp |
+| `updatedAt` | integer | Unix timestamp |
+
+**Example request**
+
+```bash
+curl https://app.hotmetalapp.com/agents-api/v1/sessions/e7f8a9b0-c1d2-3e4f-5a6b-7c8d9e0f1a2b \
+  -H "Authorization: Bearer hm_your_api_key"
+```
+
+**Example response**
+
+```json
+{
+  "data": {
+    "id": "e7f8a9b0-c1d2-3e4f-5a6b-7c8d9e0f1a2b",
+    "title": "The Rise of AI Code Review",
+    "status": "active",
+    "publicationId": "b3f1a2c4-5d6e-7f8a-9b0c-1d2e3f4a5b6c",
+    "cmsPostId": null,
+    "currentDraftVersion": 1,
+    "currentDraft": {
+      "id": "draft_001",
+      "version": 1,
+      "title": "The Rise of AI Code Review",
+      "wordCount": 1842,
+      "createdAt": 1710345600
+    },
+    "createdAt": 1710345600,
+    "updatedAt": 1710345600
+  }
+}
+```
+
+### GET /sessions/:id/drafts/:version
+
+Returns the full content of a specific draft version.
+
+**Path parameters**
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `id` | string | Session ID (UUID) |
+| `version` | integer | Draft version number (starts at 1) |
+
+**Response**
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `version` | integer | Draft version number |
+| `title` | string or null | Draft title |
+| `content` | string | Full HTML content of the draft |
+| `wordCount` | integer | Word count |
+| `isFinal` | boolean | Whether this version is marked as final |
+| `createdAt` | integer | Unix timestamp |
+
+**Example request**
+
+```bash
+curl https://app.hotmetalapp.com/agents-api/v1/sessions/e7f8a9b0-c1d2-3e4f-5a6b-7c8d9e0f1a2b/drafts/1 \
+  -H "Authorization: Bearer hm_your_api_key"
+```
+
+**Example response**
+
+```json
+{
+  "data": {
+    "version": 1,
+    "title": "The Rise of AI Code Review",
+    "content": "<h1>The Rise of AI Code Review</h1><p>In 2026, AI-powered code review tools have become...</p>",
+    "wordCount": 1842,
+    "isFinal": true,
+    "createdAt": 1710345600
+  }
+}
+```
+
+---
+
+## Publish
+
+### POST /sessions/:id/publish
+
+Publishes a session's draft to the CMS and optionally shares it to LinkedIn and/or X (Twitter). Subject to weekly post quota limits.
+
+**Path parameters**
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `id` | string | Session ID (UUID) |
+
+**Request body**
+
+All fields are optional.
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `slug` | string | URL slug for the published post |
+| `author` | string | Author name (overrides publication default) |
+| `tags` | string | Comma-separated tags |
+| `excerpt` | string | Custom excerpt or meta description |
+| `draftVersion` | integer | Specific draft version to publish (defaults to latest) |
+| `publishToLinkedIn` | boolean | Share to LinkedIn after publishing. Defaults to `false`. |
+| `publishToTwitter` | boolean | Share to X (Twitter) after publishing. Defaults to `false`. |
+| `tweetText` | string | Custom tweet text (max ~256 characters to leave room for the appended link) |
+| `linkedInText` | string | Custom LinkedIn post text (max 3000 characters) |
+
+**Example request**
+
+```bash
+curl -X POST https://app.hotmetalapp.com/agents-api/v1/sessions/e7f8a9b0-c1d2-3e4f-5a6b-7c8d9e0f1a2b/publish \
+  -H "Authorization: Bearer hm_your_api_key" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "slug": "rise-of-ai-code-review",
+    "author": "Jane Smith",
+    "tags": "ai, code-review, developer-tools",
+    "publishToLinkedIn": true,
+    "linkedInText": "Just published a deep dive into how AI is transforming code review."
+  }'
+```
+
+**Example response**
+
+```json
+{
+  "data": {
+    "postId": "post_abc123",
+    "slug": "rise-of-ai-code-review",
+    "url": "https://looking-ahead.hotmetalapp.com/rise-of-ai-code-review",
+    "social": {
+      "linkedin": {
+        "success": true
+      }
+    }
+  }
+}
+```
+
+If social sharing partially fails, the post is still published and the response includes error details:
+
+```json
+{
+  "data": {
+    "postId": "post_abc123",
+    "slug": "rise-of-ai-code-review",
+    "url": "https://looking-ahead.hotmetalapp.com/rise-of-ai-code-review",
+    "social": {
+      "linkedin": { "success": true },
+      "twitter": { "success": false, "error": "Failed to post on X" }
+    }
+  }
+}
+```
+
+---
+
+## Scout
+
+### POST /publications/:id/scout/run
+
+Triggers the Content Scout to find new content ideas for a publication based on its topics. The scout runs asynchronously -- this endpoint queues the job and returns immediately.
+
+**Path parameters**
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `id` | string | Publication ID (UUID) |
+
+**Request body**
+
+The request body is optional. You can send an empty body or omit it entirely.
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `webhookUrl` | string | No | HTTPS URL to receive scout results when the run completes |
+
+**Example request**
+
+```bash
+curl -X POST https://app.hotmetalapp.com/agents-api/v1/publications/b3f1a2c4-5d6e-7f8a-9b0c-1d2e3f4a5b6c/scout/run \
+  -H "Authorization: Bearer hm_your_api_key" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "webhookUrl": "https://your-server.com/webhooks/scout"
+  }'
+```
+
+**Example response**
+
+```json
+{
+  "data": {
+    "queued": true
+  }
+}
+```
+
+You can also trigger a scout run without a webhook. New ideas will appear in `GET /publications/:id/ideas` once the run finishes:
+
+```bash
+curl -X POST https://app.hotmetalapp.com/agents-api/v1/publications/b3f1a2c4-5d6e-7f8a-9b0c-1d2e3f4a5b6c/scout/run \
+  -H "Authorization: Bearer hm_your_api_key"
+```

@@ -25,6 +25,8 @@ export interface AuthVariables {
 	userId: string
 	userEmail: string
 	userName: string
+	userFirstName: string
+	userLastName: string
 	userTier: string
 }
 
@@ -125,6 +127,8 @@ export const clerkAuth = createMiddleware<AuthEnv>(async (c, next) => {
 		c.set('userId', payload.sub)
 		c.set('userEmail', (payload.email as string) || '')
 		c.set('userName', extractName(payload))
+		c.set('userFirstName', (payload.first_name as string) || '')
+		c.set('userLastName', (payload.last_name as string) || '')
 
 		await next()
 	} catch (err) {

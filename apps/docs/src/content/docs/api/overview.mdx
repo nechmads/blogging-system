@@ -1,0 +1,174 @@
+---
+title: "API Overview"
+description: "Authenticate and interact with Hot Metal programmatically."
+section: "API Reference"
+order: 1
+---
+
+# API Overview
+
+The Hot Metal API gives you programmatic access to the platform. You can use it to build AI agent workflows, third-party integrations, and custom automation pipelines that create publications, generate drafts, publish posts, and more -- all without touching the dashboard.
+
+## Base URL
+
+All API endpoints are served under a single base URL:
+
+```
+https://app.hotmetalapp.com/agents-api/v1
+```
+
+Every path in this documentation is relative to that base. For example, `GET /me` means `GET https://app.hotmetalapp.com/agents-api/v1/me`.
+
+## Authentication
+
+Every request must include a Bearer token in the `Authorization` header. API keys start with the `hm_` prefix and are tied to your user account.
+
+```
+Authorization: Bearer hm_your_api_key_here
+```
+
+You can create and manage API keys from **Settings > API Keys** in the Hot Metal dashboard. Treat your API key like a password -- do not commit it to source control or share it publicly.
+
+If the key is missing or invalid, the API returns a `401 Unauthorized` response.
+
+## Request format
+
+- Send request bodies as JSON with the `Content-Type: application/json` header.
+- Use standard HTTP methods: `GET` to read, `POST` to create or trigger actions, `PATCH` to update, and `DELETE` to remove.
+- Path parameters are part of the URL (e.g., `/publications/:id`). Query parameters go in the query string (e.g., `?status=new`).
+
+## Response format
+
+All successful responses wrap the result in a `data` envelope:
+
+```json
+{
+  "data": {
+    "id": "b3f1a2c4-...",
+    "name": "My Publication"
+  }
+}
+```
+
+List endpoints return an array inside `data`:
+
+```json
+{
+  "data": [
+    { "id": "b3f1a2c4-...", "name": "My Publication" },
+    { "id": "e7d9f0a1-...", "name": "Another Publication" }
+  ]
+}
+```
+
+Error responses use a consistent shape with a human-readable message and a machine-readable code:
+
+```json
+{
+  "error": "Publication not found",
+  "code": "NOT_FOUND"
+}
+```
+
+Quota errors include additional fields to help you understand usage limits:
+
+```json
+{
+  "error": "Free plan allows up to 2 publications",
+  "code": "QUOTA_EXCEEDED",
+  "limit": 2,
+  "current": 2,
+  "upgradeEmail": "hello@hotmetalapp.com"
+}
+```
+
+## HTTP status codes
+
+| Status | Meaning |
+|--------|---------|
+| `200 OK` | Request succeeded. Response body contains the result. |
+| `201 Created` | Resource was created successfully. |
+| `202 Accepted` | Request accepted for asynchronous processing. The result will be delivered via webhook. |
+| `400 Bad Request` | Validation failed -- check the `error` message for details. |
+| `401 Unauthorized` | Missing or invalid API key. |
+| `403 Forbidden` | You do not have permission, or a quota limit has been reached. |
+| `404 Not Found` | The requested resource does not exist or does not belong to you. |
+| `429 Rate Limited` | Too many requests. Back off and retry after a short delay. |
+| `500 Internal Server Error` | Something went wrong on our end. |
+| `502 Bad Gateway` | An upstream service returned an error. |
+| `503 Service Unavailable` | A required service is not configured or reachable. |
+
+## Error codes
+
+Every error response includes a `code` field you can use for programmatic handling:
+
+| Code | Description |
+|------|-------------|
+| `NOT_FOUND` | Resource does not exist or is not accessible. |
+| `VALIDATION_ERROR` | Request body or parameters failed validation. |
+| `FORBIDDEN` | Action not allowed for your account. |
+| `QUOTA_EXCEEDED` | You have reached a plan limit. |
+| `INVALID_JSON` | The request body is not valid JSON. |
+| `GENERATION_FAILED` | The AI writer failed to produce a draft. |
+| `PUBLISH_FAILED` | Publishing the draft to the CMS failed. |
+| `SERVICE_UNAVAILABLE` | A backend service is not configured or reachable. |
+| `BAD_GATEWAY` | An upstream service returned an error. |
+| `INTERNAL_ERROR` | An unexpected server-side error occurred. |
+
+## Webhooks
+
+Some endpoints accept an optional `webhookUrl` parameter to enable asynchronous processing. When you provide a webhook URL:
+
+1. The API returns `202 Accepted` immediately with a session ID.
+2. Processing happens in the background.
+3. When the work completes (or fails), a `POST` request is sent to your webhook URL with the result.
+
+Webhook payloads are JSON objects with this structure:
+
+```json
+{
+  "event": "draft.ready",
+  "sessionId": "a1b2c3d4-...",
+  "publicationId": "e5f6g7h8-...",
+  "data": { ... },
+  "timestamp": "2026-03-13T15:30:00.000Z"
+}
+```
+
+Possible event types:
+
+| Event | Description |
+|-------|-------------|
+| `draft.ready` | A draft was generated and is ready for review. |
+| `draft.published` | A draft was generated and auto-published. |
+| `draft.failed` | Draft generation failed. The `error` field contains details. |
+| `scout.completed` | A content scout run finished. |
+
+### Webhook security
+
+Every webhook delivery is signed with HMAC-SHA256. The signature is sent in the `X-HotMetal-Signature` header as a hex string. To verify a webhook:
+
+1. Read the raw request body as a string.
+2. Compute the HMAC-SHA256 of the body using your API key as the secret.
+3. Compare the result to the value in `X-HotMetal-Signature` using a timing-safe comparison.
+
+Requests come from the `HotMetal-Webhook/1.0` user agent. If your endpoint returns a non-2xx status, Hot Metal retries the delivery up to 3 times with increasing delays.
+
+### Webhook URL requirements
+
+- Must use HTTPS.
+- Must not point to localhost, private IP addresses (10.x, 172.16-31.x, 192.168.x), or internal hostnames (.local, .internal).
+- Maximum URL length is 2048 characters.
+
+## CORS
+
+The API allows requests from all origins, so you can call it from browser-based applications.
+
+## Common patterns
+
+- **IDs** are UUID strings (e.g., `"b3f1a2c4-5d6e-7f8a-9b0c-1d2e3f4a5b6c"`).
+- **Timestamps** are Unix timestamps (integers) in most resource fields, and ISO 8601 strings in webhook payloads.
+- **Nullable fields** are returned as `null` when not set.
+- **List endpoints** return arrays directly in `data` without pagination cursors. Results are ordered by creation time.
+- **Delete endpoints** return `{ "data": { "deleted": true } }` on success.
+- **Ownership** is enforced automatically. You can only access resources that belong to your account.

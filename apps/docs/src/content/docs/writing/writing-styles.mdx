@@ -1,0 +1,96 @@
+---
+title: "Writing Styles"
+description: "Customize the AI writer's voice and tone."
+section: "Writing"
+order: 6
+---
+
+# Writing Styles
+
+Writing styles control how the AI writer sounds. They define the voice, tone, vocabulary, and personality that the AI uses when drafting your posts. Instead of getting generic, one-size-fits-all output, you can make the AI match your unique writing voice -- or create entirely different voices for different publications.
+
+## What a writing style includes
+
+Each writing style is built from a **system prompt** -- a set of detailed instructions that tell the AI how to write. When a style is created from a URL analysis (more on that below), it also includes structured details about:
+
+- **Voice characteristics** -- Person (first, second, third), formality level, and personality traits.
+- **Sentence structure** -- Notable sentence patterns and tendencies.
+- **Vocabulary preferences** -- Vocabulary level, favorite phrases, power words, and jargon usage.
+- **Rhetorical devices** -- Techniques like analogies, rhetorical questions, or repetition.
+- **Content approach** -- How the writer uses examples, data, storytelling, and humor.
+- **Do's and don'ts** -- Specific guidelines for what the AI should and shouldn't do.
+
+All of this feeds into the AI writer's instructions so it produces content that feels like *you* wrote it.
+
+## Built-in styles
+
+Hot Metal comes with prebuilt writing styles that are ready to use immediately:
+
+- **Conversational Expert** -- A knowledgeable but approachable voice that explains complex topics in a friendly, accessible way.
+- **Professional Analyst** -- A more formal, data-driven voice suited for industry analysis and thought leadership.
+
+Built-in styles can't be edited directly, but you can **duplicate** any of them to create a copy that you can then customize however you like.
+
+## Creating custom styles
+
+You can create custom styles in two ways:
+
+### Write a prompt manually
+
+Click **Create Style** on the Styles page and fill in the form:
+
+- **Name** -- A short label for the style (e.g. "My Blog Voice").
+- **Description** -- A brief summary of what the style sounds like.
+- **System prompt** -- Detailed instructions for the AI writer. Describe the tone, vocabulary, sentence structure, and any patterns to follow or avoid. This is the core of the style -- the more specific you are, the better the results.
+
+### Learn from a URL
+
+If you already have a blog with an established voice, Hot Metal can analyze it and generate a style automatically. In the Create Style modal:
+
+1. Switch to the **Learn from URL** tab.
+2. Paste the URL of a blog (e.g. `https://example.com/blog`).
+3. Click **Analyze**.
+
+The AI reads the blog's content, studies the writing patterns, and generates a complete style profile -- including the system prompt and all the structured fields listed above. This process can take a few minutes depending on the site.
+
+Once the analysis is complete, you're taken to the prompt tab where you can review and tweak the generated system prompt before saving. The style name is auto-filled based on the blog's domain, but you can change it to whatever you prefer.
+
+## Assigning styles to sessions
+
+There are several ways a writing style gets applied to a session:
+
+- **Publication default** -- When you set a writing style on a publication, every session linked to that publication uses it automatically.
+- **Per-session override** -- You can choose a specific style when creating a session, overriding whatever the publication default is.
+- **From the Styles page** -- Click the **Use** button on any style card to create a new writing session with that style applied immediately.
+
+### Style cascade
+
+The AI writer resolves which style to use in this order:
+
+1. **Session style** -- If the session was created with a specific style, that wins.
+2. **Publication style** -- If no session-level style is set, the publication's default style is used.
+3. **System default** -- If neither is set, the AI falls back to its built-in writing behavior.
+
+## Editing and managing styles
+
+On the Styles page, your custom styles appear under **My Styles**. For each style you can:
+
+- **Edit** -- Update the name, description, or system prompt.
+- **Duplicate** -- Create a copy of the style that you can modify independently.
+- **Delete** -- Permanently remove the style. You'll be asked to confirm first.
+
+Built-in styles can be duplicated but not edited or deleted.
+
+## Plan limits
+
+The number of custom styles you can create depends on your subscription tier:
+
+- **Creator** -- Built-in styles only. Custom styles are not available on this plan.
+- **Growth** -- Up to 5 custom writing styles, plus full access to the URL analysis feature.
+
+If you hit your limit, you'll see an upgrade prompt suggesting you move to a higher plan. Your usage count is displayed alongside the "My Styles" heading so you always know where you stand.
+
+## Next steps
+
+- [Start a writing session](/writing/sessions) to put your styles to work.
+- [Learn about the Chat Panel](/writing/chat-panel) to see how the AI writer uses your style during conversations.

@@ -1,0 +1,48 @@
+---
+/**
+ * Wraps numbered step content. Use with <ol> inside:
+ *
+ * <Steps>
+ * 1. First step
+ * 2. Second step
+ * </Steps>
+ */
+---
+
+<div class="steps-container my-4">
+  <slot />
+</div>
+
+<style>
+  .steps-container :global(ol) {
+    list-style: none;
+    padding-left: 0;
+    counter-reset: step-counter;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .steps-container :global(ol > li) {
+    position: relative;
+    padding-left: 2.5rem;
+    counter-increment: step-counter;
+  }
+
+  .steps-container :global(ol > li)::before {
+    content: counter(step-counter);
+    position: absolute;
+    left: 0;
+    top: 0;
+    display: flex;
+    height: 1.75rem;
+    width: 1.75rem;
+    align-items: center;
+    justify-content: center;
+    border-radius: 9999px;
+    background-color: var(--color-accent);
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: white;
+  }
+</style>
