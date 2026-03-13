@@ -1,6 +1,6 @@
 import type { Context } from 'hono'
 import type { AppEnv } from '../server'
-import { getTierLimits, isUnlimited, UPGRADE_EMAIL } from '@hotmetal/shared'
+import { getTierLimits, getTierDisplayName, isUnlimited, UPGRADE_EMAIL } from '@hotmetal/shared'
 
 function getWeekStartTimestamp(): number {
   const now = new Date()
@@ -42,11 +42,12 @@ export async function checkTopicQuota(
   const limits = getTierLimits(userTier)
   if (isUnlimited(limits.topicsPerPublication)) return null
 
+  const tierName = getTierDisplayName(userTier)
   const current = await c.env.DAL.countTopicsByPublication(pubId)
   if (current >= limits.topicsPerPublication) {
     return quotaExceededResponse(
       c,
-      `Free plan allows up to ${limits.topicsPerPublication} topics per publication`,
+      `${tierName} plan allows up to ${limits.topicsPerPublication} topics per publication`,
       limits.topicsPerPublication,
       current,
     )
@@ -66,12 +67,13 @@ export async function checkPostsPerWeekQuota(
   const limits = getTierLimits(userTier)
   if (isUnlimited(limits.postsPerWeekPerPublication)) return null
 
+  const tierName = getTierDisplayName(userTier)
   const weekStart = getWeekStartTimestamp()
   const current = await c.env.DAL.countCompletedSessionsForWeek(pubId, weekStart)
   if (current >= limits.postsPerWeekPerPublication) {
     return quotaExceededResponse(
       c,
-      `Free plan allows up to ${limits.postsPerWeekPerPublication} posts per week per publication`,
+      `${tierName} plan allows up to ${limits.postsPerWeekPerPublication} posts per week per publication`,
       limits.postsPerWeekPerPublication,
       current,
     )
@@ -91,12 +93,78 @@ export async function checkPublicationQuota(
   const limits = getTierLimits(userTier)
   if (isUnlimited(limits.publicationsPerUser)) return null
 
+  const tierName = getTierDisplayName(userTier)
   const current = await c.env.DAL.countPublicationsByUser(userId)
   if (current >= limits.publicationsPerUser) {
     return quotaExceededResponse(
       c,
-      `Free plan allows up to ${limits.publicationsPerUser} publications`,
+      `${tierName} plan allows up to ${limits.publicationsPerUser} publications`,
       limits.publicationsPerUser,
+      current,
+    )
+  }
+  return null
+}
+
+/**
+ * Check whether the scout schedule type is allowed for this tier.
+ * Returns a 403 response if times_per_day is not allowed, or null if OK.
+ */
+export function checkScoutScheduleQuota(
+  c: Context<AppEnv>,
+  scheduleType: string,
+  userTier: string,
+) {
+  const limits = getTierLimits(userTier)
+  if (scheduleType === 'times_per_day' && !limits.timesPerDayScheduleAllowed) {
+    const tierName = getTierDisplayName(userTier)
+    return c.json(
+      {
+        error: `${tierName} plan does not support multiple scout runs per day. Upgrade to Growth for this feature.`,
+        code: 'QUOTA_EXCEEDED' as const,
+        upgradeEmail: UPGRADE_EMAIL,
+      },
+      403,
+    )
+  }
+  return null
+}
+
+/**
+ * Check whether the user can create another custom writing style.
+ * Returns a 403 response if exceeded, or null if OK.
+ */
+export async function checkCustomStyleQuota(
+  c: Context<AppEnv>,
+  userId: string,
+  userTier: string,
+) {
+  const limits = getTierLimits(userTier)
+
+  // Prebuilt-only tier
+  if (limits.customWritingStylesLimit === 0) {
+    const tierName = getTierDisplayName(userTier)
+    return c.json(
+      {
+        error: `${tierName} plan only supports built-in writing styles. Upgrade to Growth to create custom styles.`,
+        code: 'QUOTA_EXCEEDED' as const,
+        limit: 0,
+        current: 0,
+        upgradeEmail: UPGRADE_EMAIL,
+      },
+      403,
+    )
+  }
+
+  if (isUnlimited(limits.customWritingStylesLimit)) return null
+
+  const current = await c.env.DAL.countCustomWritingStylesByUser(userId)
+  if (current >= limits.customWritingStylesLimit) {
+    const tierName = getTierDisplayName(userTier)
+    return quotaExceededResponse(
+      c,
+      `${tierName} plan allows up to ${limits.customWritingStylesLimit} custom writing styles`,
+      limits.customWritingStylesLimit,
       current,
     )
   }

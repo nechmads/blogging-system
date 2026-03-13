@@ -273,6 +273,14 @@ export async function updateWritingStyle(
 	return getWritingStyleById(db, id)
 }
 
+export async function countCustomWritingStylesByUser(db: D1Database, userId: string): Promise<number> {
+	const row = await db
+		.prepare('SELECT COUNT(*) as cnt FROM writing_styles WHERE user_id = ? AND is_prebuilt = 0')
+		.bind(userId)
+		.first<{ cnt: number }>()
+	return row?.cnt ?? 0
+}
+
 export async function deleteWritingStyle(db: D1Database, id: string): Promise<void> {
 	await db.batch([
 		db.prepare('UPDATE publications SET style_id = NULL WHERE style_id = ?').bind(id),

@@ -73,6 +73,18 @@ export const pages: PageConfig[] = [
     ogUrl: `${BASE_URL}/terms`,
   },
   {
+    path: "/pricing",
+    outputPath: "pricing/index.html",
+    component: "PricingContent",
+    title: "Pricing — Hot Metal",
+    description:
+      "Simple, transparent pricing. Start free and upgrade when you're ready for more publications, automation, and custom writing styles.",
+    ogTitle: "Pricing — Hot Metal",
+    ogDescription:
+      "Start free with the Creator plan. Upgrade to Growth for more publications, custom writing styles, and advanced automation.",
+    ogUrl: `${BASE_URL}/pricing`,
+  },
+  {
     path: "/blog",
     outputPath: "blog/index.html",
     component: "BlogContent",

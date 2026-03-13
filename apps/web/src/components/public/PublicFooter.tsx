@@ -24,6 +24,10 @@ export function PublicFooter() {
           Blog
         </Link>
         <Dot />
+        <Link to="/pricing" className="whitespace-nowrap hover:underline">
+          Pricing
+        </Link>
+        <Dot />
         <Link to="/privacy" className="whitespace-nowrap hover:underline">
           Privacy
         </Link>

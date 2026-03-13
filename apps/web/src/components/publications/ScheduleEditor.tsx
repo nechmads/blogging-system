@@ -32,6 +32,7 @@ interface ScheduleEditorProps {
   onAutoPublishModeChange: (mode: AutoPublishMode) => void;
   maxPostsPerWeek?: number;
   isPostsLimited?: boolean;
+  isTimesPerDayAllowed?: boolean;
 }
 
 export function ScheduleEditor({
@@ -46,6 +47,7 @@ export function ScheduleEditor({
   onAutoPublishModeChange,
   maxPostsPerWeek = 14,
   isPostsLimited = false,
+  isTimesPerDayAllowed = true,
 }: ScheduleEditorProps) {
   return (
     <div className="space-y-6">
@@ -152,31 +154,44 @@ export function ScheduleEditor({
         </div>
 
         <div className="space-y-2">
-          {SCHEDULE_TYPE_OPTIONS.map((opt) => (
-            <label
-              key={opt.value}
-              className={`flex cursor-pointer items-start gap-3 rounded-lg border p-3 transition-colors ${
-                state.scheduleType === opt.value
-                  ? "border-[var(--color-accent)] bg-[var(--color-accent-light)]"
-                  : "border-[var(--color-border-default)] hover:bg-[var(--color-bg-card)]"
-              }`}
-            >
-              <input
-                type="radio"
-                name="scheduleType"
-                value={opt.value}
-                checked={state.scheduleType === opt.value}
-                onChange={() => onChange({ scheduleType: opt.value })}
-                className="mt-0.5 accent-[var(--color-accent)]"
-              />
-              <div>
-                <span className="text-sm font-medium">{opt.label}</span>
-                <p className="mt-0.5 text-xs text-[var(--color-text-muted)]">
-                  {opt.description}
-                </p>
-              </div>
-            </label>
-          ))}
+          {SCHEDULE_TYPE_OPTIONS.map((opt) => {
+            const isDisabled = opt.value === "times_per_day" && !isTimesPerDayAllowed;
+            return (
+              <label
+                key={opt.value}
+                className={`flex items-start gap-3 rounded-lg border p-3 transition-colors ${
+                  isDisabled
+                    ? "cursor-not-allowed opacity-60 border-[var(--color-border-default)]"
+                    : state.scheduleType === opt.value
+                      ? "cursor-pointer border-[var(--color-accent)] bg-[var(--color-accent-light)]"
+                      : "cursor-pointer border-[var(--color-border-default)] hover:bg-[var(--color-bg-card)]"
+                }`}
+              >
+                <input
+                  type="radio"
+                  name="scheduleType"
+                  value={opt.value}
+                  checked={state.scheduleType === opt.value}
+                  onChange={() => !isDisabled && onChange({ scheduleType: opt.value })}
+                  disabled={isDisabled}
+                  className="mt-0.5 accent-[var(--color-accent)]"
+                />
+                <div>
+                  <span className="text-sm font-medium">{opt.label}</span>
+                  {isDisabled && (
+                    <span className="ml-2 rounded bg-[var(--color-bg-card)] px-1.5 py-0.5 text-xs font-medium text-[var(--color-text-muted)]">
+                      Growth plan
+                    </span>
+                  )}
+                  <p className="mt-0.5 text-xs text-[var(--color-text-muted)]">
+                    {isDisabled
+                      ? "Upgrade to the Growth plan to run the scout multiple times per day."
+                      : opt.description}
+                  </p>
+                </div>
+              </label>
+            );
+          })}
         </div>
 
         {state.scheduleType === "daily" && (

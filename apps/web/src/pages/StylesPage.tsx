@@ -1,11 +1,13 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useNavigate } from 'react-router'
+import { useValue } from '@legendapp/state/react'
 import { toast } from 'sonner'
 import { PlusIcon } from '@phosphor-icons/react'
 import { Loader } from '@/components/loader/Loader'
 import { Modal } from '@/components/modal/Modal'
 import { StyleCard } from '@/components/styles/StyleCard'
 import { StyleFormModal, type StyleSaveData } from '@/components/styles/StyleFormModal'
+import { UpgradePrompt } from '@/components/upgrade/UpgradePrompt'
 import {
   fetchStyles,
   createStyle,
@@ -13,7 +15,10 @@ import {
   deleteStyle,
   duplicateStyle,
   createSession,
+  QuotaExceededError,
 } from '@/lib/api'
+import { userStore$ } from '@/stores/user-store'
+import { getTierLimits, isUnlimited } from '@hotmetal/shared'
 import { AnalyticsManager, AnalyticsEvent } from '@hotmetal/analytics'
 import type { WritingStyle } from '@/lib/types'
 
@@ -22,6 +27,12 @@ export function StylesPage() {
   const [styles, setStyles] = useState<WritingStyle[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [showUpgradePrompt, setShowUpgradePrompt] = useState(false)
+  const [upgradeMessage, setUpgradeMessage] = useState('')
+
+  const currentUser = useValue(userStore$.user)
+  const tierLimits = getTierLimits(currentUser?.tier ?? 'creator')
+  const customStylesLimit = tierLimits.customWritingStylesLimit
 
   // Modal state
   const [showFormModal, setShowFormModal] = useState(false)
@@ -46,9 +57,20 @@ export function StylesPage() {
   }, [loadStyles])
 
   const prebuiltStyles = styles.filter((s) => s.isPrebuilt)
+
   const userStyles = styles.filter((s) => !s.isPrebuilt)
+  const canCreateStyle = customStylesLimit !== 0 && (isUnlimited(customStylesLimit) || userStyles.length < customStylesLimit)
 
   const handleCreate = () => {
+    if (!canCreateStyle) {
+      if (customStylesLimit === 0) {
+        setUpgradeMessage('Your Creator plan only supports built-in writing styles. Upgrade to Growth to create custom styles.')
+      } else {
+        setUpgradeMessage(`Your plan allows up to ${customStylesLimit} custom writing styles.`)
+      }
+      setShowUpgradePrompt(true)
+      return
+    }
     setEditingStyle(null)
     setShowFormModal(true)
   }
@@ -59,22 +81,31 @@ export function StylesPage() {
   }
 
   const handleSave = async (data: StyleSaveData) => {
-    if (editingStyle) {
-      const updated = await updateStyle(editingStyle.id, {
-        ...data,
-        description: data.description || null,
-      })
-      setStyles((prev) => prev.map((s) => (s.id === updated.id ? updated : s)))
-      toast.success('Style updated')
-      AnalyticsManager.track(AnalyticsEvent.StyleUpdated, { styleId: editingStyle.id })
-    } else {
-      const created = await createStyle({
-        ...data,
-        description: data.description || undefined,
-      })
-      setStyles((prev) => [...prev, created])
-      toast.success('Style created')
-      AnalyticsManager.track(AnalyticsEvent.StyleCreated, { styleId: created.id, method: 'manual' })
+    try {
+      if (editingStyle) {
+        const updated = await updateStyle(editingStyle.id, {
+          ...data,
+          description: data.description || null,
+        })
+        setStyles((prev) => prev.map((s) => (s.id === updated.id ? updated : s)))
+        toast.success('Style updated')
+        AnalyticsManager.track(AnalyticsEvent.StyleUpdated, { styleId: editingStyle.id })
+      } else {
+        const created = await createStyle({
+          ...data,
+          description: data.description || undefined,
+        })
+        setStyles((prev) => [...prev, created])
+        toast.success('Style created')
+        AnalyticsManager.track(AnalyticsEvent.StyleCreated, { styleId: created.id, method: 'manual' })
+      }
+    } catch (err) {
+      if (err instanceof QuotaExceededError) {
+        setUpgradeMessage(err.message)
+        setShowUpgradePrompt(true)
+      } else {
+        throw err
+      }
     }
   }
 
@@ -101,7 +132,12 @@ export function StylesPage() {
       toast.success(`Duplicated "${style.name}"`)
       AnalyticsManager.track(AnalyticsEvent.StyleDuplicated, { sourceStyleId: style.id, newStyleId: dup.id })
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Failed to duplicate')
+      if (err instanceof QuotaExceededError) {
+        setUpgradeMessage(err.message)
+        setShowUpgradePrompt(true)
+      } else {
+        toast.error(err instanceof Error ? err.message : 'Failed to duplicate')
+      }
     }
   }
 
@@ -170,9 +206,16 @@ export function StylesPage() {
 
       {/* User Styles */}
       <section>
-        <h3 className="mb-3 text-sm font-semibold text-[var(--color-text-muted)] uppercase tracking-wide">
-          My Styles
-        </h3>
+        <div className="mb-3 flex items-center justify-between">
+          <h3 className="text-sm font-semibold text-[var(--color-text-muted)] uppercase tracking-wide">
+            My Styles
+          </h3>
+          {customStylesLimit !== 0 && !isUnlimited(customStylesLimit) && (
+            <span className="text-xs text-[var(--color-text-muted)]">
+              {userStyles.length} / {customStylesLimit}
+            </span>
+          )}
+        </div>
         {userStyles.length === 0 ? (
           <div className="rounded-xl border border-dashed border-[var(--color-border-default)] p-8 text-center">
             <p className="text-base text-[var(--color-text-muted)]">
@@ -237,6 +280,13 @@ export function StylesPage() {
           </div>
         </div>
       </Modal>
+
+      {/* Upgrade Prompt */}
+      <UpgradePrompt
+        isOpen={showUpgradePrompt}
+        onClose={() => setShowUpgradePrompt(false)}
+        message={upgradeMessage}
+      />
     </div>
   )
 }

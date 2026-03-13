@@ -15,6 +15,7 @@ import * as publicationTokens from './domains/publication-tokens'
 import * as writingStyles from './domains/writing-styles'
 import * as notificationPreferences from './domains/notification-preferences'
 import * as comments from './domains/comments'
+import * as subscriptions from './domains/subscriptions'
 import * as userApiKeys from './domains/user-api-keys'
 
 import type {
@@ -41,6 +42,8 @@ import type {
 	CreateCommentInput,
 	CommentStatus,
 	ListCommentsFilters,
+	CreateSubscriptionInput,
+	UpdateSubscriptionInput,
 } from './types'
 
 // Re-export types for consumers
@@ -64,6 +67,7 @@ import type {
 	WritingStyle,
 	NotificationPreferences,
 	Comment,
+	Subscription,
 } from './types'
 
 /**
@@ -162,6 +166,15 @@ export interface DataLayerApi {
 	listCommentsByPublication(publicationId: string, filters?: ListCommentsFilters): Promise<Comment[]>
 	updateCommentStatus(id: string, status: CommentStatus): Promise<Comment | null>
 
+	// Subscriptions
+	getSubscriptionByUserId(userId: string): Promise<Subscription | null>
+	getSubscriptionByPaddleId(paddleSubscriptionId: string): Promise<Subscription | null>
+	createSubscription(data: CreateSubscriptionInput): Promise<Subscription>
+	updateSubscription(userId: string, data: UpdateSubscriptionInput): Promise<Subscription | null>
+
+	// Paddle Events
+	hasPaddleEvent(eventId: string): Promise<boolean>
+	recordPaddleEvent(eventId: string, eventType: string): Promise<void>
 	// User API Keys
 	createUserApiKey(userId: string, label?: string): Promise<UserApiKeyWithRawToken>
 	validateUserApiKey(rawToken: string): Promise<string | null>
@@ -175,6 +188,7 @@ export interface DataLayerApi {
 	listPrebuiltStyles(): Promise<WritingStyle[]>
 	updateWritingStyle(id: string, data: UpdateWritingStyleInput): Promise<WritingStyle | null>
 	deleteWritingStyle(id: string): Promise<void>
+	countCustomWritingStylesByUser(userId: string): Promise<number>
 }
 
 /**
@@ -283,6 +297,15 @@ export class DataLayer extends WorkerEntrypoint<Env> {
 	listCommentsByPublication(publicationId: string, filters?: ListCommentsFilters) { return comments.listCommentsByPublication(this.env.DB, publicationId, filters) }
 	updateCommentStatus(id: string, status: CommentStatus) { return comments.updateCommentStatus(this.env.DB, id, status) }
 
+	// ─── Subscriptions ────────────────────────────────────────────────
+	getSubscriptionByUserId(userId: string) { return subscriptions.getSubscriptionByUserId(this.env.DB, userId) }
+	getSubscriptionByPaddleId(paddleSubscriptionId: string) { return subscriptions.getSubscriptionByPaddleId(this.env.DB, paddleSubscriptionId) }
+	createSubscription(data: CreateSubscriptionInput) { return subscriptions.createSubscription(this.env.DB, data) }
+	updateSubscription(userId: string, data: UpdateSubscriptionInput) { return subscriptions.updateSubscription(this.env.DB, userId, data) }
+
+	// ─── Paddle Events ────────────────────────────────────────────────
+	hasPaddleEvent(eventId: string) { return subscriptions.hasPaddleEvent(this.env.DB, eventId) }
+	recordPaddleEvent(eventId: string, eventType: string) { return subscriptions.recordPaddleEvent(this.env.DB, eventId, eventType) }
 	// ─── User API Keys ─────────────────────────────────────────────────
 	createUserApiKey(userId: string, label?: string) { return userApiKeys.createUserApiKey(this.env.DB, userId, label) }
 	validateUserApiKey(rawToken: string) { return userApiKeys.validateUserApiKey(this.env.DB, rawToken) }
@@ -296,6 +319,7 @@ export class DataLayer extends WorkerEntrypoint<Env> {
 	listPrebuiltStyles() { return writingStyles.listPrebuiltStyles(this.env.DB) }
 	updateWritingStyle(id: string, data: UpdateWritingStyleInput) { return writingStyles.updateWritingStyle(this.env.DB, id, data) }
 	deleteWritingStyle(id: string) { return writingStyles.deleteWritingStyle(this.env.DB, id) }
+	countCustomWritingStylesByUser(userId: string) { return writingStyles.countCustomWritingStylesByUser(this.env.DB, userId) }
 }
 
 // Default HTTP handler — health check only

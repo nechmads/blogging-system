@@ -48,13 +48,13 @@ export const internalAuth = createMiddleware<AppEnv>(async (c, next) => {
 	c.set('userEmail', '')
 	c.set('userName', 'Internal')
 
-	// Fetch the user to get their tier (fallback to 'free' on transient DB errors)
+	// Fetch the user to get their tier (fallback to 'creator' on transient DB errors)
 	try {
 		const user = await c.env.DAL.getUserById(userId)
-		c.set('userTier', user?.tier ?? 'free')
+		c.set('userTier', user?.tier ?? 'creator')
 	} catch (err) {
 		console.warn('internalAuth tier lookup:', err instanceof Error ? err.message : err)
-		c.set('userTier', 'free')
+		c.set('userTier', 'creator')
 	}
 
 	await next()

@@ -586,3 +586,30 @@ export async function approveComment(id: string): Promise<AdminComment> {
 export async function deleteComment(id: string): Promise<void> {
   await request(`/api/comments/${id}`, { method: 'DELETE' })
 }
+
+// --- Billing ---
+
+export interface SubscriptionInfo {
+  hasSubscription: boolean
+  tier: string
+  status: string
+  paddleSubscriptionId?: string
+  currentPeriodEnd?: string
+  canceledAt?: string
+}
+
+export async function fetchSubscription(): Promise<SubscriptionInfo> {
+  return request<SubscriptionInfo>('/api/billing/subscription')
+}
+
+export async function createPortalSession(): Promise<{ url: string }> {
+  return request<{ url: string }>('/api/billing/portal-session', {
+    method: 'POST',
+  })
+}
+
+export async function cancelSubscription(): Promise<{ success: boolean; message: string }> {
+  return request<{ success: boolean; message: string }>('/api/billing/cancel', {
+    method: 'POST',
+  })
+}

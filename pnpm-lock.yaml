@@ -176,6 +176,9 @@ importers:
       '@legendapp/state':
         specifier: 3.0.0-beta.43
         version: 3.0.0-beta.43(react@19.2.4)
+      '@paddle/paddle-js':
+        specifier: ^1.6.2
+        version: 1.6.2
       '@phosphor-icons/react':
         specifier: ^2.1.10
         version: 2.1.10(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
@@ -1942,6 +1945,9 @@ packages:
 
   '@oslojs/encoding@1.1.0':
     resolution: {integrity: sha512-70wQhgYmndg4GCPxPPxPGevRKqTIJ2Nh4OkiMWmDAVYsTQ+Ta7Sq+rPevXyXGdzr30/qZBnyOalCszoMxlyldQ==}
+
+  '@paddle/paddle-js@1.6.2':
+    resolution: {integrity: sha512-nx1NXCzwWUWjf0iaRDiXZlfWgFjNZ6996RFcTDk0G0ggzrh514Zsc6jGTPOUGdLB1sYJXVQiKKoNLoKoXhH+sA==}
 
   '@phosphor-icons/react@2.1.10':
     resolution: {integrity: sha512-vt8Tvq8GLjheAZZYa+YG/pW7HDbov8El/MANW8pOAz4eGxrwhnbfrQZq0Cp4q8zBEu8NIhHdnr+r8thnfRSNYA==}
@@ -7582,6 +7588,8 @@ snapshots:
   '@opentelemetry/semantic-conventions@1.39.0': {}
 
   '@oslojs/encoding@1.1.0': {}
+
+  '@paddle/paddle-js@1.6.2': {}
 
   '@phosphor-icons/react@2.1.10(react-dom@19.2.4(react@19.2.4))(react@19.2.4)':
     dependencies:

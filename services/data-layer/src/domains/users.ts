@@ -1,5 +1,7 @@
 import type { User, CreateUserInput, UpdateUserInput } from '../types'
 
+const VALID_TIERS = new Set(['creator', 'growth', 'enterprise'])
+
 interface UserRow {
 	id: string
 	email: string
@@ -39,15 +41,15 @@ export async function getUserByEmail(db: D1Database, email: string): Promise<Use
 export async function createUser(db: D1Database, data: CreateUserInput): Promise<User> {
 	const now = Math.floor(Date.now() / 1000)
 	await db
-		.prepare('INSERT OR IGNORE INTO users (id, email, name, created_at, updated_at) VALUES (?, ?, ?, ?, ?)')
-		.bind(data.id, data.email, data.name, now, now)
+		.prepare('INSERT OR IGNORE INTO users (id, email, name, tier, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)')
+		.bind(data.id, data.email, data.name, 'creator', now, now)
 		.run()
 
 	return {
 		id: data.id,
 		email: data.email,
 		name: data.name,
-		tier: 'free',
+		tier: 'creator',
 		createdAt: now,
 		updatedAt: now,
 	}
@@ -64,6 +66,13 @@ export async function updateUser(db: D1Database, id: string, data: UpdateUserInp
 	if (data.name !== undefined) {
 		sets.push('name = ?')
 		bindings.push(data.name)
+	}
+	if (data.tier !== undefined) {
+		if (!VALID_TIERS.has(data.tier)) {
+			throw new Error(`Invalid tier: ${data.tier}`)
+		}
+		sets.push('tier = ?')
+		bindings.push(data.tier)
 	}
 
 	if (sets.length === 0) return getUserById(db, id)

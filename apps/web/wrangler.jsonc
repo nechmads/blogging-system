@@ -18,9 +18,6 @@
 
   "dev": {
     "port": 5173,
-    "vars": {
-      "IMAGE_BASE_URL": "",
-    },
   },
 
   // Durable Objects — one WriterAgent instance per writing session
@@ -83,6 +80,7 @@
     "CLERK_PUBLISHABLE_KEY": "pk_live_Y2xlcmsuaG90bWV0YWxhcHAuY29tJA",
     "CLERK_ISSUER": "https://clerk.hotmetalapp.com",
     "NOTIFICATION_EMAIL": "shahar@hotmetalapp.com",
+    "PADDLE_ENVIRONMENT": "production",
   },
 
   // SPA fallback — serve index.html for unmatched routes (client-side routing)
@@ -110,4 +108,6 @@
   // INTERNAL_API_KEY     — service-to-service auth (content-scout auto-write)
   // CLERK_WEBHOOK_SECRET — Svix signing secret for Clerk webhooks
   // RESEND_API_KEY       — Resend email API key
+  // PADDLE_API_KEY       — Paddle server-side API key
+  // PADDLE_WEBHOOK_SECRET — Paddle webhook signing secret
 }

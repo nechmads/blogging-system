@@ -1,12 +1,16 @@
 import { useCallback, useEffect, useState } from 'react'
 import { useSearchParams } from 'react-router'
 import { toast } from 'sonner'
-import { LinkedinLogoIcon, XLogoIcon, LinkIcon, TrashIcon, PlugIcon, BellIcon, KeyIcon } from '@phosphor-icons/react'
+import { useValue } from '@legendapp/state/react'
+import { LinkedinLogoIcon, XLogoIcon, LinkIcon, TrashIcon, PlugIcon, BellIcon, CreditCardIcon, KeyIcon } from '@phosphor-icons/react'
+import { getTierDisplayName } from '@hotmetal/shared'
 import { NotificationPreferences } from '@/components/settings/NotificationPreferences'
 import { ApiKeys } from '@/components/settings/ApiKeys'
 import { Loader } from '@/components/loader/Loader'
 import { Modal } from '@/components/modal/Modal'
-import { fetchConnections, deleteConnection, getLinkedInAuthUrl, getTwitterAuthUrl } from '@/lib/api'
+import { UpgradePrompt } from '@/components/upgrade/UpgradePrompt'
+import { fetchConnections, deleteConnection, getLinkedInAuthUrl, getTwitterAuthUrl, createPortalSession, cancelSubscription } from '@/lib/api'
+import { userStore$, loadSubscription, refreshSubscription } from '@/stores/user-store'
 import { AnalyticsManager, AnalyticsEvent } from '@hotmetal/analytics'
 import type { SocialConnection } from '@/lib/types'
 
@@ -43,6 +47,12 @@ export function SettingsPage() {
   const [connectingProvider, setConnectingProvider] = useState<string | null>(null)
   const [disconnectTarget, setDisconnectTarget] = useState<SocialConnection | null>(null)
   const [disconnecting, setDisconnecting] = useState(false)
+  const subscription = useValue(userStore$.subscription)
+  const subscriptionLoaded = useValue(userStore$.subscriptionLoaded)
+  const [portalLoading, setPortalLoading] = useState(false)
+  const [showCancelConfirm, setShowCancelConfirm] = useState(false)
+  const [canceling, setCanceling] = useState(false)
+  const [showUpgradePrompt, setShowUpgradePrompt] = useState(false)
 
   const loadConnections = useCallback(async () => {
     try {
@@ -57,6 +67,7 @@ export function SettingsPage() {
 
   useEffect(() => {
     loadConnections()
+    loadSubscription()
   }, [loadConnections])
 
   // Handle OAuth redirect success/error
@@ -116,6 +127,31 @@ export function SettingsPage() {
     }
   }
 
+  const handleManageBilling = async () => {
+    setPortalLoading(true)
+    try {
+      const { url } = await createPortalSession()
+      window.location.href = url
+    } catch {
+      toast.error('Failed to open billing portal')
+      setPortalLoading(false)
+    }
+  }
+
+  const handleCancelSubscription = async () => {
+    setCanceling(true)
+    try {
+      await cancelSubscription()
+      toast.success('Your subscription will be canceled at the end of the billing period')
+      setShowCancelConfirm(false)
+      refreshSubscription()
+    } catch {
+      toast.error('Failed to cancel subscription')
+    } finally {
+      setCanceling(false)
+    }
+  }
+
   const linkedinConnection = connections.find((c) => c.provider === 'linkedin')
   const twitterConnection = connections.find((c) => c.provider === 'twitter')
 
@@ -127,6 +163,113 @@ export function SettingsPage() {
           Manage your account settings and integrations.
         </p>
       </div>
+
+      {/* Billing Section */}
+      <section>
+        <div className="mb-4">
+          <h2 className="flex items-center gap-2 text-lg font-semibold text-[var(--color-text-primary)]">
+            <CreditCardIcon size={20} />
+            Plan & Billing
+          </h2>
+          <p className="mt-0.5 text-sm text-[var(--color-text-muted)]">
+            Manage your subscription and billing details.
+          </p>
+        </div>
+
+        {!subscriptionLoaded ? (
+          <div className="flex items-center justify-center py-8">
+            <Loader size={20} />
+          </div>
+        ) : (
+          <div className="rounded-xl border border-[var(--color-border-default)] bg-[var(--color-bg-card)] p-5">
+            <div className="flex items-center justify-between">
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="text-base font-semibold text-[var(--color-text-primary)]">
+                    {getTierDisplayName(subscription?.tier ?? 'creator')} Plan
+                  </span>
+                  {subscription?.status === 'active' && (
+                    <span className="rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-700 dark:bg-green-900/30 dark:text-green-400">
+                      Active
+                    </span>
+                  )}
+                  {subscription?.status === 'canceled' && (
+                    <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">
+                      Cancels {subscription.currentPeriodEnd
+                        ? new Date(subscription.currentPeriodEnd).toLocaleDateString()
+                        : 'soon'}
+                    </span>
+                  )}
+                  {subscription?.status === 'past_due' && (
+                    <span className="rounded-full bg-red-100 px-2 py-0.5 text-xs font-medium text-red-700 dark:bg-red-900/30 dark:text-red-400">
+                      Past Due
+                    </span>
+                  )}
+                  {subscription?.status === 'trialing' && (
+                    <span className="rounded-full bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">
+                      Trial
+                    </span>
+                  )}
+                  {subscription?.status === 'paused' && (
+                    <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-700 dark:bg-gray-800 dark:text-gray-400">
+                      Paused
+                    </span>
+                  )}
+                </div>
+                {subscription?.hasSubscription && subscription.currentPeriodEnd && subscription.status === 'active' && (
+                  <p className="mt-1 text-xs text-[var(--color-text-muted)]">
+                    Next billing date: {new Date(subscription.currentPeriodEnd).toLocaleDateString()}
+                  </p>
+                )}
+                {!subscription?.hasSubscription && (
+                  <p className="mt-1 text-xs text-[var(--color-text-muted)]">
+                    Free forever — upgrade anytime for more power.
+                  </p>
+                )}
+              </div>
+
+              <div className="flex items-center gap-2">
+                {subscription?.hasSubscription ? (
+                  <>
+                    <button
+                      type="button"
+                      onClick={handleManageBilling}
+                      disabled={portalLoading}
+                      className="flex items-center gap-1.5 rounded-lg bg-[var(--color-accent)] px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-[var(--color-accent-hover)] disabled:opacity-50"
+                    >
+                      {portalLoading ? (
+                        <>
+                          <Loader size={12} />
+                          Opening...
+                        </>
+                      ) : (
+                        'Manage Billing'
+                      )}
+                    </button>
+                    {subscription.status === 'active' && (
+                      <button
+                        type="button"
+                        onClick={() => setShowCancelConfirm(true)}
+                        className="rounded-lg border border-[var(--color-border-default)] px-3 py-1.5 text-xs font-medium text-[var(--color-text-muted)] transition-colors hover:bg-[var(--color-bg-primary)]"
+                      >
+                        Cancel Plan
+                      </button>
+                    )}
+                  </>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => setShowUpgradePrompt(true)}
+                    className="flex items-center gap-1.5 rounded-lg bg-[var(--color-accent)] px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-[var(--color-accent-hover)]"
+                  >
+                    Upgrade to Growth
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+      </section>
 
       {/* Connections Section */}
       <section>
@@ -285,6 +428,51 @@ export function SettingsPage() {
         <NotificationPreferences />
       </section>
 
+      {/* Cancel subscription confirmation modal */}
+      <Modal isOpen={showCancelConfirm} onClose={() => setShowCancelConfirm(false)}>
+        <div className="space-y-4 p-5">
+          <h3 className="text-lg font-semibold text-[var(--color-text-primary)]">
+            Cancel your Growth plan?
+          </h3>
+          <p className="text-sm text-[var(--color-text-muted)]">
+            Your subscription will remain active until the end of your current billing period.
+            After that, your account will revert to the free Creator plan.
+          </p>
+          <p className="text-sm text-[var(--color-text-muted)]">
+            Your content will not be deleted, but some features may be limited.
+          </p>
+          <div className="flex justify-end gap-2">
+            <button
+              type="button"
+              onClick={() => setShowCancelConfirm(false)}
+              className="rounded-lg border border-[var(--color-border-default)] px-4 py-2 text-sm font-medium text-[var(--color-text-primary)] transition-colors hover:bg-[var(--color-bg-card)]"
+            >
+              Keep Plan
+            </button>
+            <button
+              type="button"
+              onClick={handleCancelSubscription}
+              disabled={canceling}
+              className="flex items-center gap-1.5 rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-red-700 disabled:opacity-50"
+            >
+              {canceling ? (
+                <>
+                  <Loader size={14} />
+                  Canceling...
+                </>
+              ) : (
+                'Cancel Plan'
+              )}
+            </button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Upgrade prompt */}
+      <UpgradePrompt
+        isOpen={showUpgradePrompt}
+        onClose={() => setShowUpgradePrompt(false)}
+      />
       {/* API Keys Section */}
       <section>
         <div className="mb-4">

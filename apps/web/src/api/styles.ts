@@ -2,6 +2,7 @@ import { Hono } from 'hono'
 import { AlexanderApi } from '@hotmetal/shared'
 import { composeStylePrompt } from '../lib/writing'
 import { hasStructuredFields, type ToneGuideFields } from '../lib/tone-guide'
+import { checkCustomStyleQuota } from '../lib/quota'
 import type { AppEnv } from '../server'
 
 const styles = new Hono<AppEnv>()
@@ -16,6 +17,11 @@ styles.get('/styles', async (c) => {
 /** Create a new writing style. */
 styles.post('/styles', async (c) => {
   const userId = c.get('userId')
+  const userTier = c.get('userTier')
+
+  const styleQuotaError = await checkCustomStyleQuota(c, userId, userTier)
+  if (styleQuotaError) return styleQuotaError
+
   const body = await c.req.json<{
     name?: string
     description?: string
@@ -117,6 +123,11 @@ styles.post('/styles/analyze-url', async (c) => {
 /** Duplicate a style into the user's collection. */
 styles.post('/styles/:id/duplicate', async (c) => {
   const userId = c.get('userId')
+  const userTier = c.get('userTier')
+
+  const styleQuotaError = await checkCustomStyleQuota(c, userId, userTier)
+  if (styleQuotaError) return styleQuotaError
+
   const source = await c.env.DAL.getWritingStyleById(c.req.param('id'))
 
   if (!source) return c.json({ error: 'Style not found' }, 404)

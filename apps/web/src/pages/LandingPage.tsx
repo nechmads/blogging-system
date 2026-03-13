@@ -12,6 +12,7 @@ import {
   PaintBrushIcon,
   RssIcon,
   LightningIcon,
+  ArrowRightIcon,
   RobotIcon,
 } from "@phosphor-icons/react";
 import { PublicNavbar } from "@/components/public/PublicNavbar";
@@ -228,6 +229,88 @@ export function LandingContent() {
               from one source of truth.
             </p>
           </div>
+        </div>
+      </section>
+
+      {/* Pricing teaser */}
+      <section className="mx-auto max-w-4xl px-6 pb-24">
+        <div className="mb-8">
+          <h3 className="text-xl font-bold tracking-tight text-[var(--color-text-primary)] md:text-2xl">
+            Simple pricing, no surprises
+          </h3>
+          <p className="mt-2 max-w-2xl text-base leading-relaxed text-[var(--color-text-muted)]">
+            Start free and upgrade when you need more power. No credit card required.
+          </p>
+        </div>
+
+        <div className="grid gap-4 md:grid-cols-2">
+          {/* Creator */}
+          <div className="rounded-xl border border-[var(--color-border-default)] bg-[var(--color-bg-card)] p-6">
+            <span className="mb-3 inline-flex rounded-full bg-[var(--color-bg-primary)] px-3 py-1 text-xs font-semibold text-[var(--color-text-muted)]">
+              Free forever
+            </span>
+            <h4 className="text-lg font-bold text-[var(--color-text-primary)]">Creator</h4>
+            <p className="mt-1 text-3xl font-extrabold tracking-tight text-[var(--color-text-primary)]">
+              $0<span className="text-sm font-normal text-[var(--color-text-muted)]"> / month</span>
+            </p>
+            <ul className="mt-4 space-y-2 text-sm text-[var(--color-text-muted)]">
+              <li className="flex items-center gap-2">
+                <CheckCircleIcon size={16} weight="fill" className="shrink-0 text-[var(--color-accent)]" />
+                2 publications
+              </li>
+              <li className="flex items-center gap-2">
+                <CheckCircleIcon size={16} weight="fill" className="shrink-0 text-[var(--color-accent)]" />
+                3 auto-published posts/week
+              </li>
+              <li className="flex items-center gap-2">
+                <CheckCircleIcon size={16} weight="fill" className="shrink-0 text-[var(--color-accent)]" />
+                Unlimited AI writing sessions
+              </li>
+              <li className="flex items-center gap-2">
+                <CheckCircleIcon size={16} weight="fill" className="shrink-0 text-[var(--color-accent)]" />
+                Social publishing + RSS feeds
+              </li>
+            </ul>
+          </div>
+
+          {/* Growth */}
+          <div className="rounded-xl border-2 border-[var(--color-accent)] bg-[var(--color-bg-card)] p-6 shadow-lg shadow-[var(--color-accent)]/10">
+            <span className="mb-3 inline-flex rounded-full bg-[var(--color-accent)] px-3 py-1 text-xs font-semibold text-white">
+              Most Popular
+            </span>
+            <h4 className="text-lg font-bold text-[var(--color-text-primary)]">Growth</h4>
+            <p className="mt-1 text-3xl font-extrabold tracking-tight text-[var(--color-text-primary)]">
+              Starts at $9<span className="text-sm font-normal text-[var(--color-text-muted)]"> / month</span>
+            </p>
+            <ul className="mt-4 space-y-2 text-sm text-[var(--color-text-muted)]">
+              <li className="flex items-center gap-2">
+                <CheckCircleIcon size={16} weight="fill" className="shrink-0 text-[var(--color-accent)]" />
+                5 publications
+              </li>
+              <li className="flex items-center gap-2">
+                <CheckCircleIcon size={16} weight="fill" className="shrink-0 text-[var(--color-accent)]" />
+                10 auto-published posts/week
+              </li>
+              <li className="flex items-center gap-2">
+                <CheckCircleIcon size={16} weight="fill" className="shrink-0 text-[var(--color-accent)]" />
+                Up to 5 custom writing styles
+              </li>
+              <li className="flex items-center gap-2">
+                <CheckCircleIcon size={16} weight="fill" className="shrink-0 text-[var(--color-accent)]" />
+                Unlimited topics + priority support
+              </li>
+            </ul>
+          </div>
+        </div>
+
+        <div className="mt-6 text-center">
+          <Link
+            to="/pricing"
+            className="inline-flex items-center gap-1.5 text-base font-semibold text-[var(--color-accent)] transition-colors hover:underline"
+          >
+            See full plan comparison
+            <ArrowRightIcon size={16} weight="bold" />
+          </Link>
         </div>
       </section>
 
