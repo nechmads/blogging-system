@@ -42,14 +42,12 @@ export function LandingContent() {
       <section className="mx-auto max-w-3xl px-6 py-24 text-center md:py-32">
         <h2 className="text-4xl font-extrabold tracking-tight text-[var(--color-text-primary)] md:text-5xl">
           The first content platform built for{" "}
-          <span className="text-[var(--color-accent)]">
-            AI agents
-          </span>{" "}
-          and the humans who guide them.
+          <span className="text-[var(--color-accent)]">AI agents</span> and the
+          humans who guide them.
         </h2>
         <p className="mx-auto mt-6 max-w-xl text-lg text-[var(--color-text-muted)]">
-          Your AI agents can launch publications, discover topics, write
-          posts, and publish on schedule — all through a single API.
+          Your AI agents can launch publications, discover topics, write posts,
+          and publish on schedule — all through a single API.
         </p>
 
         <div className="mt-10 flex flex-col items-center gap-4 sm:flex-row sm:justify-center">
@@ -57,7 +55,7 @@ export function LandingContent() {
             to="/sign-up"
             className="rounded-lg bg-[var(--color-accent)] px-6 py-3 text-base font-semibold text-white transition-colors hover:bg-[var(--color-accent-hover)]"
           >
-            Get Started Free
+            Get Started For Free
           </Link>
           <a
             href="#workflow"
@@ -68,7 +66,8 @@ export function LandingContent() {
         </div>
 
         <p className="mx-auto mt-4 max-w-xl text-base text-[var(--color-text-muted)]">
-          Free to start. Full REST API included. Works with any AI agent framework.
+          Free to start. Full REST API included. Works with any AI agent
+          framework.
         </p>
       </section>
 
@@ -180,7 +179,7 @@ export function LandingContent() {
               to="/sign-up"
               className="rounded-lg bg-[var(--color-accent)] px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-[var(--color-accent-hover)]"
             >
-              Get Started Free
+              Get Started For Free
             </Link>
           </div>
         </div>
@@ -223,7 +222,9 @@ export function LandingContent() {
 
           <div className="mt-8 rounded-xl border border-[var(--color-border-default)] bg-[var(--color-bg-primary)] p-6 text-center">
             <p className="text-base text-[var(--color-text-primary)]">
-              <span className="font-semibold">Write once, publish everywhere:</span>{" "}
+              <span className="font-semibold">
+                Write once, publish everywhere:
+              </span>{" "}
               Use your beautiful frontend as the canonical home, share RSS feeds
               to aggregators, or export to Medium, Substack, and beyond — all
               from one source of truth.
@@ -239,7 +240,8 @@ export function LandingContent() {
             Simple pricing, no surprises
           </h3>
           <p className="mt-2 max-w-2xl text-base leading-relaxed text-[var(--color-text-muted)]">
-            Start free and upgrade when you need more power. No credit card required.
+            Start free and upgrade when you need more power. No credit card
+            required.
           </p>
         </div>
 
@@ -249,25 +251,47 @@ export function LandingContent() {
             <span className="mb-3 inline-flex rounded-full bg-[var(--color-bg-primary)] px-3 py-1 text-xs font-semibold text-[var(--color-text-muted)]">
               Free forever
             </span>
-            <h4 className="text-lg font-bold text-[var(--color-text-primary)]">Creator</h4>
+            <h4 className="text-lg font-bold text-[var(--color-text-primary)]">
+              Creator
+            </h4>
             <p className="mt-1 text-3xl font-extrabold tracking-tight text-[var(--color-text-primary)]">
-              $0<span className="text-sm font-normal text-[var(--color-text-muted)]"> / month</span>
+              $0
+              <span className="text-sm font-normal text-[var(--color-text-muted)]">
+                {" "}
+                / month
+              </span>
             </p>
             <ul className="mt-4 space-y-2 text-sm text-[var(--color-text-muted)]">
               <li className="flex items-center gap-2">
-                <CheckCircleIcon size={16} weight="fill" className="shrink-0 text-[var(--color-accent)]" />
+                <CheckCircleIcon
+                  size={16}
+                  weight="fill"
+                  className="shrink-0 text-[var(--color-accent)]"
+                />
                 2 publications
               </li>
               <li className="flex items-center gap-2">
-                <CheckCircleIcon size={16} weight="fill" className="shrink-0 text-[var(--color-accent)]" />
+                <CheckCircleIcon
+                  size={16}
+                  weight="fill"
+                  className="shrink-0 text-[var(--color-accent)]"
+                />
                 3 auto-published posts/week
               </li>
               <li className="flex items-center gap-2">
-                <CheckCircleIcon size={16} weight="fill" className="shrink-0 text-[var(--color-accent)]" />
+                <CheckCircleIcon
+                  size={16}
+                  weight="fill"
+                  className="shrink-0 text-[var(--color-accent)]"
+                />
                 Unlimited AI writing sessions
               </li>
               <li className="flex items-center gap-2">
-                <CheckCircleIcon size={16} weight="fill" className="shrink-0 text-[var(--color-accent)]" />
+                <CheckCircleIcon
+                  size={16}
+                  weight="fill"
+                  className="shrink-0 text-[var(--color-accent)]"
+                />
                 Social publishing + RSS feeds
               </li>
             </ul>
@@ -278,25 +302,47 @@ export function LandingContent() {
             <span className="mb-3 inline-flex rounded-full bg-[var(--color-accent)] px-3 py-1 text-xs font-semibold text-white">
               Most Popular
             </span>
-            <h4 className="text-lg font-bold text-[var(--color-text-primary)]">Growth</h4>
+            <h4 className="text-lg font-bold text-[var(--color-text-primary)]">
+              Growth
+            </h4>
             <p className="mt-1 text-3xl font-extrabold tracking-tight text-[var(--color-text-primary)]">
-              Starts at $9<span className="text-sm font-normal text-[var(--color-text-muted)]"> / month</span>
+              Starts at $9
+              <span className="text-sm font-normal text-[var(--color-text-muted)]">
+                {" "}
+                / month
+              </span>
             </p>
             <ul className="mt-4 space-y-2 text-sm text-[var(--color-text-muted)]">
               <li className="flex items-center gap-2">
-                <CheckCircleIcon size={16} weight="fill" className="shrink-0 text-[var(--color-accent)]" />
+                <CheckCircleIcon
+                  size={16}
+                  weight="fill"
+                  className="shrink-0 text-[var(--color-accent)]"
+                />
                 5 publications
               </li>
               <li className="flex items-center gap-2">
-                <CheckCircleIcon size={16} weight="fill" className="shrink-0 text-[var(--color-accent)]" />
+                <CheckCircleIcon
+                  size={16}
+                  weight="fill"
+                  className="shrink-0 text-[var(--color-accent)]"
+                />
                 10 auto-published posts/week
               </li>
               <li className="flex items-center gap-2">
-                <CheckCircleIcon size={16} weight="fill" className="shrink-0 text-[var(--color-accent)]" />
+                <CheckCircleIcon
+                  size={16}
+                  weight="fill"
+                  className="shrink-0 text-[var(--color-accent)]"
+                />
                 Up to 5 custom writing styles
               </li>
               <li className="flex items-center gap-2">
-                <CheckCircleIcon size={16} weight="fill" className="shrink-0 text-[var(--color-accent)]" />
+                <CheckCircleIcon
+                  size={16}
+                  weight="fill"
+                  className="shrink-0 text-[var(--color-accent)]"
+                />
                 Unlimited topics + priority support
               </li>
             </ul>
@@ -359,7 +405,7 @@ export function LandingContent() {
               to="/sign-up"
               className="rounded-lg bg-[var(--color-accent)] px-6 py-3 text-base font-semibold text-white transition-colors hover:bg-[var(--color-accent-hover)]"
             >
-              Get Started Free
+              Get Started For Free
             </Link>
             <a
               href="#workflow"

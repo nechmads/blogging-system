@@ -34,7 +34,7 @@ function parseRssFeed(xml: string): BlogPost[] {
     title: item.querySelector("title")?.textContent ?? "",
     link: item.querySelector("link")?.textContent ?? "",
     description: stripHtml(
-      item.querySelector("description")?.textContent ?? ""
+      item.querySelector("description")?.textContent ?? "",
     ),
     pubDate: item.querySelector("pubDate")?.textContent ?? "",
   }));
@@ -128,7 +128,7 @@ export function BlogContent() {
               to="/sign-up"
               className="rounded-lg bg-[var(--color-accent)] px-6 py-3 text-base font-semibold text-white transition-colors hover:bg-[var(--color-accent-hover)]"
             >
-              Get Started Free
+              Get Started For Free
             </Link>
             <Link
               to="/"

@@ -309,11 +309,7 @@ export function FaqPage() {
       faqs: [
         {
           question: "How do I get access?",
-          answer: (
-            <>
-              Sign up for free and start publishing right away.
-            </>
-          ),
+          answer: <>Sign up for free and start publishing right away.</>,
         },
         {
           question: "Is there pricing information?",
@@ -401,7 +397,7 @@ export function FaqPage() {
               to="/sign-up"
               className="rounded-lg bg-[var(--color-accent)] px-6 py-3 text-base font-semibold text-white transition-colors hover:bg-[var(--color-accent-hover)]"
             >
-              Get Started Free
+              Get Started For Free
             </Link>
             <Link
               to="/"

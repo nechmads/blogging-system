@@ -34,14 +34,15 @@ export function AboutPage() {
             About Hot Metal
           </h1>
           <p className="mt-3 max-w-2xl text-base leading-relaxed text-[var(--color-text-muted)]">
-            Hot Metal was built out of a personal need: I’m a serial entrepreneur, I work long
-            hours, and I never managed to keep a consistent content habit — even though I knew it
-            mattered for brand, trust, and momentum.
+            Hot Metal was built out of a personal need: I’m a serial
+            entrepreneur, I work long hours, and I never managed to keep a
+            consistent content habit — even though I knew it mattered for brand,
+            trust, and momentum.
           </p>
           <p className="mt-4 max-w-2xl text-base leading-relaxed text-[var(--color-text-muted)]">
-            So I built the thing I wanted: a content engine that helps you show up consistently
-            with high-quality posts — with a human in the loop, or fully automated when you’re
-            ready.
+            So I built the thing I wanted: a content engine that helps you show
+            up consistently with high-quality posts — with a human in the loop,
+            or fully automated when you’re ready.
           </p>
 
           <p className="mt-5 text-base font-semibold text-[var(--color-text-primary)]">
@@ -58,12 +59,13 @@ export function AboutPage() {
               The problem we’re solving
             </h2>
             <p className="mt-2 text-base leading-relaxed text-[var(--color-text-muted)]">
-              Writing one great post isn’t the hard part. Writing consistently — while running a
-              company, shipping product, and living a life — is the hard part.
+              Writing one great post isn’t the hard part. Writing consistently —
+              while running a company, shipping product, and living a life — is
+              the hard part.
             </p>
             <p className="mt-3 text-base leading-relaxed text-[var(--color-text-muted)]">
-              Hot Metal is designed around a simple idea: consistency builds authority, and
-              authority compounds.
+              Hot Metal is designed around a simple idea: consistency builds
+              authority, and authority compounds.
             </p>
           </div>
 
@@ -82,13 +84,15 @@ export function AboutPage() {
               <li className="flex gap-2">
                 <span className="mt-1 h-1.5 w-1.5 flex-none rounded-full bg-[var(--color-accent)]" />
                 <span>
-                  Scout researches the web and brings you fresh ideas and angles.
+                  Scout researches the web and brings you fresh ideas and
+                  angles.
                 </span>
               </li>
               <li className="flex gap-2">
                 <span className="mt-1 h-1.5 w-1.5 flex-none rounded-full bg-[var(--color-accent)]" />
                 <span>
-                  Write by talking to a professional writer agent (with your style).
+                  Write by talking to a professional writer agent (with your
+                  style).
                 </span>
               </li>
               <li className="flex gap-2">
@@ -100,7 +104,8 @@ export function AboutPage() {
               <li className="flex gap-2">
                 <span className="mt-1 h-1.5 w-1.5 flex-none rounded-full bg-[var(--color-accent)]" />
                 <span>
-                  Run multiple publications, with RSS/Atom feeds for distribution.
+                  Run multiple publications, with RSS/Atom feeds for
+                  distribution.
                 </span>
               </li>
             </ul>
@@ -174,7 +179,7 @@ export function AboutPage() {
               to="/sign-up"
               className="rounded-lg bg-[var(--color-accent)] px-6 py-3 text-base font-semibold text-white transition-colors hover:bg-[var(--color-accent-hover)]"
             >
-              Get Started Free
+              Get Started For Free
             </Link>
             <Link
               to="/faq"
@@ -212,4 +217,3 @@ function MiniCard({
     </div>
   );
 }
-

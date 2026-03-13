@@ -1,65 +1,65 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
-import { Link, useNavigate, useSearchParams } from 'react-router'
-import { useUser } from '@clerk/clerk-react'
-import { CheckCircleIcon } from '@phosphor-icons/react'
-import { toast } from 'sonner'
-import { PublicNavbar } from '@/components/public/PublicNavbar'
-import { PublicFooter } from '@/components/public/PublicFooter'
-import { usePaddle } from '@/hooks/usePaddle'
-import { PADDLE_PRICE_IDS } from '@/lib/paddle-config'
+import { useCallback, useEffect, useRef, useState } from "react";
+import { Link, useNavigate, useSearchParams } from "react-router";
+import { useUser } from "@clerk/clerk-react";
+import { CheckCircleIcon } from "@phosphor-icons/react";
+import { toast } from "sonner";
+import { PublicNavbar } from "@/components/public/PublicNavbar";
+import { PublicFooter } from "@/components/public/PublicFooter";
+import { usePaddle } from "@/hooks/usePaddle";
+import { PADDLE_PRICE_IDS } from "@/lib/paddle-config";
 
 /* ------------------------------------------------------------------ */
 /*  Feature lists                                                      */
 /* ------------------------------------------------------------------ */
 
 const CREATOR_FEATURES = [
-  '2 publications',
-  '3 topics per publication',
-  '3 auto-published posts/week',
-  'Built-in writing styles',
-  'Unlimited AI writing sessions',
-  'Unlimited social publishing',
-  'AI image generation',
-  'All templates',
-  'RSS/Atom feeds',
-  'Reader comments',
-]
+  "2 publications",
+  "3 topics per publication",
+  "3 auto-published posts/week",
+  "Built-in writing styles",
+  "Unlimited AI writing sessions",
+  "Unlimited social publishing",
+  "AI image generation",
+  "All templates",
+  "RSS/Atom feeds",
+  "Reader comments",
+];
 
 const GROWTH_FEATURES = [
-  '5 publications',
-  'Unlimited topics',
-  '10 auto-published posts/week',
-  'All scout schedules (including multiple times/day)',
-  'Up to 5 custom writing styles',
-  'Priority support',
-]
+  "5 publications",
+  "Unlimited topics",
+  "10 auto-published posts/week",
+  "All scout schedules (including multiple times/day)",
+  "Up to 5 custom writing styles",
+  "Priority support",
+];
 
 interface EnterpriseFeature {
-  label: string
-  planned?: boolean
+  label: string;
+  planned?: boolean;
 }
 
 const ENTERPRISE_FEATURES: EnterpriseFeature[] = [
-  { label: 'Unlimited publications' },
-  { label: 'Unlimited posts/week' },
-  { label: 'Unlimited writing styles' },
-  { label: 'Custom domain', planned: true },
-  { label: 'Team collaboration', planned: true },
-  { label: 'Custom templates', planned: true },
-  { label: 'API access', planned: true },
-  { label: 'SSO', planned: true },
-  { label: 'Dedicated support & SLA' },
-]
+  { label: "Unlimited publications" },
+  { label: "Unlimited posts/week" },
+  { label: "Unlimited writing styles" },
+  { label: "Custom domain", planned: true },
+  { label: "Team collaboration", planned: true },
+  { label: "Custom templates", planned: true },
+  { label: "API access", planned: true },
+  { label: "SSO", planned: true },
+  { label: "Dedicated support & SLA" },
+];
 
 /* ------------------------------------------------------------------ */
 /*  Price preview hook                                                 */
 /* ------------------------------------------------------------------ */
 
 interface LocalizedPrice {
-  monthly: string | null
-  yearly: string | null
-  yearlyPerMonth: string | null
-  savingsPercent: number
+  monthly: string | null;
+  yearly: string | null;
+  yearlyPerMonth: string | null;
+  savingsPercent: number;
 }
 
 function usePricePreview() {
@@ -68,64 +68,72 @@ function usePricePreview() {
     yearly: null,
     yearlyPerMonth: null,
     savingsPercent: 0,
-  })
+  });
 
   useEffect(() => {
     async function fetchPrices() {
       try {
         // Dynamic import to access Paddle's price preview without the full SDK init
-        const { initializePaddle } = await import('@paddle/paddle-js')
-        const token = import.meta.env.VITE_PADDLE_CLIENT_TOKEN
-        if (!token) return
+        const { initializePaddle } = await import("@paddle/paddle-js");
+        const token = import.meta.env.VITE_PADDLE_CLIENT_TOKEN;
+        if (!token) return;
 
-        const environment = import.meta.env.VITE_PADDLE_ENVIRONMENT === 'production'
-          ? 'production'
-          : 'sandbox'
+        const environment =
+          import.meta.env.VITE_PADDLE_ENVIRONMENT === "production"
+            ? "production"
+            : "sandbox";
 
-        const paddle = await initializePaddle({ token, environment })
-        if (!paddle) return
+        const paddle = await initializePaddle({ token, environment });
+        if (!paddle) return;
 
         const preview = await paddle.PricePreview({
           items: [
             { priceId: PADDLE_PRICE_IDS.growthMonthly, quantity: 1 },
             { priceId: PADDLE_PRICE_IDS.growthYearly, quantity: 1 },
           ],
-        })
+        });
 
         const monthlyLine = preview.data.details.lineItems.find(
           (item) => item.price.id === PADDLE_PRICE_IDS.growthMonthly,
-        )
+        );
         const yearlyLine = preview.data.details.lineItems.find(
           (item) => item.price.id === PADDLE_PRICE_IDS.growthYearly,
-        )
+        );
 
         if (monthlyLine && yearlyLine) {
-          const monthlyAmount = Number(monthlyLine.formattedTotals.subtotal.replace(/[^\d.]/g, ''))
-          const yearlyAmount = Number(yearlyLine.formattedTotals.subtotal.replace(/[^\d.]/g, ''))
-          const yearlyPerMonth = yearlyAmount / 12
+          const monthlyAmount = Number(
+            monthlyLine.formattedTotals.subtotal.replace(/[^\d.]/g, ""),
+          );
+          const yearlyAmount = Number(
+            yearlyLine.formattedTotals.subtotal.replace(/[^\d.]/g, ""),
+          );
+          const yearlyPerMonth = yearlyAmount / 12;
 
           // Extract currency symbol from formatted price
-          const currencyMatch = monthlyLine.formattedTotals.subtotal.match(/^[^\d]+/)
-          const currencySymbol = currencyMatch ? currencyMatch[0] : '$'
+          const currencyMatch =
+            monthlyLine.formattedTotals.subtotal.match(/^[^\d]+/);
+          const currencySymbol = currencyMatch ? currencyMatch[0] : "$";
 
-          const savings = Math.round((1 - yearlyPerMonth / monthlyAmount) * 100)
+          const savings = Math.round(
+            (1 - yearlyPerMonth / monthlyAmount) * 100,
+          );
 
           setPrices({
             monthly: monthlyLine.formattedTotals.subtotal,
             yearly: yearlyLine.formattedTotals.subtotal,
             yearlyPerMonth: `${currencySymbol}${yearlyPerMonth.toFixed(2)}`,
             savingsPercent: savings,
-          })
+          });
         }
       } catch {
         // Silently fail — fallback prices will be shown
       }
     }
 
-    fetchPrices()
-  }, [])
+    fetchPrices();
+  }, []);
 
-  return prices
+  return prices;
 }
 
 /* ------------------------------------------------------------------ */
@@ -145,64 +153,77 @@ export function PricingContent() {
           Simple, transparent pricing
         </h2>
         <p className="mx-auto mt-6 max-w-xl text-lg text-[var(--color-text-muted)]">
-          Start free and upgrade when you&apos;re ready. No surprise fees, no credit card required to get started.
+          Start free and upgrade when you&apos;re ready. No surprise fees, no
+          credit card required to get started.
         </p>
       </section>
       <PublicFooter />
     </div>
-  )
+  );
 }
 
 export function PricingPage() {
-  const navigate = useNavigate()
-  const [searchParams, setSearchParams] = useSearchParams()
-  const { user, isSignedIn } = useUser()
-  const [billingPeriod, setBillingPeriod] = useState<'monthly' | 'yearly'>('monthly')
-  const prices = usePricePreview()
-  const autoCheckoutDone = useRef(false)
+  const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const { user, isSignedIn } = useUser();
+  const [billingPeriod, setBillingPeriod] = useState<"monthly" | "yearly">(
+    "monthly",
+  );
+  const prices = usePricePreview();
+  const autoCheckoutDone = useRef(false);
 
   const { ready: paddleReady, openCheckout } = usePaddle({
     onCheckoutCompleted: () => {
-      toast.success('Welcome to Growth! Your account is being upgraded.')
-      navigate('/dashboard')
+      toast.success("Welcome to Growth! Your account is being upgraded.");
+      navigate("/dashboard");
     },
-  })
+  });
 
   // Auto-open checkout after sign-up redirect (e.g. /pricing?checkout=monthly)
   useEffect(() => {
-    if (autoCheckoutDone.current) return
-    if (!isSignedIn || !user?.id || !paddleReady) return
+    if (autoCheckoutDone.current) return;
+    if (!isSignedIn || !user?.id || !paddleReady) return;
 
-    const checkoutBilling = searchParams.get('checkout')
-    if (!checkoutBilling) return
+    const checkoutBilling = searchParams.get("checkout");
+    if (!checkoutBilling) return;
 
-    autoCheckoutDone.current = true
-    setSearchParams({}, { replace: true })
+    autoCheckoutDone.current = true;
+    setSearchParams({}, { replace: true });
 
-    const priceId = checkoutBilling === 'yearly'
-      ? PADDLE_PRICE_IDS.growthYearly
-      : PADDLE_PRICE_IDS.growthMonthly
+    const priceId =
+      checkoutBilling === "yearly"
+        ? PADDLE_PRICE_IDS.growthYearly
+        : PADDLE_PRICE_IDS.growthMonthly;
 
-    openCheckout(priceId, user.primaryEmailAddress?.emailAddress, user.id)
-  }, [isSignedIn, user, paddleReady, searchParams, setSearchParams, openCheckout])
+    openCheckout(priceId, user.primaryEmailAddress?.emailAddress, user.id);
+  }, [
+    isSignedIn,
+    user,
+    paddleReady,
+    searchParams,
+    setSearchParams,
+    openCheckout,
+  ]);
 
   const handleStartGrowth = useCallback(() => {
     if (!isSignedIn) {
       // Redirect to sign-up, then back here with checkout param
-      navigate(`/sign-up?redirect_url=${encodeURIComponent(`/pricing?checkout=${billingPeriod}`)}`)
-      return
+      navigate(
+        `/sign-up?redirect_url=${encodeURIComponent(`/pricing?checkout=${billingPeriod}`)}`,
+      );
+      return;
     }
 
-    const priceId = billingPeriod === 'monthly'
-      ? PADDLE_PRICE_IDS.growthMonthly
-      : PADDLE_PRICE_IDS.growthYearly
+    const priceId =
+      billingPeriod === "monthly"
+        ? PADDLE_PRICE_IDS.growthMonthly
+        : PADDLE_PRICE_IDS.growthYearly;
 
-    openCheckout(priceId, user?.primaryEmailAddress?.emailAddress, user?.id)
-  }, [billingPeriod, isSignedIn, user, openCheckout, navigate])
+    openCheckout(priceId, user?.primaryEmailAddress?.emailAddress, user?.id);
+  }, [billingPeriod, isSignedIn, user, openCheckout, navigate]);
 
-  const displayPrice = billingPeriod === 'monthly'
-    ? prices.monthly
-    : prices.yearlyPerMonth
+  const displayPrice =
+    billingPeriod === "monthly" ? prices.monthly : prices.yearlyPerMonth;
 
   return (
     <div className="min-h-screen bg-[var(--color-bg-primary)]">
@@ -214,36 +235,41 @@ export function PricingPage() {
           Simple, transparent pricing
         </h2>
         <p className="mx-auto mt-6 max-w-xl text-lg text-[var(--color-text-muted)]">
-          Start free and upgrade when you're ready. No surprise fees, no credit card required to get started.
+          Start free and upgrade when you're ready. No surprise fees, no credit
+          card required to get started.
         </p>
 
         {/* Billing toggle */}
         <div className="mt-10 flex items-center justify-center gap-3">
           <span
-            className={`text-sm font-medium ${billingPeriod === 'monthly' ? 'text-[var(--color-text-primary)]' : 'text-[var(--color-text-muted)]'}`}
+            className={`text-sm font-medium ${billingPeriod === "monthly" ? "text-[var(--color-text-primary)]" : "text-[var(--color-text-muted)]"}`}
           >
             Monthly
           </span>
           <button
             type="button"
             role="switch"
-            aria-checked={billingPeriod === 'yearly'}
+            aria-checked={billingPeriod === "yearly"}
             aria-label="Toggle annual billing"
-            onClick={() => setBillingPeriod((prev) => (prev === 'monthly' ? 'yearly' : 'monthly'))}
+            onClick={() =>
+              setBillingPeriod((prev) =>
+                prev === "monthly" ? "yearly" : "monthly",
+              )
+            }
             className={`relative inline-flex h-7 w-12 shrink-0 cursor-pointer items-center rounded-full transition-colors ${
-              billingPeriod === 'yearly'
-                ? 'bg-[var(--color-accent)]'
-                : 'bg-[var(--color-border-default)]'
+              billingPeriod === "yearly"
+                ? "bg-[var(--color-accent)]"
+                : "bg-[var(--color-border-default)]"
             }`}
           >
             <span
               className={`inline-block h-5 w-5 rounded-full bg-white shadow-sm transition-transform ${
-                billingPeriod === 'yearly' ? 'translate-x-6' : 'translate-x-1'
+                billingPeriod === "yearly" ? "translate-x-6" : "translate-x-1"
               }`}
             />
           </button>
           <span
-            className={`text-sm font-medium ${billingPeriod === 'yearly' ? 'text-[var(--color-text-primary)]' : 'text-[var(--color-text-muted)]'}`}
+            className={`text-sm font-medium ${billingPeriod === "yearly" ? "text-[var(--color-text-primary)]" : "text-[var(--color-text-muted)]"}`}
           >
             Yearly
           </span>
@@ -271,7 +297,7 @@ export function PricingPage() {
                 to="/sign-up"
                 className="block w-full rounded-lg border border-[var(--color-border-default)] px-6 py-3 text-center text-base font-semibold text-[var(--color-text-primary)] transition-colors hover:bg-[var(--color-bg-card)]"
               >
-                Get Started Free
+                Get Started For Free
               </Link>
             }
           />
@@ -281,7 +307,9 @@ export function PricingPage() {
             name="Growth"
             badge="Most Popular"
             price={displayPrice}
-            priceSuffix={billingPeriod === 'monthly' ? '/ month' : '/ month, billed yearly'}
+            priceSuffix={
+              billingPeriod === "monthly" ? "/ month" : "/ month, billed yearly"
+            }
             priceLoading={!displayPrice}
             description="For creators serious about growing their audience consistently."
             highlighted
@@ -358,14 +386,15 @@ export function PricingPage() {
             Ready to grow your audience?
           </h4>
           <p className="mx-auto mt-2 max-w-2xl text-base leading-relaxed text-[var(--color-text-muted)]">
-            Start free, publish consistently, and upgrade when you need more power.
+            Start free, publish consistently, and upgrade when you need more
+            power.
           </p>
           <div className="mt-6 flex flex-col items-center justify-center gap-3 sm:flex-row">
             <Link
               to="/sign-up"
               className="rounded-lg bg-[var(--color-accent)] px-6 py-3 text-base font-semibold text-white transition-colors hover:bg-[var(--color-accent-hover)]"
             >
-              Get Started Free
+              Get Started For Free
             </Link>
             <Link
               to="/"
@@ -379,7 +408,7 @@ export function PricingPage() {
 
       <PublicFooter />
     </div>
-  )
+  );
 }
 
 /* ------------------------------------------------------------------ */
@@ -387,21 +416,21 @@ export function PricingPage() {
 /* ------------------------------------------------------------------ */
 
 interface PricingFeature {
-  label: string
-  planned?: boolean
+  label: string;
+  planned?: boolean;
 }
 
 interface PricingCardProps {
-  name: string
-  badge: string
-  price: string | null
-  priceSuffix?: string
-  priceLoading?: boolean
-  description: string
-  highlighted?: boolean
-  includedFrom?: string
-  features: PricingFeature[]
-  cta: React.ReactNode
+  name: string;
+  badge: string;
+  price: string | null;
+  priceSuffix?: string;
+  priceLoading?: boolean;
+  description: string;
+  highlighted?: boolean;
+  includedFrom?: string;
+  features: PricingFeature[];
+  cta: React.ReactNode;
 }
 
 function PricingCard({
@@ -420,23 +449,25 @@ function PricingCard({
     <div
       className={`relative flex flex-col rounded-2xl border p-6 ${
         highlighted
-          ? 'border-[var(--color-accent)] bg-[var(--color-bg-card)] shadow-lg shadow-[var(--color-accent)]/10'
-          : 'border-[var(--color-border-default)] bg-[var(--color-bg-card)]'
+          ? "border-[var(--color-accent)] bg-[var(--color-bg-card)] shadow-lg shadow-[var(--color-accent)]/10"
+          : "border-[var(--color-border-default)] bg-[var(--color-bg-card)]"
       }`}
     >
       {/* Badge */}
       <span
         className={`mb-4 inline-flex w-fit rounded-full px-3 py-1 text-xs font-semibold ${
           highlighted
-            ? 'bg-[var(--color-accent)] text-white'
-            : 'bg-[var(--color-bg-primary)] text-[var(--color-text-muted)]'
+            ? "bg-[var(--color-accent)] text-white"
+            : "bg-[var(--color-bg-primary)] text-[var(--color-text-muted)]"
         }`}
       >
         {badge}
       </span>
 
       {/* Plan name */}
-      <h3 className="text-xl font-bold text-[var(--color-text-primary)]">{name}</h3>
+      <h3 className="text-xl font-bold text-[var(--color-text-primary)]">
+        {name}
+      </h3>
 
       {/* Price */}
       <div className="mt-3">
@@ -450,7 +481,9 @@ function PricingCard({
               {price}
             </span>
             {priceSuffix && (
-              <span className="text-sm text-[var(--color-text-muted)]">{priceSuffix}</span>
+              <span className="text-sm text-[var(--color-text-muted)]">
+                {priceSuffix}
+              </span>
             )}
           </div>
         )}
@@ -482,7 +515,9 @@ function PricingCard({
               <span className="text-sm text-[var(--color-text-primary)]">
                 {feature.label}
                 {feature.planned && (
-                  <span className="ml-1 text-[var(--color-text-muted)]">(planned)</span>
+                  <span className="ml-1 text-[var(--color-text-muted)]">
+                    (planned)
+                  </span>
                 )}
               </span>
             </li>
@@ -490,7 +525,7 @@ function PricingCard({
         </ul>
       </div>
     </div>
-  )
+  );
 }
 
 /* ------------------------------------------------------------------ */
@@ -508,7 +543,9 @@ function FaqItem({ question, answer }: { question: string; answer: string }) {
           </span>
         </span>
       </summary>
-      <p className="mt-3 text-base leading-relaxed text-[var(--color-text-muted)]">{answer}</p>
+      <p className="mt-3 text-base leading-relaxed text-[var(--color-text-muted)]">
+        {answer}
+      </p>
     </details>
-  )
+  );
 }

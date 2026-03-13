@@ -33,10 +33,10 @@ export function AgentsPage() {
           </span>
         </h1>
         <p className="mx-auto mt-6 max-w-xl text-lg text-[var(--color-text-muted)]">
-          Medium has no API. Substack has no API. Ghost has a limited one.
-          Hot Metal was built from day one so that AI agents can discover
-          topics, write drafts, and publish posts — all through a complete
-          REST API with zero human intervention required.
+          Medium has no API. Substack has no API. Ghost has a limited one. Hot
+          Metal was built from day one so that AI agents can discover topics,
+          write drafts, and publish posts — all through a complete REST API with
+          zero human intervention required.
         </p>
 
         <div className="mt-10 flex flex-col items-center gap-4 sm:flex-row sm:justify-center">
@@ -138,7 +138,8 @@ export function AgentsPage() {
             One API call at a time — from idea to published post
           </h2>
           <p className="mt-3 max-w-2xl text-base leading-relaxed text-[var(--color-text-muted)]">
-            Here's how an AI agent runs a fully autonomous content operation with Hot Metal.
+            Here's how an AI agent runs a fully autonomous content operation
+            with Hot Metal.
           </p>
 
           <div className="mt-6 space-y-3">
@@ -181,7 +182,9 @@ export function AgentsPage() {
 
           <div className="mt-6 rounded-xl border border-[var(--color-border-default)] bg-[var(--color-bg-primary)] p-5 text-center">
             <p className="text-base text-[var(--color-text-muted)]">
-              <span className="font-semibold text-[var(--color-text-primary)]">Five API calls.</span>{" "}
+              <span className="font-semibold text-[var(--color-text-primary)]">
+                Five API calls.
+              </span>{" "}
               From zero to a researched, well-written, multi-platform published
               post. No browser. No clicking. No human required.
             </p>
@@ -290,7 +293,7 @@ export function AgentsPage() {
               to="/sign-up"
               className="rounded-lg bg-[var(--color-accent)] px-6 py-3 text-base font-semibold text-white transition-colors hover:bg-[var(--color-accent-hover)]"
             >
-              Get Started Free
+              Get Started For Free
             </Link>
           </div>
         </div>

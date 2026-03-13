@@ -66,7 +66,7 @@ export function PublicNavbar({ showSignUpCta = true }: PublicNavbarProps) {
               to="/sign-up"
               className="ml-2 rounded-lg bg-[var(--color-accent)] px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-[var(--color-accent-hover)]"
             >
-              Get Started Free
+              Get Started For Free
             </Link>
           ) : null}
 
@@ -146,7 +146,7 @@ export function PublicNavbar({ showSignUpCta = true }: PublicNavbarProps) {
                   className="rounded-lg bg-[var(--color-accent)] px-4 py-2.5 text-center text-sm font-semibold text-white transition-colors hover:bg-[var(--color-accent-hover)]"
                   onClick={() => setMobileMenuOpen(false)}
                 >
-                  Get Started Free
+                  Get Started For Free
                 </Link>
               ) : null}
               <Link
