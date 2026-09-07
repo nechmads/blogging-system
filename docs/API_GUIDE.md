@@ -192,6 +192,9 @@ design. An unrecognised value is rejected with `400`.
 | `bold` | Tech-forward: geometric layout, thick borders, high contrast. |
 | `press-machine` | A newspaper front page — ruled columns, a commanding lead headline, and a typographic date plate where a post has no image. |
 | `one-signal` | A dark dispatch log — a numbered index instead of cards, with a long-form reading column. |
+| `cover-stock` | Every post gets a typographic cover: a face-out bookshelf home page, and an article that opens on its own cover. |
+| `horizon` | Time is the spine: a large date axis across the top, posts hung from their real dates, and only "now" in colour. |
+| `poster` | The headline is the argument: the lead title fills the first screen, the archive is a wall of type, images appear only on hover. |
 
 ```bash
 curl -X PATCH "$BASE/publications/$PUB_ID" \
@@ -202,13 +205,14 @@ curl -X PATCH "$BASE/publications/$PUB_ID" \
 
 Two behaviours worth knowing before you switch:
 
-- **The home page caps at 10 posts.** `press-machine` and `one-signal` show at
-  most ten on the home page — a lead plus nine for Press Machine, an index of
-  ten for One Signal — and then link to `/posts` for the full archive. The link
-  only appears once a publication has more than ten published posts.
-- **`press-machine` and `one-signal` render on EmDash-backed publications.** A
-  publication still served by the legacy frontend accepts the value but falls
-  back to `starter` until it is migrated.
+- **The home page caps at 10 posts.** Every template after `bold` —
+  `press-machine`, `one-signal`, `cover-stock`, `horizon` and `poster` — shows
+  at most ten on the home page and then links to `/posts` for the full
+  archive. The link only appears once a publication has more than ten
+  published posts.
+- **Every template renders on both frontends.** The EmDash fleet and the
+  legacy frontend carry the same template set, so switching takes effect
+  whichever one serves the publication.
 
 ## Local development
 

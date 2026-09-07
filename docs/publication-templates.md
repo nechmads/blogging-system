@@ -34,10 +34,15 @@ rename or remove one without migrating the rows that point at it.
 | `bold` | Tech-forward: geometric layout, thick borders, high contrast. |
 | `press-machine` | A newspaper front page: ruled multi-column grid, a commanding lead headline over a drop-capped lede, a section digest, and a ruled archive. |
 | `one-signal` | A dark dispatch log: a numbered index under sticky column headers instead of cards, with a long-form reading column. |
+| `cover-stock` | Every post is an issue with a generated typographic cover; the home page is a face-out bookshelf with the lead facing out and the rest standing beside it, and the article opens on its own cover, which stays beside the text. |
+| `horizon` | Time is the spine: a large date axis with giant month numerals across the top, posts hung from their real dates with an honest break for gaps, "now" as the only colour, and a reading-progress strip on the article. |
+| `poster` | The headline is the argument: the lead title fills the first screen edge to edge, the archive is a wall of type with no rules or containers, and images exist only on hover. |
 
 `press-machine` and `one-signal` came out of the design exploration in
-`design-prototypes/emdash-2026-09-06/`, which holds the original static
-prototypes and the review record behind each decision.
+`design-prototypes/emdash-2026-09-06/`; `cover-stock`, `horizon` and `poster`
+out of `design-prototypes/emdash-2026-09-07/`. Each run holds the original
+static prototypes and the review record behind each decision, and each
+concept's `DESIGN.md` lists the gaps its critics left open.
 
 ## Where a template lives
 
@@ -46,11 +51,29 @@ prototypes and the review record behind each decision.
 `src/components/HomePage.astro`, `PostPage.astro`, `PostsPage.astro` and
 `NotFoundPage.astro` — adding a template means editing all four.
 
-`apps/publications-web` mirrors this structure for legacy SonicJS-backed
-publications and carries `starter`, `editorial` and `bold` only. It falls back
-to `starter` for an id it does not know, so a legacy publication that selects
-`press-machine` or `one-signal` renders as Starter until it is migrated or the
-templates are ported. See `docs/emdash-phase2-parity.md`.
+The three round-two templates use a slightly tighter component contract than
+the older ones, so their switcher branches are short and identical in shape:
+`Header` (`publicationName`, `logoUrl`, `showDate` marks the home page),
+`Home` (`branding`, the capped `posts`, `hasMorePosts` — everything between
+header and footer on the home page), `PostList` (the `/posts` page), `PostContent`
+(the article, with the `comments` slot), `Footer`, and `NotFound` (the 404
+body). Prefer this shape for new templates.
+
+`apps/publications-web` mirrors the same template directories verbatim for the
+legacy SonicJS-backed publications, and its four switchers carry the same
+branches. A change to a template must land in both apps; see
+`docs/emdash-phase2-parity.md`. It still falls back to `starter` for an id it
+does not know.
+
+## Previewing a template on realistic content
+
+`scripts/emdash-seed-looking-ahead.ts` seeds a local EmDash instance with the
+eight "Looking Ahead" posts the design explorations used — bursty real dates,
+one long article with citations, and a newest post with no featured image.
+Run `pnpm preview:emdash`, mint a PAT (see `docs/emdash-instance-deploy.md`),
+then `BASE_URL=http://localhost:4321 PAT=ec_pat_... pnpm tsx scripts/emdash-seed-looking-ahead.ts`.
+Set `PUBLICATION_TEMPLATE` (and `PUBLICATION_ACCENT`, to test a hostile hex)
+in `apps/emdash-blog/.dev.vars` to pick the template the preview renders.
 
 ## Two constraints every template must satisfy
 
@@ -103,10 +126,12 @@ load-bearing, but it is cheap and it means those two survive a regression here.
 
 ## Home page post limit
 
-`press-machine` and `one-signal` show at most `HOME_POST_LIMIT` (10) posts on
-the home page and then link to `/posts` for the rest, so a long-running
-publication's home page does not grow without bound. Press Machine shows a lead
-plus nine archive rows; One Signal shows an index of ten including the lead.
+`press-machine`, `one-signal`, `cover-stock`, `horizon` and `poster` show at
+most `HOME_POST_LIMIT` (10) posts on the home page and then link to `/posts`
+for the rest, so a long-running publication's home page does not grow without
+bound. Press Machine shows a lead plus nine archive rows; One Signal shows an
+index of ten including the lead; the round-two templates receive the capped
+list and `hasMorePosts` through their `Home` component.
 
 `HOME_POST_LIMIT` lives in `apps/emdash-blog/src/lib/post-utils.ts`.
 `src/pages/index.astro` fetches `HOME_POST_LIMIT + 1`, so `posts.length >
