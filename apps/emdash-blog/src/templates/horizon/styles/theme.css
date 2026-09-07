@@ -607,8 +607,16 @@ html.horizon body {
 .hz-entry {
   position: relative;
   padding-top: var(--gap, 40px);
-  scroll-margin-top: calc(var(--hz-strip-h) + 12px);
+  /* Budget the EXPANDED axis: the ticks are ordinary anchors that still
+     navigate with JS off, and nothing compacts the axis there, so a
+     strip-sized budget left the target ~148px behind the header. */
+  scroll-margin-top: calc(var(--hz-axis-h) + 12px);
   --lead: var(--hz-lead-bare);
+}
+
+/* Once AxisSpy has compacted the axis, the strip height is the honest budget. */
+.horizon:has(.hz-axis.is-compact) .hz-entry {
+  scroll-margin-top: calc(var(--hz-strip-h) + 12px);
 }
 
 .hz-entry.has-img {

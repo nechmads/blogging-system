@@ -17,9 +17,23 @@ interface Props {
   posts: Post[];
   heading?: string;
   showViewAll?: boolean;
+  /**
+   * True when this list IS the page (the /posts route) rather than a section of
+   * the home page. Only then may it own the `main` landmark and the `h1`; on the
+   * home page both already belong to `Home.astro`.
+   */
+  standalone?: boolean;
 }
 
-const { posts, heading = 'Catalogue', showViewAll = false } = Astro.props;
+const {
+  posts,
+  heading = 'Catalogue',
+  showViewAll = false,
+  standalone = false,
+} = Astro.props;
+
+const Region = standalone ? 'main' : 'section';
+const Heading = standalone ? 'h1' : 'h2';
 
 const rows = posts.map((post) => ({
   post,
@@ -33,19 +47,25 @@ const rows = posts.map((post) => ({
 const hasBacks = rows.some((row) => row.deck);
 ---
 
-<section class="cs-section" id="cs-catalogue" aria-labelledby="cs-cat-h">
+<Region class="cs-section" id="cs-catalogue" aria-labelledby="cs-cat-h">
   <div class="cs-section-h">
-    <h2 id="cs-cat-h">
+    <Heading id="cs-cat-h">
       {heading}
       {posts.length > 0 && (
         <small>{posts.length} {posts.length === 1 ? 'issue' : 'issues'}, newest first</small>
       )}
-    </h2>
+    </Heading>
 
     {(hasBacks || showViewAll) && (
       <div class="cs-cat-tools">
+        {/*
+          The control is server-rendered `hidden` and revealed by the script
+          below. The summaries it toggles are themselves `hidden` attributes
+          that only script can clear, so with JavaScript off the button would
+          be a focusable control that can never do anything.
+        */}
         {hasBacks && (
-          <button class="cs-cat-all" type="button" aria-pressed="false" data-cs-backs>
+          <button class="cs-cat-all" type="button" aria-pressed="false" data-cs-backs hidden>
             Show summaries
           </button>
         )}
@@ -80,7 +100,7 @@ const hasBacks = rows.some((row) => row.deck);
   ) : (
     <p class="cs-empty">No issues in the catalogue yet.</p>
   )}
-</section>
+</Region>
 
 <script>
   /**
@@ -91,6 +111,9 @@ const hasBacks = rows.some((row) => row.deck);
   function initCatalogueBacks() {
     const toggle = document.querySelector<HTMLButtonElement>('[data-cs-backs]');
     if (!toggle) return;
+
+    /* Scripting is available, so the control can now earn its place. */
+    toggle.hidden = false;
 
     toggle.addEventListener('click', () => {
       const on = toggle.getAttribute('aria-pressed') !== 'true';

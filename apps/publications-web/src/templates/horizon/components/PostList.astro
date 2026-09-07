@@ -9,6 +9,12 @@ interface Props {
   posts: Post[];
   heading?: string;
   showViewAll?: boolean;
+  /**
+   * True when this list IS the page (the /posts route). Horizon's home page
+   * draws its own axis rather than reusing this component, so in practice it is
+   * always true here — the prop keeps the three templates on one contract.
+   */
+  standalone?: boolean;
 }
 
 /**
@@ -20,7 +26,10 @@ interface Props {
  * No entry is promoted to a lead here: on the archive every piece is one slice
  * of the same axis.
  */
-const { posts, heading = 'All posts', showViewAll = false } = Astro.props;
+const { posts, heading = 'All posts', showViewAll = false, standalone = true } = Astro.props;
+
+const Region = standalone ? 'main' : 'section';
+const Heading = standalone ? 'h1' : 'h2';
 
 const axis = buildAxis(posts, new Date());
 const dated = axis.entries.filter((entry) => entry.x !== null).length;
@@ -35,9 +44,9 @@ const undated = axis.entries.length - dated;
   </div>
 )}
 
-<main class="hz-page hz-page--list">
+<Region class="hz-page hz-page--list">
   <div class="hz-listhead">
-    <h1 class="hz-listtitle">{heading}</h1>
+    <Heading class="hz-listtitle">{heading}</Heading>
     <p class="hz-label hz-num">
       {axis.entries.length} {axis.entries.length === 1 ? 'piece' : 'pieces'}
       {undated > 0 && <> &middot; {undated} undated</>}
@@ -55,6 +64,6 @@ const undated = axis.entries.length - dated;
   {showViewAll && (
     <p class="hz-viewall"><a href="/posts">View all posts &rarr;</a></p>
   )}
-</main>
+</Region>
 
 <AxisSpy />

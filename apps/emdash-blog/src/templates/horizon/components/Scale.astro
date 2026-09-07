@@ -68,7 +68,7 @@ const fmt = (value: number) => value.toFixed(4);
   ))}
 
   {showNow && (
-    <span class="hz-now" style="--x:1" aria-hidden="true"><span>{axis.nowLabel}</span></span>
+    <span class="hz-now" style={`--x:${fmt(axis.nowX)}`} aria-hidden="true"><span>{axis.nowLabel}</span></span>
   )}
 
   {showCursor && <span class="hz-cursor" aria-hidden="true"></span>}

@@ -188,8 +188,15 @@ export interface Axis {
   breaks: AxisBreak[];
   months: AxisMonth[];
   ticks: AxisTick[];
-  /** Label for the accent pennant at the right end. */
+  /** Label for the accent pennant. */
   nowLabel: string;
+  /**
+   * Where "now" actually falls on the scale, 0–1. Not always the right edge:
+   * the last point is padded, and a forward-dated post extends the axis past
+   * today. Drawing the pennant at a hardcoded 1 made the axis claim today was
+   * wherever the newest post happened to be.
+   */
+  nowX: number;
   entries: AxisEntry[];
   /** Month of the newest entry — ink before any scrolling happens. */
   currentMonthKey: string | null;
@@ -218,7 +225,11 @@ function buildScale(days: number[], nowDay: number) {
       start = points[i + 1] - PAD_DAYS;
     }
   }
-  segments.push({ start, end: points[points.length - 1] });
+  /* The last point is padded like the first. Without it the newest post sits
+     exactly at x=1 whenever it was published today, on top of the "now"
+     pennant, and a publication's first day renders as an axis of pure
+     padding with everything jammed into the right gutter. */
+  segments.push({ start, end: points[points.length - 1] + PAD_DAYS });
 
   const spanned = segments.reduce((total, seg) => total + (seg.end - seg.start), 0);
   const total = Math.max(1, spanned + BREAK_UNITS * gaps.length);
@@ -303,6 +314,7 @@ export function buildAxis(posts: Post[], now: Date): Axis {
       months: [],
       ticks: [],
       nowLabel,
+      nowX: 1,
       currentMonthKey: null,
       entries: [...dated, ...undated].map(({ post }, i) => ({
         post,
@@ -376,8 +388,13 @@ export function buildAxis(posts: Post[], now: Date): Axis {
     }
   }
 
-  const spansYears =
-    new Set([...monthSeen.values()].map((m) => m.date.getUTCFullYear())).size > 1;
+  /*
+   * Qualify months with their year when the axis crosses one — and also when it
+   * never reaches the current year, since a dormant publication's months
+   * otherwise sit beside a "Now · <this year>" pennant and read as this year's.
+   */
+  const captionYears = new Set([...monthSeen.values()].map((m) => m.date.getUTCFullYear()));
+  const spansYears = captionYears.size > 1 || !captionYears.has(now.getUTCFullYear());
 
   const monthCandidates = [...monthSeen.entries()]
     .map(([key, { date, day }]) => ({
@@ -439,6 +456,7 @@ export function buildAxis(posts: Post[], now: Date): Axis {
     months,
     ticks,
     nowLabel,
+    nowX: scale.x(nowDay),
     entries,
     currentMonthKey: monthKeyOf(dated[0].when.date),
   };

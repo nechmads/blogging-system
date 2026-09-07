@@ -76,7 +76,7 @@ const layoutProps = {
 {templateId === 'cover-stock' ? (
   <CoverStockBaseLayout {...layoutProps}>
     <CoverStockHeader publicationName={branding.name} logoUrl={branding.logoUrl} />
-    <CoverStockPostList posts={posts} heading="All posts" showViewAll={false} />
+    <CoverStockPostList posts={posts} heading="All posts" showViewAll={false} standalone />
     <CoverStockFooter
       publicationName={branding.name}
       publicationSlug={branding.slug}
@@ -86,7 +86,7 @@ const layoutProps = {
 ) : templateId === 'horizon' ? (
   <HorizonBaseLayout {...layoutProps}>
     <HorizonHeader publicationName={branding.name} logoUrl={branding.logoUrl} />
-    <HorizonPostList posts={posts} heading="All posts" showViewAll={false} />
+    <HorizonPostList posts={posts} heading="All posts" showViewAll={false} standalone />
     <HorizonFooter
       publicationName={branding.name}
       publicationSlug={branding.slug}
@@ -96,7 +96,7 @@ const layoutProps = {
 ) : templateId === 'poster' ? (
   <PosterBaseLayout {...layoutProps}>
     <PosterHeader publicationName={branding.name} logoUrl={branding.logoUrl} />
-    <PosterPostList posts={posts} heading="All posts" showViewAll={false} />
+    <PosterPostList posts={posts} heading="All posts" showViewAll={false} standalone />
     <PosterFooter
       publicationName={branding.name}
       publicationSlug={branding.slug}

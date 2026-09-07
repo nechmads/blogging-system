@@ -12,19 +12,29 @@ interface Props {
   posts: Post[];
   heading?: string;
   showViewAll?: boolean;
+  /**
+   * True when this wall IS the page (the /posts route) rather than a section of
+   * the home page. Only then may it own the `main` landmark and the `h1`.
+   */
+  standalone?: boolean;
 }
 
-const { posts, heading, showViewAll = false } = Astro.props;
+const { posts, heading, showViewAll = false, standalone = false } = Astro.props;
 const labelId = heading ? 'po-wall-h' : undefined;
+
+/* On /posts this list is the page, so it owns the `main` landmark and the `h1`.
+   On the home page both already belong to `Home.astro`. */
+const Region = standalone ? 'main' : 'section';
+const Label = standalone ? 'h1' : 'p';
 ---
 
-<section
+<Region
   class="po-wall"
   aria-labelledby={labelId}
   aria-label={heading ? undefined : 'Archive'}
 >
   {heading && (
-    <p class="po-meta po-wall-label" id={labelId}>{heading}</p>
+    <Label class="po-meta po-wall-label" id={labelId}>{heading}</Label>
   )}
 
   {posts.length > 0 ? (
@@ -41,4 +51,4 @@ const labelId = heading ? 'po-wall-h' : undefined;
   {showViewAll && posts.length > 0 && (
     <p class="po-band"><a class="po-more" href="/posts">View all &rarr;</a></p>
   )}
-</section>
+</Region>
