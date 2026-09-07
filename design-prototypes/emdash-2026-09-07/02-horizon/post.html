@@ -1,0 +1,628 @@
+<!DOCTYPE html>
+<html lang="en" style="--publication-accent:#b4361f">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Agent First Development is The Future — Looking Ahead</title>
+<meta name="description" content="In June 2026, bot and agent traffic passed human traffic on the internet for the first time. The winning products will be the ones an agent can actually use.">
+<meta name="robots" content="noindex">
+<style>@font-face {
+  font-family: 'Schibsted Grotesk';
+  font-style: italic;
+  font-weight: 400 900;
+  font-display: swap;
+  src: url(fonts/schibsted-grotesk-0.woff2) format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: 'Schibsted Grotesk';
+  font-style: italic;
+  font-weight: 400 900;
+  font-display: swap;
+  src: url(fonts/schibsted-grotesk-1.woff2) format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: 'Schibsted Grotesk';
+  font-style: normal;
+  font-weight: 400 900;
+  font-display: swap;
+  src: url(fonts/schibsted-grotesk-2.woff2) format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: 'Schibsted Grotesk';
+  font-style: normal;
+  font-weight: 400 900;
+  font-display: swap;
+  src: url(fonts/schibsted-grotesk-3.woff2) format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: 'Literata';
+  font-style: italic;
+  font-weight: 200 900;
+  font-display: swap;
+  src: url(fonts/literata-0.woff2) format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: 'Literata';
+  font-style: italic;
+  font-weight: 200 900;
+  font-display: swap;
+  src: url(fonts/literata-1.woff2) format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: 'Literata';
+  font-style: normal;
+  font-weight: 200 900;
+  font-display: swap;
+  src: url(fonts/literata-2.woff2) format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: 'Literata';
+  font-style: normal;
+  font-weight: 200 900;
+  font-display: swap;
+  src: url(fonts/literata-3.woff2) format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+:root {
+  --publication-accent: #b4361f;
+  /* Every legibility-bearing use of the accent goes through this one
+     derivation: lightness floored/capped, chroma floored so a near-black or
+     pale accent still reads as *a colour* against the cold-white ground. */
+  --accent-ink: oklch(from var(--publication-accent) clamp(0.30, l, 0.50) max(c, 0.11) h);
+
+  --ground: oklch(98.6% 0.004 240);
+  --ink: oklch(21% 0.03 262);
+  --ink-2: oklch(42% 0.022 258);
+  --axis: oklch(63% 0.012 255);
+  --axis-soft: oklch(84% 0.008 250);
+  --numeral: oklch(55% 0.014 255);
+
+  --sans: "Schibsted Grotesk", "Helvetica Neue", Arial, sans-serif;
+  --serif: "Literata", Georgia, "Times New Roman", serif;
+
+  --gutter: clamp(20px, 4.4vw, 64px);
+  --axis-h: 232px;
+  --axis-compact: 72px;
+  --base: 44px;            /* baseline height above the axis bottom (expanded) */
+  --base-compact: 40px;    /* labels end ~19px above the strip's edge: sealed, nothing bleeds */
+  --annot: 88px;
+  --lead-img: 100px;       /* leader length when a thumbnail hangs at the tick */
+  --lead-bare: 40px;
+  --ease: cubic-bezier(.3,.7,.2,1);
+}
+html { overflow-x: clip; background: var(--ground); color: var(--ink); }
+body {
+  margin: 0; font-family: var(--sans); font-size: 1rem; line-height: 1.5;
+  -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility;
+}
+* { box-sizing: border-box; }
+img { max-width: 100%; display: block; }
+a { color: inherit; }
+time, .tnum { font-variant-numeric: tabular-nums; }
+:focus-visible { outline: 2px solid var(--accent-ink); outline-offset: 3px; }
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+/* ---------- the axis (home) ---------- */
+.axis {
+  position: sticky; top: 0; z-index: 10; height: var(--axis-h);
+  background: var(--ground);
+  /* compaction snaps: deterministic under any capture, and the cursor slide is the motion that matters */
+}
+.axis.is-compact { transform: translateY(calc(var(--axis-compact) - var(--axis-h))); }
+.axis-in { position: relative; height: 100%; margin: 0 var(--gutter); }
+.axis-title { position: absolute; left: 0; top: 18px; display: flex; gap: 14px; align-items: baseline; white-space: nowrap; }
+.wordmark { font-size: 1.0625rem; font-weight: 400; letter-spacing: .01em; text-decoration: none; margin: 0; }
+.wordmark a { text-decoration: none; }
+.wordmark:hover, .wordmark a:hover { text-decoration: underline; text-decoration-color: var(--axis); text-underline-offset: 4px; }
+.tagline { font-family: var(--serif); font-style: italic; font-size: 1rem; color: var(--ink-2); font-optical-sizing: auto; }
+.mast-nav { position: absolute; right: 0; top: 18px; display: flex; gap: 22px; font-size: .9375rem; }
+.mast-nav a { text-decoration: none; color: var(--ink-2); }
+.mast-nav a:hover { color: var(--ink); text-decoration: underline; text-decoration-color: var(--axis); text-underline-offset: 4px; }
+.axis.is-compact .mast-nav { opacity: 0; pointer-events: none; }
+.axis.is-compact .axis-title { opacity: 0; pointer-events: none; }
+
+.scale { position: absolute; left: 0; right: 0; bottom: 0; top: 0; --b: var(--base); }
+.axis.is-compact .scale { --b: var(--base-compact); }
+.seg { position: absolute; height: 1px; background: var(--axis); bottom: var(--b); transition: bottom 0s; }
+.seg-a { left: 0; width: calc(var(--x1) * 100%); }
+.seg-b { left: calc(var(--x0) * 100%); right: 0; }
+
+.brk { position: absolute; bottom: var(--b); left: calc(var(--x0) * 100%); width: calc((var(--x1) - var(--x0)) * 100%); height: 0; transition: bottom 0s; }
+.brk i { position: absolute; top: -8px; width: 1.5px; height: 16px; background: var(--ink-2); transform: rotate(24deg); left: calc(50% - 5px); }
+.brk i + i { left: calc(50% + 4px); }
+.brk small { position: absolute; top: 10px; left: 50%; transform: translateX(-50%); white-space: nowrap; font-size: .6875rem; color: var(--axis); letter-spacing: .01em; }
+.axis.is-compact .brk small { opacity: 0; }
+
+.month { position: absolute; bottom: calc(var(--b) + 13px); left: calc(var(--x) * 100%); line-height: 1; white-space: nowrap; transition: bottom 0s, font-size 0s; }
+.month b { display: block; font-weight: 400; font-size: 6.5rem; letter-spacing: -.045em; color: var(--numeral); line-height: .78; font-variant-numeric: tabular-nums; transition: font-size 0s; }
+.month span { position: absolute; left: 0.18em; bottom: calc(100% + 10px); font-size: .8125rem; color: var(--axis); letter-spacing: .01em; }
+.month.m-last b { color: var(--ink); }
+.axis.is-compact .month { bottom: calc(var(--b) + 6px); }
+.axis.is-compact .month b { font-size: 1.125rem; letter-spacing: -.01em; line-height: .9; }
+.axis.is-compact .month span { opacity: 0; }
+
+.tick { position: absolute; left: calc(var(--x) * 100%); bottom: var(--b); width: 1px; height: 12px; margin-left: -0.5px; background: var(--axis); transform: translateY(100%); text-decoration: none; transition: bottom 0s, height .15s; }
+.tick span { position: absolute; top: calc(100% + 4px); left: 50%; transform: translateX(-50%); font-size: .8125rem; color: var(--ink-2); font-variant-numeric: tabular-nums; line-height: 1; white-space: nowrap; }
+.tick.at-origin span { left: 0; transform: none; }
+.tick::before { content: ""; position: absolute; left: -12px; right: -12px; top: -6px; bottom: -18px; } /* hit area */
+.axis.is-compact .tick { height: 8px; }
+.axis.is-compact .tick span { font-size: .75rem; top: calc(100% + 3px); }
+.tick.is-current, .tick.is-hot, .tick:hover, .tick:focus-visible { background: var(--ink); height: 18px; width: 2px; margin-left: -1px; }
+.axis.is-compact .tick.is-current, .axis.is-compact .tick.is-hot, .axis.is-compact .tick:hover, .axis.is-compact .tick:focus-visible { height: 12px; }
+.tick.is-current span, .tick.is-hot span, .tick:hover span { color: var(--ink); }
+/* the newest post's tick runs down to the axis edge and meets the lead's leader; its label sits beside it */
+.axis:not(.is-compact) .tick.newest, .axis:not(.is-compact) .tick.newest.is-current { height: var(--base); }
+.axis:not(.is-compact) .tick.newest span { left: auto; right: 8px; transform: none; top: 6px; }
+
+/* "now": a 3px stem that breaks the baseline (ground halo) with a pennant —
+   a different shape from every tick and from the reader cursor, so it stays
+   the one special mark even when the accent is near-black */
+.now { position: absolute; left: calc(var(--x) * 100%); bottom: calc(var(--b) - 14px); width: 3px; height: 48px; margin-left: -1.5px; background: var(--accent-ink); box-shadow: 0 0 0 3px var(--ground); transition: bottom 0s, height 0s; }
+.now::before { content: ""; position: absolute; left: 3px; top: 0; width: 0; height: 0; border-top: 8px solid transparent; border-bottom: 8px solid transparent; border-left: 16px solid var(--accent-ink); }
+.now span { position: absolute; right: 10px; top: 34px; font-size: .8125rem; white-space: nowrap; color: var(--ink); line-height: 1; }
+.axis.is-compact .now { height: 34px; bottom: calc(var(--b) - 10px); }
+.axis.is-compact .now::before { border-top-width: 6px; border-bottom-width: 6px; border-left-width: 12px; }
+.axis.is-compact .now span { font-size: .6875rem; top: 24px; }
+
+/* reader cursor: hollow, never filled */
+.cursor { position: absolute; left: calc(var(--x, .857) * 100%); bottom: calc(var(--b) - 4px); width: 9px; height: 9px; margin-left: -4.5px; box-sizing: border-box; border: 1.5px solid var(--ink); background: var(--ground); transition: left .16s var(--ease); }
+
+/* ---------- page body ---------- */
+.page { margin: 0 var(--gutter); }
+.hero { position: relative; padding: 48px 0 8px; }
+.ident { position: absolute; left: 0; top: 48px; width: min(340px, 30%); }
+.ident p { margin: 0 0 14px; font-family: var(--serif); font-optical-sizing: auto; font-size: 1.0625rem; line-height: 1.5; color: var(--ink-2); }
+.ident .who { color: var(--ink-2); margin-right: 4px; }
+.ident-links, .foot-links { display: flex; gap: 18px; font-size: .875rem; }
+.ident-links a, .foot-links a, .tag-list a { text-decoration: underline; text-decoration-color: var(--axis-soft); text-underline-offset: 4px; text-decoration-thickness: 1px; }
+.ident-links a:hover, .foot-links a:hover, .tag-list a:hover { text-decoration-color: var(--accent-ink); }
+
+/* entries: the tick, its label and thumbnail sit at the entry's real x; a
+   short vertical leader drops to one left-aligned reading column */
+.entry { position: relative; padding-top: var(--gap, 64px); scroll-margin-top: 84px; --lead: var(--lead-bare); }
+.entry.has-img { --lead: var(--lead-img); }
+/* each entry is a slice of the axis: a full-width hairline with the date notch, image and meta at the true x */
+.entry::before { content: ""; position: absolute; top: var(--gap, 64px); left: 0; right: 0; height: 1px; background: var(--axis-soft); }
+.entry.lead::before { display: none; }
+.entry.is-current::before, .entry.is-hot::before { background: var(--axis); }
+.mark { position: absolute; top: var(--gap, 64px); left: calc(var(--x) * 100%); height: var(--lead); border-left: 1px solid var(--axis); }
+.mark::before { content: ""; position: absolute; top: -5px; left: -1px; width: 1px; height: 11px; background: var(--ink-2); }
+.kicker { position: absolute; top: 7px; left: 12px; margin: 0; font-size: .875rem; color: var(--ink-2); white-space: nowrap; line-height: 1.2; }
+.kicker time { color: var(--ink); }
+.annot { position: absolute; top: 10px; right: 14px; width: var(--annot); height: var(--annot); display: block; }
+.annot::before { content: ""; position: absolute; left: 100%; top: 10px; width: 14px; height: 1px; background: var(--axis); }
+.annot img { width: 100%; height: 100%; object-fit: cover; filter: saturate(.85) contrast(1.02); }
+.entry.is-current .mark, .entry.is-hot .mark { border-left-width: 2px; border-left-color: var(--ink); }
+.entry.is-current .mark::before, .entry.is-hot .mark::before { background: var(--ink); }
+
+.ebody { padding-top: calc(var(--lead) + 8px); max-width: 720px; }
+.entry h2 { margin: 0; font-size: clamp(1.625rem, 2vw, 2.25rem); line-height: 1.06; font-weight: 800; letter-spacing: -.022em; text-wrap: balance; }
+.entry h2 a { text-decoration: none; }
+.entry h2 a:hover, .entry h2 a:focus-visible, .entry.is-hot h2 a { text-decoration: underline; text-decoration-color: var(--accent-ink); text-decoration-thickness: 3px; text-underline-offset: 5px; }
+.dek { margin: 8px 0 0; font-family: var(--serif); font-style: italic; font-optical-sizing: auto; font-size: 1.125rem; line-height: 1.45; color: var(--ink-2); text-wrap: pretty; max-width: 640px; }
+
+/* the lead hangs left of its tick, headline right-aligned to the leader,
+   deck flush-left inside the same block */
+.entry.lead { padding-top: 0; }
+.entry.lead .mark { top: -48px; height: calc(var(--lead) + 48px); }
+.entry.lead .kicker { left: auto; right: 12px; top: auto; bottom: 4px; font-size: .9375rem; }
+.entry.lead .ebody { max-width: 720px; margin-left: auto; margin-right: calc((1 - var(--x)) * 100%); padding-right: 14px; padding-top: calc(var(--lead) + 10px); text-align: right; }
+.entry.lead h2 { font-size: clamp(2.25rem, 4.9vw, 4.375rem); line-height: .98; letter-spacing: -.03em; text-align: right; }
+.entry.lead .dek { font-size: 1.5rem; line-height: 1.4; margin: 24px 0 0 auto; max-width: 600px; }
+.entry.lead .readlink { margin-top: 18px; }
+.readlink { display: inline-block; font-size: .9375rem; text-decoration: underline; text-decoration-color: var(--accent-ink); text-decoration-thickness: 2px; text-underline-offset: 4px; }
+.rest { padding-top: 24px; }
+
+/* mobile rail pieces, hidden on desktop */
+.rail-month, .rail-break, .rail-now { display: none; }
+
+/* tags */
+.tags { margin-top: 140px; max-width: 760px; }
+.tags .label, .foot .label { font-size: .8125rem; color: var(--axis); margin: 0 0 8px; }
+.tag-list { margin: 0; padding: 0; list-style: none; display: flex; flex-wrap: wrap; gap: 6px 18px; font-size: .9375rem; }
+
+/* footer as a final baseline */
+.foot { margin: 120px var(--gutter) 0; padding: 26px 0 56px; position: relative; display: flex; justify-content: space-between; gap: 32px; flex-wrap: wrap; font-size: .875rem; color: var(--ink-2); }
+.foot::before { content: ""; position: absolute; left: 0; right: 0; top: 0; height: 1px; background: var(--axis); }
+.foot::after { content: ""; position: absolute; left: 0; top: 0; width: 1px; height: 12px; background: var(--axis); }
+.foot .fname { color: var(--ink); text-decoration: none; }
+.foot p { margin: 0 0 6px; }
+
+/* ---------- post page ---------- */
+.strip { position: sticky; top: 0; z-index: 10; height: var(--axis-compact); background: var(--ground); }
+.strip-in { position: relative; height: 100%; margin: 0 var(--gutter); display: grid; grid-template-columns: 200px 1fr; align-items: stretch; }
+.strip .wordmark { align-self: center; }
+.strip .scale { position: relative; --b: var(--base-compact); }
+.strip .month b { font-size: 1.125rem; letter-spacing: -.01em; line-height: .9; }
+.strip .month span { display: none; }
+.strip .tick { height: 8px; }
+.strip .tick span { font-size: .75rem; top: calc(100% + 3px); }
+.strip .tick.post-tick { background: var(--ink); height: 11px; width: 2px; margin-left: -1px; }
+.strip .tick.post-tick span { color: var(--ink); }
+.strip .now { height: 34px; bottom: calc(var(--b) - 10px); }
+.strip .now::before { border-top-width: 6px; border-bottom-width: 6px; border-left-width: 12px; }
+.strip .now span { font-size: .6875rem; top: 24px; }
+.strip .brk small { display: none; }
+/* reading progress: its own hairline along the strip's bottom edge (under the wordmark too), not on the date axis */
+.progress { position: absolute; left: 0; bottom: 0; height: 2px; width: calc(var(--p, 0) * 100%); background: var(--accent-ink); transition: width .25s var(--ease); pointer-events: none; }
+.strip.at-top .progress { width: 0; transition: none; visibility: hidden; }
+
+.post { margin: 0 var(--gutter); display: grid; grid-template-columns: minmax(0, 66ch) minmax(220px, 1fr); column-gap: clamp(48px, 7vw, 120px); padding-top: 72px; }
+.post > * { grid-column: 1; }
+.post-aside { grid-column: 2; grid-row: 1 / span 3; align-self: start; position: sticky; top: 100px; padding-top: 14px; }
+.post-head { margin-bottom: 40px; }
+.post-head .kicker { font-size: .9375rem; }
+.post-head h1 { margin: 0; font-size: clamp(2.25rem, 4.2vw, 3.75rem); line-height: .98; letter-spacing: -.03em; font-weight: 800; text-wrap: balance; }
+.post-head .sub { margin: 22px 0 0; font-family: var(--serif); font-style: italic; font-optical-sizing: auto; font-size: 1.5rem; line-height: 1.38; color: var(--ink-2); text-wrap: pretty; }
+.post-head .meta { margin: 26px 0 0; font-size: .9375rem; color: var(--ink-2); }
+.post-head .meta span { white-space: nowrap; }
+.post-head .meta time { font-variant-numeric: normal; }
+.post-head .meta span + span::before { content: " · "; color: var(--axis); white-space: normal; }
+.post-annot { width: var(--annot); height: var(--annot); margin-top: 22px; }
+
+.elapsed { margin: 0 0 40px; line-height: 1; }
+.elapsed b { display: block; font-weight: 400; font-size: 6rem; letter-spacing: -.045em; color: var(--numeral); line-height: .8; font-variant-numeric: tabular-nums; }
+.elapsed span { display: block; font-size: .875rem; color: var(--ink-2); margin-top: 12px; max-width: 24ch; line-height: 1.4; }
+.toc { margin: 0; padding: 0; list-style: none; font-size: .9375rem; }
+.toc li { position: relative; padding-left: 20px; margin: 0 0 10px; }
+.toc li::before { content: ""; position: absolute; left: 0; top: .62em; width: 10px; height: 1px; background: var(--axis); }
+.toc li.is-current::before { background: var(--ink); width: 14px; height: 2px; top: .58em; }
+.toc a { text-decoration: none; color: var(--ink-2); }
+.toc li.is-current a, .toc a:hover { color: var(--ink); }
+.toc-label { font-size: .8125rem; color: var(--axis); margin: 0 0 12px; }
+
+.prose { font-family: var(--serif); font-optical-sizing: auto; font-size: 1.125rem; line-height: 1.6; max-width: 66ch; }
+.prose p { margin: 0 0 1.35em; text-wrap: pretty; }
+.prose a { text-decoration: underline; text-decoration-color: var(--accent-ink); text-decoration-thickness: 2px; text-underline-offset: 3px; }
+.prose a:hover { text-decoration-thickness: 3px; }
+.prose strong { font-weight: 700; }
+.prose code { font-family: var(--sans); font-size: .97em; letter-spacing: -.005em; }
+.prose h2 { position: relative; font-family: var(--sans); font-weight: 700; font-size: 1.625rem; line-height: 1.15; letter-spacing: -.015em; margin: 2.2em 0 .7em; scroll-margin-top: 92px; text-wrap: balance; }
+.prose h2::before { content: ""; position: absolute; left: -26px; top: .18em; width: 1px; height: .85em; background: var(--ink); }
+.prose h2::after { content: ""; position: absolute; left: -26px; top: .18em; width: 14px; height: 1px; background: var(--ink); }
+
+.post-tail { margin-top: 56px; }
+.post-tail section { margin-top: 64px; }
+.post-tail h2 { font-size: 1.125rem; font-weight: 400; margin: 0 0 20px; color: var(--ink); }
+.post-tail h2 small { color: var(--axis); font-size: .875rem; margin-left: 8px; font-variant-numeric: tabular-nums; }
+
+.sources { margin: 0; padding: 0; list-style: none; counter-reset: src; }
+.sources li { display: grid; grid-template-columns: 2.5rem minmax(0, 1fr) 11rem; column-gap: 16px; align-items: baseline; padding: 7px 0; font-size: .9375rem; }
+.sources li::before { counter-increment: src; content: counter(src, decimal-leading-zero); color: var(--axis); font-variant-numeric: tabular-nums; }
+.sources a { text-decoration: underline; text-decoration-color: var(--axis-soft); text-underline-offset: 4px; text-decoration-thickness: 1px; }
+.sources a:hover { text-decoration-color: var(--accent-ink); }
+.sources .site { color: var(--ink-2); font-size: .875rem; overflow-wrap: anywhere; }
+
+.mini { position: relative; height: 44px; margin: 8px 0 28px; max-width: 520px; }
+.mini .seg { bottom: 22px; left: 0; width: 100%; }
+.mini .tick { bottom: 22px; height: 8px; }
+.mini .tick.post-tick { background: var(--ink); height: 12px; width: 2px; margin-left: -1px; }
+.mini .tick span { font-size: .75rem; }
+/* the comments axis ends at now with a plain ink tick: the page keeps one coloured flag */
+.mini .now { bottom: 22px; height: 14px; width: 1px; margin-left: -.5px; background: var(--ink); box-shadow: none; }
+.mini .now::before { display: none; }
+.mini .now span { font-size: .75rem; top: 18px; right: auto; left: 50%; transform: translateX(-50%); }
+.comment { position: relative; padding-left: 5.5rem; margin: 0 0 28px; max-width: 60ch; }
+.comment time { position: absolute; left: 0; top: .1em; font-size: .875rem; color: var(--ink-2); padding-left: 12px; }
+.comment time::before { content: ""; position: absolute; left: 0; top: .35em; width: 1px; height: .9em; background: var(--axis); }
+.comment .who { margin: 0 0 4px; font-size: .9375rem; }
+.comment p { margin: 0; font-family: var(--serif); font-optical-sizing: auto; font-size: 1.0625rem; line-height: 1.5; color: var(--ink-2); }
+
+form { max-width: 60ch; }
+.field { display: grid; gap: 6px; margin: 0 0 18px; }
+.field label { font-size: .875rem; color: var(--ink-2); }
+.field input, .field textarea { font: inherit; font-size: 1rem; color: var(--ink); background: transparent; border: 0; border-bottom: 1px solid var(--axis); padding: 8px 0; border-radius: 0; }
+.field textarea { min-height: 96px; resize: vertical; font-family: var(--serif); font-optical-sizing: auto; }
+.field input:focus, .field textarea:focus { outline: none; border-bottom-color: var(--ink); box-shadow: 0 1px 0 var(--ink); }
+.field.is-invalid input, .field.is-invalid textarea { border-bottom-color: var(--accent-ink); box-shadow: 0 1px 0 var(--accent-ink); }
+.row { display: flex; gap: 16px; align-items: end; flex-wrap: wrap; }
+.row .field { flex: 1 1 220px; margin: 0; }
+button { font: inherit; font-size: .9375rem; color: var(--ground); background: var(--ink); border: 0; padding: 10px 18px; cursor: pointer; }
+button:hover { background: var(--ink-2); }
+.form-note { margin: 12px 0 0; font-size: .875rem; color: var(--ink-2); min-height: 1.3em; }
+.form-note.is-ok { color: var(--ink); }
+.subscribe p.intro { margin: 0 0 18px; font-family: var(--serif); font-optical-sizing: auto; font-size: 1.0625rem; color: var(--ink-2); max-width: 48ch; }
+
+/* ---------- reduced motion: cursor and progress jump ---------- */
+@media (prefers-reduced-motion: reduce) {
+  .axis, .scale, .seg, .brk, .month, .month b, .month span, .tick, .now, .cursor, .progress, .mark { transition: none !important; }
+}
+
+/* ---------- narrow: the axis becomes a vertical rail ---------- */
+@media (max-width: 1100px) {
+  .annot { right: auto; left: 14px; top: 26px; }
+  .annot::before { left: auto; right: 100%; }
+  .entry.has-img { --lead: calc(var(--annot) + 40px); }
+  .entry.lead .annot { left: auto; right: 14px; }
+  .entry.lead .annot::before { right: auto; left: 100%; }
+  .post { grid-template-columns: minmax(0, 1fr); }
+  .post-aside { grid-column: 1; grid-row: auto; position: static; padding: 0; margin-bottom: 40px; }
+  .elapsed { display: none; }
+}
+@media (max-width: 720px) {
+  :root { --annot: 88px; --rail: 40px; }
+  .axis { position: static; height: auto; transition: none; }
+  .axis.is-compact { transform: none; }
+  .axis-in { height: auto; padding: 16px 0 0; }
+  .axis-title { position: static; flex-direction: column; gap: 2px; white-space: normal; }
+  .mast-nav { position: static; margin-top: 8px; gap: 18px; }
+  .axis.is-compact .mast-nav { opacity: 1; pointer-events: auto; }
+  .axis.is-compact .axis-title { opacity: 1; }
+  .axis .scale { display: none; }
+  .archive { padding-left: var(--rail); }
+  .hero { display: flex; flex-direction: column; padding: 20px 0 0; }
+  .hero > * { order: 0; }
+  .ident { position: static; order: -1; width: auto; margin: 0 0 28px calc(-1 * var(--rail)); }
+  .ident p { font-size: 1rem; margin-bottom: 10px; }
+  .ident-links { flex-wrap: wrap; gap: 6px 14px; }
+  /* the rail: each hung element draws its own segment so the line is
+     continuous through the archive and never runs beside the identity text */
+  .entry, .rail-month, .rail-break, .rail-now { position: relative; }
+  .entry::before, .rail-month::before, .rail-now::before { content: ""; width: 1px; height: auto; position: absolute; left: calc(-1 * var(--rail) + 8px); top: 0; bottom: 0; width: 1px; background: var(--axis); }
+  .rail-now { display: block; height: 40px; }
+  .rail-now::before { background: var(--accent-ink); width: 3px; margin-left: -1px; }
+  .rail-now::after { content: ""; position: absolute; left: calc(-1 * var(--rail) + 10px); top: 0; width: 0; height: 0; border-top: 7px solid transparent; border-bottom: 7px solid transparent; border-left: 14px solid var(--accent-ink); }
+  .rail-now span { position: absolute; left: 0; top: -1px; font-size: .8125rem; }
+  .rail-month { display: block; height: 84px; }
+  .rail-month b { position: absolute; left: calc(-1 * var(--rail) - 4px); top: 6px; font-weight: 400; font-size: 4.5rem; letter-spacing: -.045em; color: var(--numeral); line-height: 1; background: var(--ground); padding: 4px 6px 4px 4px; font-variant-numeric: tabular-nums; }
+  .rail-month span { position: absolute; left: 60px; top: 52px; font-size: .8125rem; color: var(--axis); }
+  .rail-break { display: block; height: 44px; }
+  .rail-break i { position: absolute; left: calc(-1 * var(--rail) + 1px); top: 14px; width: 15px; height: 1.5px; background: var(--ink-2); transform: rotate(-28deg); }
+  .rail-break i + i { top: 24px; }
+  .rail-break small { position: absolute; left: 0; top: 12px; font-size: .75rem; color: var(--axis); }
+  .entry { margin-top: 0; padding: var(--gap, 40px) 0 8px; scroll-margin-top: 12px; --lead: 0px; }
+  .entry.lead { padding-top: 0; }
+  .mark, .entry.lead .mark { position: relative; top: auto; left: auto; height: auto; border: 0; margin: 0 0 10px; }
+  .mark::before { left: calc(-1 * var(--rail) + 8px); top: .6em; width: 12px; height: 1px; }
+  .entry.is-current .mark::before, .entry.is-hot .mark::before { height: 2px; background: var(--ink); }
+  .kicker, .entry.lead .kicker { position: static; white-space: normal; font-size: .875rem; }
+  .annot, .entry.lead .annot { position: static; margin: 10px 0 0; }
+  .annot::before { display: none; }
+  .ebody, .entry.lead .ebody { padding: 0; margin: 0; max-width: none; }
+  .entry.lead h2, .entry.lead .ebody { text-align: left; }
+  .entry.lead .dek { margin-left: 0; }
+  .entry::before { display: none; }
+  .rest { padding-top: 0; }
+  .entry h2 { font-size: 1.75rem; }
+  .entry.lead h2 { font-size: 2.375rem; }
+  .entry.lead .dek { font-size: 1.25rem; }
+  .dek { font-size: 1.125rem; }
+  .tags { margin-top: 64px; }
+  .foot { margin-top: 64px; }
+
+  .strip-in { grid-template-columns: 112px 1fr; column-gap: 12px; }
+  .strip .wordmark { font-size: .9375rem; }
+  .strip .month b { font-size: .8125rem; }
+  .strip .tick:not(.post-tick) span { display: none; }
+  .strip .tick.post-tick span { left: auto; right: 4px; transform: none; }
+  .strip .now span { display: none; }
+  .post { padding-top: 40px; }
+  .post-head h1 { font-size: 2.25rem; }
+  .post-head .sub { font-size: 1.25rem; }
+  .prose { font-size: 1.0625rem; }
+  .prose h2 { padding-top: 14px; }
+  .prose h2::before { left: 0; top: 0; width: 1px; height: 10px; }
+  .prose h2::after { left: 0; top: 0; width: 14px; height: 1px; }
+  .sources li { grid-template-columns: 2rem minmax(0, 1fr); row-gap: 2px; }
+  .sources .site { grid-column: 2; }
+  .comment { padding-left: 0; padding-top: 22px; }
+  .comment time { top: 0; }
+}
+</style>
+</head>
+<body>
+
+<header class="strip">
+  <div class="strip-in">
+    <a class="wordmark" href="index.html">Looking Ahead</a>
+    <nav class="scale" aria-label="Posts by date">
+<span class="seg seg-a" style="--x1:0.6857"></span>
+<span class="seg seg-b" style="--x0:0.7429"></span>
+<span class="brk" style="--x0:0.6857;--x1:0.7429" aria-hidden="true"><i></i><i></i><small>174 days skipped</small></span>
+<div class="month" style="--x:0.0000" aria-hidden="true"><b>02</b><span>February 2026</span></div>
+<div class="month" style="--x:0.4857" aria-hidden="true"><b>03</b><span>March</span></div>
+<div class="month m-last" style="--x:0.8286" aria-hidden="true"><b>09</b><span>September</span></div>
+<a class="tick post-tick" href="index.html#e-agent-first-development-is-the-future" style="--x:0.8571" aria-label="September 2, 2026 — Agent First Development is The Future"><span aria-hidden="true">Sep 2</span></a>
+<a class="tick" href="index.html#e-the-iran-war-is-not-really-about-iran" style="--x:0.5714" aria-label="March 4, 2026 — The Iran War Is Not Really About Iran"><span aria-hidden="true">4</span></a>
+<a class="tick" href="index.html#e-openai-pentagon-deal-red-lines" style="--x:0.4857" aria-label="March 1, 2026 — OpenAI’s Pentagon Deal and the Red Lines Problem"><span aria-hidden="true">1</span></a>
+<a class="tick" href="index.html#e-should-ai-agents-be-friends" style="--x:0.3429" aria-label="February 24, 2026 — Should AI Agents be Friends?"><span aria-hidden="true">24</span></a>
+<a class="tick" href="index.html#e-from-copilot-to-colleague" style="--x:0.2286" aria-label="February 20, 2026 — From Copilot to Colleague: The Five Pillars of an Agentic AI Strategy"><span aria-hidden="true">20</span></a>
+<a class="tick" href="index.html#e-the-hyper-learner" style="--x:0.1714" aria-label="February 18, 2026 — The Hyper Learner"><span aria-hidden="true">18</span></a>
+<a class="tick" href="index.html#e-github-agentic-workflows" style="--x:0.1429" aria-label="February 17, 2026 — GitHub’s Agentic Workflows and the Coming ‘Continuous AI’ Era"><span aria-hidden="true">17</span></a>
+<a class="tick" href="index.html#e-how-i-10x-d-my-ai-coding-productivity" style="--x:0.1143" aria-label="February 16, 2026 — How I 10x’d My AI Coding Productivity (And You Can Too)"><span aria-hidden="true">16</span></a>
+<span class="now" style="--x:1" aria-hidden="true"><span>Now · Sep 7</span></span>
+    </nav>
+    <span class="progress" role="progressbar" aria-label="Reading progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"></span>
+  </div>
+</header>
+
+<main class="post">
+  <header class="post-head">
+    <p class="kicker">Product strategy · 9 min read</p>
+    <h1>Agent First Development is The Future</h1>
+    <p class="sub">Mobile-first was a rethink of where you start. This is the same move, one layer deeper.</p>
+    <p class="meta"><span>Shahar Nechmad</span><span><time datetime="2026-09-02">September 2, 2026</time></span><span>5 days ago</span></p>
+    
+  </header>
+  <aside class="post-aside" aria-label="About this post">
+    <p class="elapsed"><b>5</b><span>days since this was published. Time will tell.</span></p>
+    <p class="toc-label">In this piece</p>
+    <ol class="toc"><li data-for="my-thesis"><a href="#my-thesis">My thesis</a></li><li data-for="start-with-the-api"><a href="#start-with-the-api">Start with the API, not the frontend</a></li><li data-for="frontend-too"><a href="#frontend-too">Agent First changes the frontend too</a></li><li data-for="not-agents-over-humans"><a href="#not-agents-over-humans">The point isn’t agents over humans</a></li></ol>
+  </aside>
+  <div class="prose">
+<p>Back when mobile took off, every product team went through the same reckoning. You couldn’t just shrink your desktop site down and call it a mobile experience. The winners were the teams that flipped the process: design for the small screen first, then expand out to desktop. “Mobile first” wasn’t a slogan, it was a complete rethink of where you start.</p>
+<p>I think we’re at the exact same inflection point again, except this time the new screen isn’t a screen at all. It’s an agent.</p>
+<p>Here’s the thing that makes this not just a hot take: it already happened. In June 2026, Cloudflare CEO Matthew Prince confirmed that bot and agent traffic officially <a href="https://www.techspot.com/news/112657-bots-have-officially-overtaken-humans-internet-cloudflare.html" target="_blank" rel="noopener noreferrer">passed human traffic on the internet</a> for the first time ever. He’d predicted this would happen in 2027. It happened a year early. Cloudflare Radar puts it at roughly 57% of requests now coming from bots and agents, not people.</p>
+<p>And the reason isn’t spam. It’s scale. A human comparing cameras might check five websites. An agent doing the same task might check five thousand. Multiply that across every shopping decision, every research task, every “hey, can you handle this for me” moment, and you get an internet where the primary requester of your product is increasingly a piece of software acting on someone’s behalf.</p>
+<p>Stripe’s own research backs this up with a number that’s hard to ignore: agentic shoppers could account for as much as <a href="https://stripe.com/resources/more/agentic-commerce" target="_blank" rel="noopener noreferrer">$385 billion in US ecommerce spending by 2030</a>. That’s not a niche use case. That’s a second customer base showing up at your door, and in a lot of businesses, it’ll eventually be the bigger one.</p>
+<h2 id="my-thesis">My thesis</h2>
+<p>The old playbook was: build the product for humans, then bolt on an API later so “enterprise customers” or “developers” could integrate. Agents were an afterthought, something you served through a thin wrapper around your real product.</p>
+<p>I think that playbook is now backwards. The right way to build a product going forward is <strong>Agent First Development</strong>: design for the agent as your primary user, and treat the human-facing UI as one client among several, not the canonical one.</p>
+<p>This isn’t about ignoring humans. Plenty of your users will still be people clicking around a dashboard. It’s about recognizing that the agent calling your API might be the one actually making the purchase decision, filing the ticket, or configuring the account. And if your product wasn’t built with that in mind, you’re invisible to it.</p>
+<h2 id="start-with-the-api">Start with the API, not the frontend</h2>
+<p>Agents are getting shockingly good at “computer use”: clicking buttons, reading screenshots, filling out forms like a human would. But that’s still the slow, fragile, expensive path for them. Give an agent a well-designed API instead of a UI to fumble through, and it’ll be faster, cheaper, and far more reliable every time.</p>
+<p>So the first thing you should design isn’t the frontend UX. It’s the API UX.</p>
+<p>That means every single thing a human can do in your product should be reachable through an API. Not just the core feature set. The boring stuff too. Creating a new user. Grabbing API keys. Changing a plan. Resetting a password. If a human can click it, an agent should be able to call it.</p>
+<p>Stripe is a good case study here, mostly because they’ve been transparent about the process. They didn’t just add an “AI mode.” They built the <a href="https://stripe.com/blog/developing-an-open-standard-for-agentic-commerce" target="_blank" rel="noopener noreferrer">Agentic Commerce Protocol</a> with OpenAI as an open standard for how agents transact with businesses, introduced <a href="https://stripe.com/blog/introducing-our-agentic-commerce-solutions" target="_blank" rel="noopener noreferrer">Shared Payment Tokens</a> so an agent can pay on someone’s behalf without ever touching raw card details, and shipped an official MCP server at mcp.stripe.com so any MCP-compatible agent can work with the Stripe API directly. The pattern across all of it: don’t make the agent guess. Give it a typed, scoped, well-documented surface built for exactly what they want to accomplish.</p>
+<p>That last point matters more than it sounds. Your API shouldn’t just be a plain HTTP interface anymore. It needs to be reachable through <a href="https://modelcontextprotocol.io/introduction" target="_blank" rel="noopener noreferrer">MCP</a>, through OAuth, and through plain old REST, because different agent harnesses will reach for different tools, and you don’t get to pick which one shows up at your door. And here’s the part people get wrong: don’t build a separate “agent API” next to your “real API.” Build one API that both your frontend and your agents consume. The moment you fork them, they drift, and eventually your agent experience quietly rots while nobody notices because the humans never hit that code path.</p>
+<p>There’s a side benefit to this that’s easy to miss: once your API genuinely covers every feature, your own internal coding agents get an enormous gift. They can test the thing they’re building the same way an external agent would, by hitting the same API, instead of scripting a browser to click through your UI. If you’re using Claude Code, Cursor, or any coding agent to ship features faster, an API-first product is the difference between that agent verifying its own work in seconds versus flying blind.</p>
+<h2 id="frontend-too">Agent First changes the frontend too</h2>
+<p>None of this means the frontend doesn’t matter. It means the frontend needs to change in ways most teams haven’t thought about yet.</p>
+<p><strong>Give coding agents a real way to log in.</strong> If your coding agent is iterating on your frontend, it needs to authenticate against your live app to actually test what it built. “Login with Google” is fine for a human clicking a button, but it’s a wall for an agent. You need an auth path, a service account, an API key flow, something, that lets your own agents log in and verify their work without a human clicking through an OAuth consent screen every time.</p>
+<p><strong>Make your marketing content legible to agents, not just search engines.</strong> This is where <code>llms.txt</code> comes in: a plain-text file that tells agents what your product does and where to find more. Stripe already publishes theirs at <a href="https://stripe.com/guides/how-to-prepare-for-agentic-commerce-technical-field-guide" target="_blank" rel="noopener noreferrer">stripe.com/llms.txt</a>, alongside Markdown versions of their docs, specifically so an agent can parse “what does this company offer and how do I use it” without having to render a JavaScript-heavy page first. If an agent is doing the research and recommending your product to a human, and it can’t parse your homepage, you’re not in the running.</p>
+<p><strong>Get ahead with new discovery standards like WebMCP.</strong> <a href="https://developer.chrome.com/docs/ai/webmcp" target="_blank" rel="noopener noreferrer">WebMCP</a> is a proposed web standard, already shipping behind a flag in Chrome 146, that lets a webpage declare its own callable tools directly to an in-browser agent. Think <code>bookFlight()</code> or <code>checkout()</code> instead of an agent trying to guess which button does what. Google’s own numbers on this are eye-opening: roughly <a href="https://www.codewithseb.com/blog/webmcp-website-ai-agent-tools-guide" target="_blank" rel="noopener noreferrer">89% fewer tokens</a> spent when an agent calls a declared tool versus scraping pixels and DOM to figure out what’s clickable. It’s early, it’s experimental, and it might not be the exact standard that wins. But the direction is unmistakable, and the products that adopt this kind of thing early will have a real edge with browser-native agents.</p>
+<h2 id="not-agents-over-humans">The point isn’t agents over humans</h2>
+<p>None of this is an argument for building soulless, headless products with no UI. Humans still need a place to see what happened, feel good about their purchase, and trust the brand behind it. What’s changing is the order of operations, and who you assume is knocking on your API first.</p>
+<p>Mobile-first didn’t mean nobody used desktops anymore. It meant you stopped treating mobile as the cut-down version of the “real” product. Agent-first is the same move, one layer deeper. Your agent interface isn’t the stripped-down version of your product for robots. For a growing share of your users, it <em>is</em> the product. Everything else is just a nicer way to look at what already happened.</p>
+<p>The teams that get this early won’t just be more “AI-friendly.” They’ll be the ones agents actually recommend, actually complete transactions with, and actually keep coming back to, because they built for that reality instead of retrofitting it in six months from now, after everyone else already did.</p>
+  </div>
+
+<footer class="post-tail">
+<section class="tags" aria-label="Tags">
+  <p class="label">Filed under</p>
+  <ul class="tag-list"><li><a href="index.html#archive">agent-first development</a></li><li><a href="index.html#archive">api design</a></li><li><a href="index.html#archive">product strategy</a></li></ul>
+</section>
+<section class="sources-wrap" aria-labelledby="sources-h">
+  <h2 id="sources-h">Sources<small class="tnum">13</small></h2>
+  <ol class="sources"><li><a href="https://www.techspot.com/news/112657-bots-have-officially-overtaken-humans-internet-cloudflare.html" target="_blank" rel="noopener noreferrer">Bots have officially overtaken humans on the internet</a><span class="site">techspot.com</span></li><li><a href="https://www.nbcnews.com/tech/tech-news/bot-web-traffic-overtaken-human-web-traffic-data-shows-rcna348522" target="_blank" rel="noopener noreferrer">Bot web traffic has overtaken human web traffic, data shows</a><span class="site">nbcnews.com</span></li><li><a href="https://stripe.com/resources/more/agentic-commerce" target="_blank" rel="noopener noreferrer">Agentic Commerce: A Guide for Businesses</a><span class="site">stripe.com</span></li><li><a href="https://stripe.com/blog/developing-an-open-standard-for-agentic-commerce" target="_blank" rel="noopener noreferrer">Developing an open standard for agentic commerce</a><span class="site">stripe.com</span></li><li><a href="https://stripe.com/blog/introducing-our-agentic-commerce-solutions" target="_blank" rel="noopener noreferrer">Introducing our agentic commerce solutions</a><span class="site">stripe.com</span></li><li><a href="https://stripe.com/blog/agentic-commerce-suite" target="_blank" rel="noopener noreferrer">Introducing the Agentic Commerce Suite</a><span class="site">stripe.com</span></li><li><a href="https://stripe.com/guides/how-to-prepare-for-agentic-commerce-technical-field-guide" target="_blank" rel="noopener noreferrer">How to prepare for agentic commerce: A technical field guide</a><span class="site">stripe.com</span></li><li><a href="https://docs.stripe.com/agents" target="_blank" rel="noopener noreferrer">Agents and AI on Stripe</a><span class="site">docs.stripe.com</span></li><li><a href="https://developer.chrome.com/docs/ai/webmcp" target="_blank" rel="noopener noreferrer">WebMCP | AI on Chrome</a><span class="site">developer.chrome.com</span></li><li><a href="https://www.codewithseb.com/blog/webmcp-website-ai-agent-tools-guide" target="_blank" rel="noopener noreferrer">WebMCP: Turn Your Website Into a Tool for AI Agents</a><span class="site">codewithseb.com</span></li><li><a href="https://blog.cloudflare.com/agentic-internet-bot-report/" target="_blank" rel="noopener noreferrer">Building the business model for the agentic Internet</a><span class="site">blog.cloudflare.com</span></li><li><a href="https://modelcontextprotocol.io/introduction" target="_blank" rel="noopener noreferrer">Model Context Protocol Introduction</a><span class="site">modelcontextprotocol.io</span></li><li><a href="https://dev.to/adamklein/the-agent-first-approach-to-building-products-51oj" target="_blank" rel="noopener noreferrer">The agent-first approach to building products</a><span class="site">dev.to</span></li></ol>
+</section>
+<section class="subscribe" aria-labelledby="sub-h">
+  <h2 id="sub-h">Get the next forecast</h2>
+  <p class="intro">One email when a new piece is published. No digests, no summaries.</p>
+  <form method="dialog" data-demo novalidate>
+    <div class="row">
+      <div class="field"><label for="sub-email">Email</label><input id="sub-email" type="email" required data-name="your email" autocomplete="email" placeholder="you@example.com"></div>
+      <button type="submit">Subscribe</button>
+    </div>
+    <p class="form-note" aria-live="polite"></p>
+  </form>
+</section>
+<section class="comments" aria-labelledby="com-h">
+  <h2 id="com-h">Comments<small class="tnum">3</small></h2>
+  <div class="mini" aria-hidden="true"><span class="seg"></span><span class="tick post-tick at-origin" style="--x:0" aria-hidden="true"><span>Sep 2</span></span><span class="tick" style="--x:0.2000" aria-hidden="true"><span>3</span></span><span class="tick" style="--x:0.4000" aria-hidden="true"><span>4</span></span><span class="now" style="--x:1" aria-hidden="true"><span>Now</span></span></div>
+  <article class="comment">
+    <time datetime="2026-09-03">Sep 3</time>
+    <p class="who">Dana R.</p>
+    <p>The point about not forking a separate “agent API” is the one I keep having to argue internally. Two surfaces means one of them rots.</p>
+  </article><article class="comment">
+    <time datetime="2026-09-03">Sep 3</time>
+    <p class="who">Michael Osei</p>
+    <p>Curious how you’d sequence this for a team with an existing product. Do you retrofit the API coverage first, or start with llms.txt and discovery?</p>
+  </article><article class="comment">
+    <time datetime="2026-09-04">Sep 4</time>
+    <p class="who">Priya N.</p>
+    <p>The 89% token reduction number for WebMCP is what convinced me. That’s not a nice-to-have, that’s a cost line.</p>
+  </article>
+  <form method="dialog" data-demo novalidate>
+    <div class="field"><label for="c-name">Name</label><input id="c-name" type="text" required data-name="your name" autocomplete="name"></div>
+    <div class="field"><label for="c-text">Comment</label><textarea id="c-text" required data-name="a comment"></textarea></div>
+    <button type="submit">Post comment</button>
+    <p class="form-note" aria-live="polite"></p>
+  </form>
+</section>
+</footer>
+</main>
+<footer class="foot">
+  <div>
+    <p><a class="fname" href="index.html">Looking Ahead</a> — <span class="tagline">AI, and what it means for the rest of us</span></p>
+    <p>© 2026 Shahar Nechmad</p>
+  </div>
+  <div>
+    <p class="label">Follow</p>
+    <p class="foot-links"><a href="#">X</a> <a href="#">LinkedIn</a> <a href="#">RSS</a></p>
+  </div>
+</footer>
+
+<script>
+(function () {
+  // Chrome does not repaint text-decoration-color when a custom property on
+  // <html> changes after first paint; nudge decorated links so a live accent
+  // swap (theme preview, the capture tool's --accent) repaints them too.
+  if (window.MutationObserver) {
+    new MutationObserver(function () {
+      Array.prototype.forEach.call(document.querySelectorAll('.readlink, .prose a'), function (a) {
+        a.style.textDecorationColor = 'transparent';
+        void a.offsetWidth;
+        a.style.textDecorationColor = '';
+      });
+    }).observe(document.documentElement, { attributes: true, attributeFilter: ['style'] });
+  }
+  // Demo forms: method="dialog" already aborts submission; validate locally
+  // and tell the reader nothing was sent.
+  var forms = document.querySelectorAll('form[data-demo]');
+  Array.prototype.forEach.call(forms, function (f) {
+    f.addEventListener('submit', function (ev) {
+      ev.preventDefault();
+      var note = f.querySelector('.form-note');
+      var fields = Array.prototype.slice.call(f.querySelectorAll('[required]'));
+      var bad = [];
+      fields.forEach(function (i) {
+        var v = i.value.trim();
+        var ok = v.length > 0 && (i.type !== 'email' || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v));
+        i.closest('.field').classList.toggle('is-invalid', !ok);
+        if (!ok) bad.push(i);
+      });
+      note.classList.remove('is-ok');
+      if (bad.length) {
+        note.textContent = bad.length === 1
+          ? 'Please add ' + bad[0].getAttribute('data-name') + '.'
+          : 'Please fill in ' + bad.map(function (i) { return i.getAttribute('data-name'); }).join(', ') + '.';
+        bad[0].focus();
+        return;
+      }
+      note.textContent = 'Demo only — nothing was sent.';
+      note.classList.add('is-ok');
+      f.reset();
+    });
+  });
+})();
+
+(function () {
+  var strip = document.querySelector('.strip');
+  var bar = strip.querySelector('.progress');
+  var heads = Array.prototype.slice.call(document.querySelectorAll('.prose h2[id]'));
+  var items = {};
+  Array.prototype.forEach.call(document.querySelectorAll('.toc li'), function (li) {
+    items[li.getAttribute('data-for')] = li;
+  });
+  var tops = [], cur = null, queued = false, last = -1;
+  function measure() { tops = heads.map(function (h) { return h.getBoundingClientRect().top + window.scrollY; }); }
+  function update() {
+    queued = false;
+    var y = window.scrollY;
+    var max = document.documentElement.scrollHeight - window.innerHeight;
+    var p = max > 0 ? Math.min(1, Math.max(0, y / max)) : 0;
+    if (p !== last) {
+      last = p;
+      strip.style.setProperty('--p', p.toFixed(4));
+      strip.classList.toggle('at-top', p === 0);
+      bar.setAttribute('aria-valuenow', Math.round(p * 100));
+    }
+    var line = y + 72 + Math.min(200, Math.round(window.innerHeight * 0.25));
+    var idx = -1;
+    for (var i = 0; i < tops.length; i++) { if (tops[i] <= line) idx = i; else break; }
+    var id = idx >= 0 ? heads[idx].id : null;
+    if (id !== cur) {
+      if (cur && items[cur]) items[cur].classList.remove('is-current');
+      cur = id;
+      if (cur && items[cur]) items[cur].classList.add('is-current');
+    }
+  }
+  function schedule() { if (!queued) { queued = true; window.requestAnimationFrame(update); } }
+  window.addEventListener('scroll', schedule, { passive: true });
+  window.addEventListener('resize', function () { measure(); schedule(); });
+  window.addEventListener('load', function () { measure(); update(); });
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(function () { measure(); update(); });
+  measure(); update();
+  window.__horizon = { progress: function () { return last; }, section: function () { return cur; } };
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,485 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Looking Ahead — AI, and what it means for the rest of us</title>
+<style>
+@font-face {
+  font-family: 'Fraunces';
+  font-style: italic;
+  font-weight: 300 900;
+  font-display: swap;
+  src: url(fonts/fraunces-0.woff2) format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: 'Fraunces';
+  font-style: italic;
+  font-weight: 300 900;
+  font-display: swap;
+  src: url(fonts/fraunces-1.woff2) format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: 'Fraunces';
+  font-style: normal;
+  font-weight: 300 900;
+  font-display: swap;
+  src: url(fonts/fraunces-2.woff2) format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: 'Fraunces';
+  font-style: normal;
+  font-weight: 300 900;
+  font-display: swap;
+  src: url(fonts/fraunces-3.woff2) format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: 'Instrument Sans';
+  font-style: italic;
+  font-weight: 400 700;
+  font-stretch: 75% 100%;
+  font-display: swap;
+  src: url(fonts/instrument-sans-0.woff2) format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: 'Instrument Sans';
+  font-style: italic;
+  font-weight: 400 700;
+  font-stretch: 75% 100%;
+  font-display: swap;
+  src: url(fonts/instrument-sans-1.woff2) format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: 'Instrument Sans';
+  font-style: normal;
+  font-weight: 400 700;
+  font-stretch: 75% 100%;
+  font-display: swap;
+  src: url(fonts/instrument-sans-2.woff2) format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: 'Instrument Sans';
+  font-style: normal;
+  font-weight: 400 700;
+  font-stretch: 75% 100%;
+  font-display: swap;
+  src: url(fonts/instrument-sans-3.woff2) format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: 'Source Serif 4';
+  font-style: italic;
+  font-weight: 400;
+  font-display: swap;
+  src: url(fonts/source-serif-0.woff2) format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: 'Source Serif 4';
+  font-style: italic;
+  font-weight: 400;
+  font-display: swap;
+  src: url(fonts/source-serif-1.woff2) format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: 'Source Serif 4';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url(fonts/source-serif-2.woff2) format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: 'Source Serif 4';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url(fonts/source-serif-3.woff2) format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: 'Source Serif 4';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url(fonts/source-serif-4.woff2) format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: 'Source Serif 4';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url(fonts/source-serif-5.woff2) format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+html{--publication-accent:#b4361f;overflow-x:clip}
+:root{
+  --ground:oklch(93.5% 0.016 82);
+  --stock:oklch(97.5% 0.008 85);
+  --shelf:oklch(85% 0.022 78);
+  --ink:oklch(22% 0.012 60);
+  --ink-2:oklch(42% 0.012 60);
+  --rule:oklch(80% 0.014 80);
+  /* Derived accent family — never the raw hex under text. */
+  --accent-ink:oklch(from var(--publication-accent) clamp(0.25, l, 0.42) min(c, 0.15) h);
+  --plate-deep:var(--accent-ink);
+  --plate-tint:oklch(from var(--publication-accent) 0.92 min(c, 0.08) h);
+  --accent-line:oklch(from var(--publication-accent) clamp(0.3, l, 0.5) min(c, 0.17) h);
+  --sans:'Instrument Sans',system-ui,-apple-system,sans-serif;
+  --disp:'Fraunces',Georgia,'Times New Roman',serif;
+  --body:'Source Serif 4',Georgia,'Times New Roman',serif;
+  --pad:clamp(16px, 3.4vw, 48px);
+  --lift:160ms cubic-bezier(.2,.7,.2,1);
+}
+*,*::before,*::after{box-sizing:border-box}
+body{margin:0;background:var(--ground);color:var(--ink);font-family:var(--sans);font-size:1rem;line-height:1.5;-webkit-font-smoothing:antialiased}
+a{color:inherit}
+img{display:block;max-width:100%}
+:focus-visible{outline:2px solid var(--accent-ink);outline-offset:3px}
+button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:pointer}
+
+/* Imprint — the publisher's mark, not a masthead */
+.imprint{display:flex;flex-wrap:wrap;align-items:baseline;gap:.35rem 1.25rem;padding:1.1rem var(--pad) .9rem;font-size:.82rem;letter-spacing:.01em}
+.imprint-name{font-weight:500;text-transform:uppercase;letter-spacing:.14em;text-decoration:none;margin:0;font-size:inherit}
+.imprint-name a{text-decoration:none}
+.imprint-tag{color:var(--ink-2)}
+.imprint nav{margin-left:auto;display:flex;gap:1.2rem}
+.imprint nav a{text-decoration:none;color:var(--ink-2)}
+.imprint nav a:hover{color:var(--ink);text-decoration:underline;text-underline-offset:.2em}
+.imprint nav a.rss::before{content:"";display:inline-block;width:.55em;height:.55em;margin-right:.35em;border-radius:50%;background:var(--accent-line);vertical-align:.05em}
+
+/* ---------- Cover grid (Marber-style: band / title / illustration / foot) ---------- */
+.cover{container-type:inline-size;position:relative;display:block;aspect-ratio:2/3;width:100%;text-decoration:none;color:var(--cv-fg);background:var(--cv-bg);--cv-fg:var(--ink);--cv-bg:var(--stock);--cv-rule:var(--ink)}
+.cover--deep{--cv-bg:var(--plate-deep);--cv-fg:var(--stock);--cv-rule:var(--stock)}
+.cover--tint{--cv-bg:var(--plate-tint);--cv-fg:var(--ink);--cv-rule:var(--ink)}
+.cover--paper{--cv-bg:var(--stock);--cv-fg:var(--ink);--cv-rule:var(--ink)}
+.cv{display:grid;grid-template-rows:14cqw 1fr 50cqw 12cqw;height:100%}
+.cv > *{display:block;min-width:0}
+.cv-band{display:flex;justify-content:space-between;align-items:center;gap:.8em;padding:0 6cqw;font-size:max(.6rem,3.1cqw);text-transform:uppercase;letter-spacing:min(.12em,.6cqw);border-bottom:1px solid var(--cv-rule)}
+.cover--paper .cv-band{background:var(--accent-ink);color:var(--stock);border-bottom:0}
+.cv-band > span{white-space:nowrap}
+.cv-title{padding:5cqw 6cqw 4cqw;display:flex;flex-direction:column;gap:2.4cqw;overflow:clip}
+.cv-kicker{font-size:max(.6rem,3.1cqw);letter-spacing:.1em;text-transform:uppercase;opacity:.85}
+.cv-h{margin:0;font-family:var(--disp);font-weight:600;font-optical-sizing:none;font-variation-settings:"opsz" 144;line-height:1.02;letter-spacing:-.01em;text-wrap:balance;hyphens:manual;font-size:var(--fs)}
+.fit-xl{--fs:max(1.25rem,14cqw)}
+.fit-l{--fs:max(1.15rem,12cqw)}
+.fit-m{--fs:max(1rem,10cqw)}
+.fit-s{--fs:max(.95rem,9cqw)}
+.cv-ill{border-top:1px solid var(--cv-rule);overflow:clip}
+.cv-ill--deck{padding:4cqw 6cqw 0}
+.cover--paper .cv-ill{border-top-color:var(--rule)}
+/* The photo belongs to the plate: flush in the zone, greyscaled, then it takes the plate's hue (luminosity blend). */
+.cv-ill--img img{width:100%;height:100%;object-fit:cover;filter:grayscale(1) contrast(1.05);mix-blend-mode:luminosity}
+.cv-deck{display:block;font-family:var(--body);font-style:italic;font-weight:400;font-size:max(.8rem,4.7cqw);line-height:1.32;text-wrap:pretty}
+.cv-foot{display:flex;justify-content:space-between;align-items:center;gap:1em;padding:0 6cqw;font-size:max(.6rem,3cqw);letter-spacing:.04em;border-top:1px solid var(--cv-rule);font-variant-numeric:tabular-nums}
+.cover--paper .cv-foot{border-top-color:var(--rule)}
+.cv-foot > *{white-space:nowrap;overflow:clip;text-overflow:ellipsis}
+@container (max-width:190px){.cv-author{display:none}.cv-foot{justify-content:flex-end}}
+/* The issue cut by the shelf's edge is shown as its spine: the plate, the series name and number turned 90°. */
+.cv-spine{display:none;position:absolute;top:0;left:0;bottom:0;width:40px;writing-mode:vertical-rl;align-items:center;justify-content:flex-start;padding-top:14px;font-size:.62rem;letter-spacing:.14em;text-transform:uppercase;white-space:nowrap;color:var(--cv-fg)}
+.cover--paper .cv-spine{background:var(--accent-ink);color:var(--stock)}
+.cover.is-partial .cv{visibility:hidden}
+.cover.is-partial .cv-spine{display:flex}
+a.cover{transition:transform var(--lift),box-shadow var(--lift)}
+a.cover:hover,a.cover:focus-visible{transform:translateY(-8px);box-shadow:0 18px 26px -16px oklch(22% 0.02 60 / .55)}
+
+/* ---------- Shelf ---------- */
+.shelf-wrap{padding-top:.5rem}
+.shelf{display:grid;grid-template-columns:auto minmax(0,1fr);gap:0 clamp(20px,3vw,40px);align-items:end;padding-inline:var(--pad)}
+.lead{width:clamp(300px,min(27vw,46vh),440px)}
+.lead .cv-h,.opening-cover .cv-h{font-size:calc(var(--fs) * 1.25)}
+.lead .cv-deck,.opening-cover .cv-deck{font-size:max(.95rem,5.8cqw)}
+.stack{display:flex;flex-direction:column;justify-content:flex-end;min-width:0}
+.shelf-label{display:flex;align-items:flex-end;justify-content:space-between;gap:1.5rem 3rem;padding:0 0 .2rem 4px}
+.shelf-note{margin:0;font-family:var(--body);font-style:italic;font-weight:400;font-size:clamp(1.05rem,1.35vw,1.25rem);line-height:1.35;max-width:32em;color:var(--ink);text-wrap:pretty}
+.shelf-count{margin:0;font-size:.82rem;color:var(--ink-2);white-space:nowrap;display:flex;align-items:center;gap:.8rem}
+.row{display:flex;align-items:flex-end;gap:16px;overflow-x:auto;overflow-y:clip;scroll-snap-type:x proximity;scroll-padding-left:4px;padding:16px 0 0 4px;scrollbar-width:none;--base:18.5vw}
+.row::-webkit-scrollbar{display:none}
+.row .cover{flex:0 0 auto;width:calc(var(--base) * var(--m,1));scroll-snap-align:start}
+.shelf-line{height:14px;border-top:2px solid var(--ink);background:var(--shelf)}
+.cap-btns{display:inline-flex;gap:.25rem}
+.cap-btns button{width:2.25rem;height:2.25rem;border:1px solid var(--ink);display:inline-grid;place-items:center;font-family:var(--disp);font-size:1.05rem;line-height:1}
+.cap-btns button:hover{background:var(--ink);color:var(--stock)}
+.cap-btns button:disabled{opacity:.35;cursor:default;background:none;color:inherit}
+
+/* ---------- Catalogue ---------- */
+.section{padding:3.2rem var(--pad) 0}
+.section-h{display:flex;align-items:baseline;gap:1rem;margin:0 0 1rem;font-size:.82rem;letter-spacing:.12em;text-transform:uppercase;font-weight:500}
+.section-h h2{margin:0;font-size:inherit;font-weight:inherit;letter-spacing:inherit}
+.section-h small{font-weight:400;letter-spacing:.02em;text-transform:none;color:var(--ink-2);margin-left:.6rem}
+.cat-all{margin-left:auto;font-size:.78rem;letter-spacing:.06em;color:var(--ink-2);border-bottom:1px solid var(--accent-line);padding-bottom:1px}
+.cat-all:hover,.cat-all[aria-pressed="true"]{color:var(--ink)}
+.cat{list-style:none;margin:0;padding:0;border-top:1px solid var(--ink)}
+.cat li{border-bottom:1px solid var(--rule)}
+.cat-row{display:grid;grid-template-columns:4.2rem 7.2rem minmax(0,1fr) 9rem 4rem;gap:.5rem 1.2rem;align-items:baseline;padding:.85rem 0;font-variant-numeric:tabular-nums;text-decoration:none;color:inherit}
+.cat-no{color:var(--accent-ink)}
+.cat-date{color:var(--ink-2)}
+.cat-title{font-size:1.02rem;font-weight:500}
+.cat-row:hover .cat-title{text-decoration:underline;text-underline-offset:.2em;text-decoration-color:var(--accent-line)}
+.cat-kicker,.cat-read{color:var(--ink-2);font-size:.85rem}
+.cat-read{text-align:right}
+.cat-back{padding:0 0 1rem 12.6rem;font-size:.95rem}
+.cat-back[hidden]{display:none}
+.cat-back p{margin:0;font-family:var(--body);font-style:italic;font-size:1.08rem;line-height:1.4;max-width:60ch}
+.cat-back .subjects{margin:.35rem 0 0;color:var(--ink-2);font-size:.85rem}
+.cat-back .subjects a{color:var(--ink);text-decoration-color:var(--accent-line);text-underline-offset:.2em}
+
+/* ---------- Colophon ---------- */
+.colophon{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr);gap:2rem clamp(24px,5vw,80px);padding:3.6rem var(--pad) 0;border-top:0}
+.colophon h2{margin:0 0 .6rem;font-size:.74rem;letter-spacing:.12em;text-transform:uppercase;font-weight:400;color:var(--ink-2)}
+.colophon .about{font-family:var(--body);font-size:1.08rem;line-height:1.55;max-width:56ch;margin:0}
+.colophon .who{margin:.8rem 0 0;color:var(--ink-2);font-size:.9rem}
+.colophon .social{margin:.9rem 0 0;display:flex;gap:1.1rem;font-size:.9rem}
+.colophon .social a{text-decoration-color:var(--accent-line);text-underline-offset:.2em}
+.subjects-idx{margin:0;padding:0;list-style:none;display:flex;flex-wrap:wrap;gap:.2rem .9rem;font-size:.92rem}
+.subjects-idx a{text-decoration-color:var(--accent-line);text-underline-offset:.2em}
+.sub label{display:block;font-size:.72rem;letter-spacing:.1em;text-transform:uppercase;margin-bottom:.5rem;font-weight:400;color:var(--ink-2)}
+.sub-row{display:flex;border:1px solid var(--ink);max-width:28rem}
+.sub input{flex:1;min-width:0;border:0;background:var(--stock);padding:.7rem .8rem;font:inherit;color:var(--ink)}
+.sub input:focus-visible{outline-offset:-2px}
+.sub button[type=submit],.cmt-form button[type=submit]{background:var(--ink);color:var(--stock);padding:.7rem 1.1rem;font-weight:500}
+.sub button[type=submit]:hover,.cmt-form button[type=submit]:hover{background:var(--accent-ink)}
+.form-note{margin:.5rem 0 0;font-size:.85rem;color:var(--ink-2);min-height:1.2em}
+.form-note.err{color:var(--accent-ink)}
+.form-note:empty{display:none}
+
+/* ---------- Footer ---------- */
+.foot{margin-top:4rem;border-top:2px solid var(--ink);background:var(--shelf)}
+.foot-in{padding:1.4rem var(--pad) 2.2rem;font-size:.85rem;display:flex;flex-wrap:wrap;gap:.4rem 2rem;align-items:baseline}
+.foot p{margin:0}
+.foot-name{font-weight:500;text-transform:uppercase;letter-spacing:.12em}
+.foot-links{display:flex;gap:1rem}
+.foot-links a{text-decoration-color:var(--accent-line);text-underline-offset:.2em}
+.foot-fine{width:100%;color:var(--ink-2)}
+
+/* ---------- Post ---------- */
+/* One reading axis: the opening and the body share the same two columns, centred as a pair. */
+.opening,.post{--cover-w:clamp(300px,min(27vw,46vh),440px);display:grid;grid-template-columns:var(--cover-w) minmax(0,68ch);gap:0 clamp(28px,4vw,64px);justify-content:center;font-family:var(--body);font-size:1.125rem}
+.opening{align-items:stretch;padding:.5rem var(--pad) 0}
+.opening-cover{align-self:end}
+.opening-cover .cover{width:100%}
+/* The lede's first baseline sits on the cover's title baseline; the opening then runs to the shelf line. */
+.opening-text{padding:calc(var(--cover-w) * .325) 0 1.6rem;line-height:1.6}
+.prose--lede{margin-top:1.6rem}
+.standfirst{font-size:clamp(1.35rem,1.9vw,1.7rem);line-height:1.35;margin:0 0 1.1rem;text-wrap:pretty}
+.byline{font-family:var(--sans);font-size:.85rem;color:var(--ink-2);margin:0;display:flex;flex-wrap:wrap;gap:.3rem .9rem;font-variant-numeric:tabular-nums;line-height:1.5}
+.byline b{font-weight:500;color:var(--ink)}
+.post{padding:2.6rem var(--pad) 0;align-items:start}
+.post-aside{position:sticky;top:1.25rem;justify-self:end;width:min(250px,100%);visibility:hidden;opacity:0;transition:opacity 220ms ease}
+.post-aside.is-stuck{visibility:visible;opacity:1}
+.post-col{min-width:0;line-height:1.6}
+.prose > :first-child{margin-top:0}
+.prose p{margin:0 0 1.15em}
+.prose h2{font-family:var(--disp);font-weight:500;font-optical-sizing:none;font-variation-settings:"opsz" 72;font-size:1.7rem;line-height:1.15;margin:2.2em 0 .6em;letter-spacing:-.01em;text-wrap:balance}
+.prose a{color:var(--ink);text-decoration:underline;text-decoration-color:var(--accent-line);text-decoration-thickness:2px;text-underline-offset:.16em}
+.prose a:hover{text-decoration-color:var(--ink)}
+.prose strong{font-weight:600}
+.prose code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.88em;background:var(--stock);padding:.05em .3em}
+.spine{display:none}
+
+/* Sources — a stamped column of numbers, like a due-date card */
+.sources{margin-top:3rem;padding-top:1rem;border-top:2px solid var(--ink)}
+.sources h2,.comments h2,.also h2,.post-sub-h{font-family:var(--sans);font-weight:500;font-size:.82rem;letter-spacing:.12em;text-transform:uppercase;margin:0 0 .9rem}
+.sources h2 small,.comments h2 small{font-weight:400;letter-spacing:.02em;text-transform:none;color:var(--ink-2);margin-left:.6rem}
+.src{margin:0;padding:0;list-style:none;counter-reset:src;font-family:var(--sans);font-size:.92rem;line-height:1.4}
+.src li{display:grid;grid-template-columns:2.6rem minmax(0,1fr);gap:.6rem;padding:.5rem 0;border-bottom:1px solid var(--rule);counter-increment:src}
+.src li::before{content:counter(src,decimal-leading-zero);font-variant-numeric:tabular-nums;color:var(--accent-ink)}
+.src a{text-decoration-color:var(--accent-line);text-underline-offset:.2em}
+.src .dom{color:var(--ink-2);margin-left:.5rem;white-space:nowrap}
+.subjects{font-family:var(--sans);font-size:.92rem;margin:1.6rem 0 0;color:var(--ink-2)}
+.subjects a{color:var(--ink);text-decoration-color:var(--accent-line);text-underline-offset:.2em}
+.subjects .lbl{letter-spacing:.08em;text-transform:uppercase;font-size:.78rem;margin-right:.5rem}
+
+/* Comments */
+.comments{margin-top:3rem;padding-top:1rem;border-top:2px solid var(--ink)}
+.cmt{list-style:none;margin:0;padding:0}
+.cmt li{padding:1rem 0;border-bottom:1px solid var(--rule);display:grid;grid-template-columns:2.6rem minmax(0,1fr);gap:.6rem}
+.cmt .ini{font-family:var(--sans);font-size:.7rem;letter-spacing:.06em;width:2rem;height:2rem;display:grid;place-items:center;background:var(--plate-tint);color:var(--ink);border:1px solid var(--ink)}
+.cmt .who{font-family:var(--sans);font-size:.85rem;display:flex;gap:.7rem;align-items:baseline;margin:0 0 .3rem}
+.cmt .who b{font-weight:500}
+.cmt .who time{color:var(--ink-2)}
+.cmt p{margin:0;font-size:1.02rem;line-height:1.5}
+.cmt-form{margin-top:1.4rem;font-family:var(--sans);font-size:.95rem;display:grid;gap:.7rem}
+.cmt-form label{display:block;font-size:.78rem;letter-spacing:.08em;text-transform:uppercase;margin-bottom:.3rem;font-weight:500}
+.cmt-form input,.cmt-form textarea{width:100%;border:1px solid var(--ink);background:var(--stock);padding:.6rem .75rem;font:inherit;color:var(--ink)}
+.cmt-form textarea{min-height:7rem;resize:vertical;font-family:var(--body);font-size:1.02rem}
+.cmt-form .row2{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:.8rem;align-items:end}
+.cmt-form button[type=submit]{justify-self:start}
+.post-sub-wrap{margin-top:2.6rem;padding-top:1rem;border-top:2px solid var(--ink);font-family:var(--sans)}
+
+/* More from the shelf */
+.also{margin-top:4rem;padding:0 var(--pad)}
+.also h2{font-size:.74rem;font-weight:400;color:var(--ink-2)}
+.also .shelf-line{margin-inline:calc(-1 * var(--pad))}
+.also .row{--base:15vw}
+
+/* ---------- Motion / narrow ---------- */
+@media (prefers-reduced-motion:reduce){
+  a.cover,.post-aside{transition:none}
+  a.cover:hover,a.cover:focus-visible{transform:none}
+  html{scroll-behavior:auto}
+}
+@media (max-width:1100px){
+  .cat-row{grid-template-columns:4.2rem 7.2rem minmax(0,1fr) 4rem}
+  .cat-kicker{display:none}
+}
+@media (max-width:860px){
+  .opening,.post{grid-template-columns:1fr;gap:0}
+  .opening-cover .cover{aspect-ratio:3/4}
+  .opening-cover .cv{grid-template-rows:12cqw 1fr 44cqw 10cqw}
+  .opening-cover .cv-deck{font-size:max(.95rem,5.3cqw)}
+  .opening-text{padding:1.4rem 0 0;max-width:66ch}
+  .prose--lede{margin-top:1.2rem}
+  .post-line{display:none}
+  .post{padding-top:0}
+  .post-aside{display:none}
+  .spine{display:flex;position:sticky;top:0;z-index:2;margin-bottom:1.4rem;gap:.8rem;align-items:center;margin:0 calc(-1 * var(--pad));padding:.5rem var(--pad);background:var(--plate-deep);color:var(--stock);font-family:var(--sans);font-size:.75rem;letter-spacing:.06em;text-transform:uppercase;white-space:nowrap}
+  .spine span:last-child{overflow:clip;text-overflow:ellipsis;min-width:0}
+  .spine span:first-child{flex:0 0 auto}
+}
+@media (max-width:700px){
+  .imprint{font-size:.78rem;gap:.3rem .9rem}
+  .imprint nav{width:100%;margin-left:0;gap:1rem}
+  .shelf{grid-template-columns:1fr;gap:0;padding-left:0}
+  .also{padding-left:0}
+  .also .shelf-line{margin-left:0}
+  .lead{width:auto;margin:0 0 0 var(--pad);aspect-ratio:3/4}
+  .lead .cv{grid-template-rows:12cqw 1fr 44cqw 10cqw}
+  .lead .cv-deck{font-size:max(.95rem,5.3cqw)}
+  .shelf-label{flex-direction:column;align-items:flex-start;gap:.6rem;padding:1.6rem 0 .4rem var(--pad)}
+  .shelf-count{width:100%;justify-content:space-between}
+  .shelf-note{font-size:1rem}
+  .shelf-count{white-space:normal}
+  .cap-btns button{width:2.75rem;height:2.75rem}
+  .row{--base:38vw;padding:14px 0 0 var(--pad);gap:12px;scroll-snap-type:x mandatory;scroll-padding-left:var(--pad)}
+  .cat-row{grid-template-columns:4.2rem 7.2rem minmax(0,1fr);gap:.2rem .8rem}
+  .cat-title{grid-column:1 / -1;grid-row:2}
+  .cat-read{grid-column:3;text-align:right;grid-row:1}
+  .section-h{flex-wrap:wrap}
+  .cat-back{padding-left:0}
+  .colophon{grid-template-columns:1fr}
+  .post-col{font-size:1.06rem}
+  .also .row{--base:38vw}
+}
+@media (max-width:420px){
+  .cat-row{grid-template-columns:4.2rem minmax(0,1fr) auto}
+  .cat-date{grid-column:2}
+  .cat-read{grid-column:3;grid-row:1}
+}
+</style>
+</head>
+<body class="page-home">
+<header class="imprint"><h1 class="imprint-name"><a href="index.html">Looking Ahead</a></h1><span class="imprint-tag">AI, and what it means for the rest of us</span><nav aria-label="Site"><a href="#shelf">Shelf</a><a href="#catalogue">Catalogue</a><a href="#colophon">About</a><a href="#" class="rss">RSS</a></nav></header><main><section class="shelf-wrap" id="shelf" aria-label="The shelf"><div class="shelf"><a class="cover cover--deep fit-l lead" href="post.html"><span class="cv"><span class="cv-band"><span>Looking Ahead</span><span>No. 41</span></span><span class="cv-title"><span class="cv-kicker">Product strategy</span><span class="cv-h">Agent First Development is The Future</span></span><span class="cv-ill cv-ill--deck"><span class="cv-deck">Cloudflare’s CEO predicted bots would outnumber humans online by 2027. It happened a year early — and your product probably isn’t ready.</span></span><span class="cv-foot"><span class="cv-author">Shahar Nechmad</span><time datetime="2026-09-02">Sep 2, 2026</time></span></span><span class="cv-spine" aria-hidden="true">Looking Ahead · No. 41</span></a><div class="stack"><div class="shelf-label"><p class="shelf-note">Notes from a five-time AI founder on what’s actually being built, what it means, and what to do about it.</p><p class="shelf-count">Back issues · 7 on the shelf <span class="cap-btns"><button type="button" data-shelf-prev aria-label="Earlier on the shelf">‹</button><button type="button" data-shelf-next aria-label="Later on the shelf">›</button></span></p></div><div class="row" aria-label="Back issues, newest first. Use the left and right arrow keys to move along the shelf."><a class="cover cover--tint fit-l " href="post.html" style="--m:1.0"><span class="cv"><span class="cv-band"><span>Looking Ahead</span><span>No. 40</span></span><span class="cv-title"><span class="cv-kicker">Geopolitics</span><span class="cv-h">The Iran War Is Not Really About Iran</span></span><span class="cv-ill cv-ill--img"><img src="img/iran.jpg" alt="" width="1024" height="1024" loading="eager"></span><span class="cv-foot"><span class="cv-author">Shahar Nechmad</span><time datetime="2026-03-04">Mar 4, 2026</time></span></span><span class="cv-spine" aria-hidden="true">Looking Ahead · No. 40</span></a><a class="cover cover--paper fit-m " href="post.html" style="--m:0.95"><span class="cv"><span class="cv-band"><span>Looking Ahead</span><span>No. 39</span></span><span class="cv-title"><span class="cv-kicker">AI &amp; policy</span><span class="cv-h">OpenAI’s Pentagon Deal and the Red Lines Problem</span></span><span class="cv-ill cv-ill--img"><img src="img/pentagon.jpg" alt="" width="1024" height="1024" loading="eager"></span><span class="cv-foot"><span class="cv-author">Shahar Nechmad</span><time datetime="2026-03-01">Mar 1, 2026</time></span></span><span class="cv-spine" aria-hidden="true">Looking Ahead · No. 39</span></a><a class="cover cover--deep fit-xl " href="post.html" style="--m:1.06"><span class="cv"><span class="cv-band"><span>Looking Ahead</span><span>No. 38</span></span><span class="cv-title"><span class="cv-kicker">Research</span><span class="cv-h">Should AI Agents be Friends?</span></span><span class="cv-ill cv-ill--img"><img src="img/agents-friends.jpg" alt="" width="1024" height="1024" loading="eager"></span><span class="cv-foot"><span class="cv-author">Shahar Nechmad</span><time datetime="2026-02-24">Feb 24, 2026</time></span></span><span class="cv-spine" aria-hidden="true">Looking Ahead · No. 38</span></a><a class="cover cover--tint fit-s " href="post.html" style="--m:0.97"><span class="cv"><span class="cv-band"><span>Looking Ahead</span><span>No. 37</span></span><span class="cv-title"><span class="cv-kicker">Strategy</span><span class="cv-h">From Copilot to Colleague: The Five Pillars of an Agentic AI Strategy</span></span><span class="cv-ill cv-ill--img"><img src="img/copilot.jpg" alt="" width="1024" height="1024" loading="eager"></span><span class="cv-foot"><span class="cv-author">Shahar Nechmad</span><time datetime="2026-02-20">Feb 20, 2026</time></span></span><span class="cv-spine" aria-hidden="true">Looking Ahead · No. 37</span></a><a class="cover cover--paper fit-xl " href="post.html" style="--m:1.03"><span class="cv"><span class="cv-band"><span>Looking Ahead</span><span>No. 36</span></span><span class="cv-title"><span class="cv-kicker">Essay</span><span class="cv-h">The Hyper Learner</span></span><span class="cv-ill cv-ill--img"><img src="img/hyperlearner.jpg" alt="" width="1024" height="1024" loading="lazy"></span><span class="cv-foot"><span class="cv-author">Shahar Nechmad</span><time datetime="2026-02-18">Feb 18, 2026</time></span></span><span class="cv-spine" aria-hidden="true">Looking Ahead · No. 36</span></a><a class="cover cover--deep fit-s " href="post.html" style="--m:0.94"><span class="cv"><span class="cv-band"><span>Looking Ahead</span><span>No. 35</span></span><span class="cv-title"><span class="cv-kicker">Tools</span><span class="cv-h">GitHub’s Agentic Workflows and the Coming ‘Continuous AI’ Era</span></span><span class="cv-ill cv-ill--img"><img src="img/github.jpg" alt="" width="1024" height="1024" loading="lazy"></span><span class="cv-foot"><span class="cv-author">Shahar Nechmad</span><time datetime="2026-02-17">Feb 17, 2026</time></span></span><span class="cv-spine" aria-hidden="true">Looking Ahead · No. 35</span></a><a class="cover cover--tint fit-m " href="post.html" style="--m:1.07"><span class="cv"><span class="cv-band"><span>Looking Ahead</span><span>No. 34</span></span><span class="cv-title"><span class="cv-kicker">Practice</span><span class="cv-h">How I 10x’d My AI Coding Productivity (And You Can Too)</span></span><span class="cv-ill cv-ill--img"><img src="img/productivity.jpg" alt="" width="1024" height="1024" loading="lazy"></span><span class="cv-foot"><span class="cv-author">Shahar Nechmad</span><time datetime="2026-02-16">Feb 16, 2026</time></span></span><span class="cv-spine" aria-hidden="true">Looking Ahead · No. 34</span></a></div></div></div><div class="shelf-line" aria-hidden="true"></div></section><section class="section" id="catalogue" aria-labelledby="cat-h"><div class="section-h"><h2 id="cat-h">Catalogue <small>every issue, newest first</small></h2><button class="cat-all" type="button" aria-pressed="false">Show summaries</button></div><ol class="cat"><li><a class="cat-row" href="post.html"><span class="cat-no">No. 41</span><time class="cat-date" datetime="2026-09-02">2026-09-02</time><span class="cat-title">Agent First Development is The Future</span><span class="cat-kicker">Product strategy</span><span class="cat-read">9 min</span></a><div class="cat-back" hidden><p>Cloudflare’s CEO predicted bots would outnumber humans online by 2027. It happened a year early — and your product probably isn’t ready.</p><p class="subjects">Subjects: <a href="#">agent-first development</a> · <a href="#">api design</a> · <a href="#">product strategy</a></p></div></li><li><a class="cat-row" href="post.html"><span class="cat-no">No. 40</span><time class="cat-date" datetime="2026-03-04">2026-03-04</time><span class="cat-title">The Iran War Is Not Really About Iran</span><span class="cat-kicker">Geopolitics</span><span class="cat-read">7 min</span></a><div class="cat-back" hidden><p>The US strike on Iran is a message aimed at Beijing. China buys 90–95% of Iran’s oil, and a destabilized regime puts that lifeline at risk.</p><p class="subjects">Subjects: <a href="#">geopolitics</a> · <a href="#">china</a> · <a href="#">energy</a></p></div></li><li><a class="cat-row" href="post.html"><span class="cat-no">No. 39</span><time class="cat-date" datetime="2026-03-01">2026-03-01</time><span class="cat-title">OpenAI’s Pentagon Deal and the Red Lines Problem</span><span class="cat-kicker">AI &amp; policy</span><span class="cat-read">11 min</span></a><div class="cat-back" hidden><p>OpenAI signed a Pentagon deal while the US military was already running Claude — the model it had officially blacklisted — on live operations.</p><p class="subjects">Subjects: <a href="#">policy</a> · <a href="#">defense</a> · <a href="#">openai</a></p></div></li><li><a class="cat-row" href="post.html"><span class="cat-no">No. 38</span><time class="cat-date" datetime="2026-02-24">2026-02-24</time><span class="cat-title">Should AI Agents be Friends?</span><span class="cat-kicker">Research</span><span class="cat-read">8 min</span></a><div class="cat-back" hidden><p>Large-scale research shows agents simulate social behavior rather than genuinely socialize. The real question isn’t whether they can — it’s whether they should.</p><p class="subjects">Subjects: <a href="#">research</a> · <a href="#">multi-agent</a> · <a href="#">society</a></p></div></li><li><a class="cat-row" href="post.html"><span class="cat-no">No. 37</span><time class="cat-date" datetime="2026-02-20">2026-02-20</time><span class="cat-title">From Copilot to Colleague: The Five Pillars of an Agentic AI Strategy</span><span class="cat-kicker">Strategy</span><span class="cat-read">12 min</span></a><div class="cat-back" hidden><p>Most “AI strategies” are a list of tools. Here is the structure that survives contact with an actual org chart.</p><p class="subjects">Subjects: <a href="#">strategy</a> · <a href="#">enterprise</a></p></div></li><li><a class="cat-row" href="post.html"><span class="cat-no">No. 36</span><time class="cat-date" datetime="2026-02-18">2026-02-18</time><span class="cat-title">The Hyper Learner</span><span class="cat-kicker">Essay</span><span class="cat-read">6 min</span></a><div class="cat-back" hidden><p>The most valuable skill of the next decade isn’t prompting. It’s the ability to absorb an entire field in a weekend.</p><p class="subjects">Subjects: <a href="#">learning</a> · <a href="#">careers</a></p></div></li><li><a class="cat-row" href="post.html"><span class="cat-no">No. 35</span><time class="cat-date" datetime="2026-02-17">2026-02-17</time><span class="cat-title">GitHub’s Agentic Workflows and the Coming ‘Continuous AI’ Era</span><span class="cat-kicker">Tools</span><span class="cat-read">9 min</span></a><div class="cat-back" hidden><p>What continuous integration did for tests, continuous AI is about to do for everything else a solo founder can’t staff.</p><p class="subjects">Subjects: <a href="#">tools</a> · <a href="#">github</a> · <a href="#">automation</a></p></div></li><li><a class="cat-row" href="post.html"><span class="cat-no">No. 34</span><time class="cat-date" datetime="2026-02-16">2026-02-16</time><span class="cat-title">How I 10x’d My AI Coding Productivity (And You Can Too)</span><span class="cat-kicker">Practice</span><span class="cat-read">10 min</span></a><div class="cat-back" hidden><p>Nine months of working almost entirely through coding agents, and the handful of habits that made the difference.</p><p class="subjects">Subjects: <a href="#">coding agents</a> · <a href="#">practice</a></p></div></li></ol></section><section class="colophon" id="colophon" aria-labelledby="col-h"><div><h2 id="col-h">From the publisher</h2><p class="about">My name is Shahar Nechmad. I’m a five-time startup founder specializing in AI, and I’ve built a range of AI-driven products. Here I share what I’m learning along the way—AI news and breakthroughs, what they might mean for our lives and the world, plus practical recommendations, new releases, and tools worth trying.</p><p class="who">Written and published by Shahar Nechmad.</p><p class="social"><a href="#">X</a> <a href="#">LinkedIn</a> <a href="#">RSS</a></p></div><div><h2>Subjects</h2><ul class="subjects-idx"><li><a href="#">agent-first development</a></li><li><a href="#">api design</a></li><li><a href="#">product strategy</a></li><li><a href="#">geopolitics</a></li><li><a href="#">china</a></li><li><a href="#">energy</a></li><li><a href="#">policy</a></li><li><a href="#">defense</a></li><li><a href="#">openai</a></li><li><a href="#">research</a></li><li><a href="#">multi-agent</a></li><li><a href="#">society</a></li><li><a href="#">strategy</a></li><li><a href="#">enterprise</a></li><li><a href="#">learning</a></li><li><a href="#">careers</a></li><li><a href="#">tools</a></li><li><a href="#">github</a></li><li><a href="#">automation</a></li><li><a href="#">coding agents</a></li><li><a href="#">practice</a></li></ul><div style="margin-top:2rem"><form class="sub" method="dialog" novalidate data-demo><label for="sub-email">Get the next issue by email</label><div class="sub-row"><input id="sub-email" name="email" type="email" autocomplete="email" placeholder="you@example.com" required><button type="submit">Subscribe</button></div><p class="form-note" aria-live="polite"></p></form></div></div></section></main><footer class="foot"><div class="foot-in"><p><span class="foot-name">Looking Ahead</span> · AI, and what it means for the rest of us</p><p class="foot-links"><a href="#">X</a> <a href="#">LinkedIn</a> <a href="#">RSS</a></p><p class="foot-fine">© 2026 Shahar Nechmad · Made with Hot Metal</p></div></footer>
+<script>
+(function(){
+  var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var behavior = reduce ? 'auto' : 'smooth';
+
+  // Shelf: arrow keys move focus between covers; buttons page the shelf.
+  document.querySelectorAll('.row').forEach(function(row){
+    var covers = Array.prototype.slice.call(row.querySelectorAll('a.cover'));
+    row.addEventListener('keydown', function(e){
+      if (e.key !== 'ArrowRight' && e.key !== 'ArrowLeft') return;
+      var i = covers.indexOf(document.activeElement);
+      if (i < 0) return;
+      var n = e.key === 'ArrowRight' ? Math.min(i + 1, covers.length - 1) : Math.max(i - 1, 0);
+      if (n !== i) { e.preventDefault(); covers[n].focus({preventScroll:true}); covers[n].scrollIntoView({behavior:behavior, block:'nearest', inline:'nearest'}); }
+    });
+    var wrap = row.closest('.shelf-wrap');
+    if (!wrap) return;
+    var prev = wrap.querySelector('[data-shelf-prev]'), next = wrap.querySelector('[data-shelf-next]');
+    if (!prev || !next) return;
+    function step(dir){
+      var w = covers[0] ? covers[0].getBoundingClientRect().width + 16 : 240;
+      row.scrollBy({left: dir * w * 2, behavior: behavior});
+    }
+    function update(){
+      prev.disabled = row.scrollLeft <= 2;
+      next.disabled = row.scrollLeft + row.clientWidth >= row.scrollWidth - 2;
+    }
+    prev.addEventListener('click', function(){ step(-1); });
+    next.addEventListener('click', function(){ step(1); });
+    row.addEventListener('scroll', update, {passive:true});
+    window.addEventListener('resize', update);
+    update();
+  });
+
+  // Fit each shelf to whole covers plus a 40px spine of the next one, so no title is ever sliced by the edge.
+  function fitShelf(row){
+    var covers = row.querySelectorAll('a.cover'); if (!covers.length) return;
+    row.style.width = '';
+    var cs = getComputedStyle(row), gap = parseFloat(cs.columnGap) || 16, padL = parseFloat(cs.paddingLeft) || 0, spine = 40;
+    var avail = row.clientWidth, used = padL, n = 0;
+    for (var i = 0; i < covers.length; i++) {
+      var w = covers[i].getBoundingClientRect().width;
+      if (used + (n ? gap : 0) + w + gap + spine > avail) break;
+      used += (n ? gap : 0) + w; n++;
+    }
+    if (n === 0 || n === covers.length) return;
+    row.style.width = Math.round(used + gap + spine) + 'px';
+  }
+  function fitAll(){ document.querySelectorAll('.row').forEach(fitShelf); }
+  fitAll(); window.addEventListener('resize', fitAll);
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(fitAll);
+
+  // The cover cut at the shelf's edge shows only its plate — a spine, never sliced type.
+  if ('IntersectionObserver' in window) document.querySelectorAll('.row').forEach(function(row){
+    var io = new IntersectionObserver(function(entries){
+      entries.forEach(function(e){ e.target.classList.toggle('is-partial', e.intersectionRatio < 0.98); });
+    }, {root: row, threshold: [0, 0.5, 0.98, 1]});
+    row.querySelectorAll('a.cover').forEach(function(c){ io.observe(c); });
+  });
+
+  // Post: once the opening has scrolled away, reveal the pinned facsimile (desktop). The narrow running head is plain CSS sticky.
+  var pcover = document.querySelector('.opening');
+  var pinned = document.querySelectorAll('.post-aside');
+  if (pcover && pinned.length && 'IntersectionObserver' in window) {
+    new IntersectionObserver(function(entries){
+      var e = entries[0], gone = !e.isIntersecting && e.boundingClientRect.top < 0;
+      pinned.forEach(function(el){ el.classList.toggle('is-stuck', gone); });
+    }, {threshold: 0}).observe(pcover);
+  }
+
+  // Catalogue: turn a row over to read the back (deck + subjects).
+  var all = document.querySelector('.cat-all');
+  if (all) all.addEventListener('click', function(){
+    var on = all.getAttribute('aria-pressed') !== 'true';
+    all.setAttribute('aria-pressed', String(on));
+    all.textContent = on ? 'Hide summaries' : 'Show summaries';
+    document.querySelectorAll('.cat-back').forEach(function(b){ b.hidden = !on; });
+  });
+
+  // Demo forms: method="dialog" already aborts submission; validate locally and say so.
+  document.querySelectorAll('form[data-demo]').forEach(function(form){
+    var note = form.querySelector('.form-note');
+    form.addEventListener('submit', function(e){
+      e.preventDefault();
+      var bad = Array.prototype.filter.call(form.querySelectorAll('[required]'), function(f){ return !f.checkValidity(); });
+      note.classList.toggle('err', bad.length > 0);
+      form.querySelectorAll('[aria-invalid]').forEach(function(x){ x.removeAttribute('aria-invalid'); });
+      if (bad.length) {
+        var f = bad[0];
+        f.setAttribute('aria-invalid', 'true');
+        note.textContent = f.type === 'email' ? 'Enter a valid email address.' : 'Please fill in ' + (f.labels[0] ? f.labels[0].textContent.toLowerCase() : 'this field') + '.';
+        f.focus();
+        return;
+      }
+      note.textContent = 'Demo only — nothing was sent.';
+      form.reset();
+    });
+  });
+})();
+</script>
+</body>
+</html>
