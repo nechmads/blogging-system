@@ -4,6 +4,8 @@ import { getFirstTopic } from '../../../lib/post-utils';
 
 interface Props {
   post: Post;
+  /** The switcher passes branding in; the two frontends resolve it differently. */
+  publicationName: string;
   sanitizedContent: string;
   date: string | null;
   allLabels: string[];

@@ -8,6 +8,7 @@ interface Props {
 }
 
 const { publicationName, socialLinks } = Astro.props;
+
 const year = new Date().getFullYear();
 
 const links = [
@@ -15,19 +16,34 @@ const links = [
   socialLinks?.linkedin ? { href: socialLinks.linkedin, label: 'LinkedIn', external: true } : null,
   socialLinks?.github ? { href: socialLinks.github, label: 'GitHub', external: true } : null,
   socialLinks?.website ? { href: socialLinks.website, label: 'Website', external: true } : null,
-  { href: '/posts', label: 'Archive', external: false },
+  { href: '/posts', label: 'Catalogue', external: false },
   { href: '/rss', label: 'RSS', external: false },
 ].filter((link): link is { href: string; label: string; external: boolean } => link !== null);
 ---
 
-<footer class="cs-footer mt-auto px-6 py-8 text-sm flex flex-wrap gap-6 justify-between">
-  <p>&copy; {year} {publicationName}</p>
-  <p class="flex gap-4">
-    {links.map(({ href, label, external }) => (
-      <a href={href} target={external ? '_blank' : undefined} rel={external ? 'noopener noreferrer' : undefined}>{label}</a>
-    ))}
-  </p>
-  <p>
-    Powered by <a href="https://hotmetalapp.com" target="_blank" rel="noopener noreferrer">Hot&nbsp;Metal</a>
-  </p>
+{/* The footer band is the shelf colour: the page ends on the same surface the
+    covers stand on. */}
+<footer class="cs-foot">
+  <div class="cs-foot-in">
+    <p><span class="cs-foot-name">{publicationName}</span></p>
+
+    <p class="cs-foot-links">
+      {links.map(({ href, label, external }) => (
+        <a
+          href={href}
+          target={external ? '_blank' : undefined}
+          rel={external ? 'noopener noreferrer' : undefined}
+        >
+          {label}
+        </a>
+      ))}
+    </p>
+
+    <p class="cs-foot-fine">
+      &copy; {year} {publicationName} &middot; Made with{' '}
+      <a href="https://hotmetalapp.com" target="_blank" rel="noopener noreferrer">
+        Hot&nbsp;Metal
+      </a>
+    </p>
+  </div>
 </footer>

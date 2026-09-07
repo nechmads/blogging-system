@@ -1,11 +1,16 @@
 ---
 /**
- * Cover Stock home page body: everything between the header and the footer —
- * publication identity, the lead, the archive, and the "View all" link when
- * more posts exist than the home page shows.
+ * The home page: a face-out shelf.
+ *
+ * The newest issue faces out at full size; the back issues stand beside it on
+ * one shelf line in staggered heights, scrolling sideways with the spine of
+ * the next issue as the cue. Below, the same issues again as the catalogue.
  */
 import type { Post } from '@hotmetal/content-core';
 import type { PublicationBranding } from '../../../dl/publication';
+import { parseTopics } from '../../../lib/post-utils';
+import { shelfSize } from '../lib/issue';
+import Cover from './Cover.astro';
 import PostList from './PostList.astro';
 
 interface Props {
@@ -17,10 +22,212 @@ interface Props {
 }
 
 const { branding, posts, hasMorePosts } = Astro.props;
+
+const [lead, ...shelved] = posts;
+
+/* The standing line beside the shelf. The description follows in the colophon
+   only when it says something the standing line did not. */
 const standing = branding.tagline ?? branding.description;
+const blurb = branding.description && branding.description !== standing ? branding.description : null;
+
+/* One index of everything the publication writes about, built from the posts
+   themselves. Not links: this template has no tag pages to send them to. */
+const subjects: string[] = [];
+for (const post of posts) {
+  const labels = [
+    ...parseTopics(post),
+    ...(post.tags ? post.tags.split(',').map((tag) => tag.trim()).filter(Boolean) : []),
+  ];
+  for (const label of labels) {
+    if (!subjects.some((existing) => existing.toLowerCase() === label.toLowerCase())) {
+      subjects.push(label);
+    }
+  }
+}
 ---
 
-<main class="cs-home flex-1 px-6 py-10">
-  {standing && <p class="cs-standing max-w-[60ch] mb-8">{standing}</p>}
-  <PostList posts={posts} heading="Latest" showViewAll={hasMorePosts} />
+<main class="flex-1">
+  {lead ? (
+    <section class="cs-shelf-wrap" id="cs-shelf" aria-label="The shelf">
+      <div class="cs-shelf">
+        <Cover
+          post={lead}
+          index={0}
+          class="cs-lead"
+          publicationName={branding.name}
+          loading="eager"
+        />
+
+        {/* With a single issue there is no shelf to stand beside the lead, so
+            the stack carries only the standing line — never an empty row. */}
+        <div class:list={['cs-stack', shelved.length === 0 ? 'cs-stack--solo' : null]}>
+          {(standing || shelved.length > 0) && (
+            <div class="cs-shelf-label">
+              {standing && <p class="cs-shelf-note">{standing}</p>}
+              {shelved.length > 0 && (
+                <p class="cs-shelf-count">
+                  Back issues &middot; {shelved.length} on the shelf
+                </p>
+              )}
+            </div>
+          )}
+
+          {shelved.length > 0 && (
+            <div
+              class="cs-row"
+              data-cs-shelf
+              tabindex="-1"
+              aria-label="Back issues, newest first. Use the left and right arrow keys to move along the shelf."
+            >
+              {shelved.map((post, i) => (
+                <Cover
+                  post={post}
+                  index={i + 1}
+                  publicationName={branding.name}
+                  withSpine
+                  style={`--cs-m:${shelfSize(i)}`}
+                  loading={i < 3 ? 'eager' : 'lazy'}
+                />
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+
+      <div class="cs-shelf-line" aria-hidden="true"></div>
+    </section>
+  ) : (
+    <section class="cs-section" aria-label="The shelf">
+      {standing && <p class="cs-shelf-note">{standing}</p>}
+      <p class="cs-empty">
+        The shelf is empty. The first issue is still at the printer.
+      </p>
+    </section>
+  )}
+
+  {lead && <PostList posts={posts} heading="Catalogue" showViewAll={hasMorePosts} />}
+
+  {(blurb || subjects.length > 0) && (
+    <section class="cs-colophon" id="cs-colophon" aria-label="About this publication">
+      {blurb && (
+        <div>
+          <h2>From the publisher</h2>
+          <p class="cs-about">{blurb}</p>
+        </div>
+      )}
+
+      {subjects.length > 0 && (
+        <div>
+          <h2>Subjects</h2>
+          <ul class="cs-subjects-idx">
+            {subjects.map((subject) => <li>{subject}</li>)}
+          </ul>
+        </div>
+      )}
+    </section>
+  )}
 </main>
+
+<script>
+  /**
+   * The shelf. Two jobs, both of which keep the row honest:
+   *
+   *  - fit the row's width to whole covers plus a 40px spine of the next one,
+   *    so the edge never slices a title — the spine is what tells the reader
+   *    there is more shelf, in place of pager buttons;
+   *  - move focus along the covers with the arrow keys.
+   *
+   * Every listener is torn down before a re-init, because the ClientRouter
+   * swaps this DOM on navigation and would otherwise leave observers bound to
+   * detached nodes.
+   */
+  let teardownShelf: (() => void) | null = null;
+
+  function initShelf() {
+    teardownShelf?.();
+    teardownShelf = null;
+
+    const rows = Array.from(document.querySelectorAll<HTMLElement>('[data-cs-shelf]'));
+    if (rows.length === 0) return;
+
+    const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const behavior: ScrollBehavior = reduce ? 'auto' : 'smooth';
+    const cleanups: Array<() => void> = [];
+
+    for (const row of rows) {
+      const covers = Array.from(row.querySelectorAll<HTMLAnchorElement>('a.cs-cover'));
+      if (covers.length === 0) continue;
+
+      const onKeydown = (event: KeyboardEvent) => {
+        if (event.key !== 'ArrowRight' && event.key !== 'ArrowLeft') return;
+        const current = covers.indexOf(document.activeElement as HTMLAnchorElement);
+        if (current < 0) return;
+        const next =
+          event.key === 'ArrowRight'
+            ? Math.min(current + 1, covers.length - 1)
+            : Math.max(current - 1, 0);
+        if (next === current) return;
+        event.preventDefault();
+        covers[next].focus({ preventScroll: true });
+        covers[next].scrollIntoView({ behavior, block: 'nearest', inline: 'nearest' });
+      };
+
+      row.addEventListener('keydown', onKeydown);
+      cleanups.push(() => row.removeEventListener('keydown', onKeydown));
+
+      const fit = () => {
+        row.style.width = '';
+        const styles = getComputedStyle(row);
+        const gap = Number.parseFloat(styles.columnGap) || 16;
+        const padLeft = Number.parseFloat(styles.paddingLeft) || 0;
+        const spine = 40;
+        const available = row.clientWidth;
+        let used = padLeft;
+        let whole = 0;
+
+        for (const cover of covers) {
+          const width = cover.getBoundingClientRect().width;
+          if (used + (whole ? gap : 0) + width + gap + spine > available) break;
+          used += (whole ? gap : 0) + width;
+          whole += 1;
+        }
+
+        /* Nothing to trim when every issue already fits, and nothing sensible
+           to do when not even one does. */
+        if (whole === 0 || whole === covers.length) return;
+        row.style.width = `${Math.round(used + gap + spine)}px`;
+      };
+
+      const onResize = () => fit();
+      window.addEventListener('resize', onResize);
+      cleanups.push(() => {
+        window.removeEventListener('resize', onResize);
+        row.style.width = '';
+      });
+      fit();
+      if (document.fonts?.ready) void document.fonts.ready.then(fit);
+
+      /* The cover cut by the edge shows only its spine — the plate and the
+         series name turned 90°, never sliced type. */
+      if ('IntersectionObserver' in window) {
+        const observer = new IntersectionObserver(
+          (entries) => {
+            for (const entry of entries) {
+              entry.target.classList.toggle('is-partial', entry.intersectionRatio < 0.98);
+            }
+          },
+          { root: row, threshold: [0, 0.5, 0.98, 1] },
+        );
+        covers.forEach((cover) => observer.observe(cover));
+        cleanups.push(() => observer.disconnect());
+      }
+    }
+
+    teardownShelf = () => {
+      for (const cleanup of cleanups) cleanup();
+    };
+  }
+
+  initShelf();
+  document.addEventListener('astro:after-swap', initShelf);
+</script>

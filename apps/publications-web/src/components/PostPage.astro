@@ -143,7 +143,7 @@ const contentProps = {
 {templateId === 'cover-stock' ? (
   <CoverStockBaseLayout {...layoutProps}>
     <CoverStockHeader publicationName={branding.name} logoUrl={branding.logoUrl} />
-    <CoverStockPostContent {...contentProps}>
+    <CoverStockPostContent {...contentProps} publicationName={branding.name}>
       {commentsEnabled && (
         <CommentSection
           slot="comments"
@@ -164,7 +164,7 @@ const contentProps = {
 ) : templateId === 'horizon' ? (
   <HorizonBaseLayout {...layoutProps}>
     <HorizonHeader publicationName={branding.name} logoUrl={branding.logoUrl} />
-    <HorizonPostContent {...contentProps}>
+    <HorizonPostContent {...contentProps} publicationName={branding.name}>
       {commentsEnabled && (
         <CommentSection
           slot="comments"
@@ -185,7 +185,7 @@ const contentProps = {
 ) : templateId === 'poster' ? (
   <PosterBaseLayout {...layoutProps}>
     <PosterHeader publicationName={branding.name} logoUrl={branding.logoUrl} />
-    <PosterPostContent {...contentProps}>
+    <PosterPostContent {...contentProps} publicationName={branding.name}>
       {commentsEnabled && (
         <CommentSection
           slot="comments"

@@ -1,9 +1,28 @@
 ---
+/**
+ * The article: it opens on its own cover.
+ *
+ * The opening (cover + standfirst + byline + the first paragraphs) and the
+ * body share one two-column grid, so the reading measure never moves. Once the
+ * opening has scrolled away a half-size facsimile of the same cover pins at
+ * the same left edge — the issue shrinks in place rather than jumping across
+ * the column. On narrow screens that becomes a running head instead.
+ */
 import type { Post } from '@hotmetal/content-core';
-import { getFirstTopic } from '../../../lib/post-utils';
+import { getPreviewText } from '../../../lib/post-utils';
+import { issueMonth, readingMinutes, wordCount } from '../lib/issue';
+import Cover from './Cover.astro';
 
 interface Props {
   post: Post;
+  /**
+   * The cover's series band carries the publication's name, exactly as it does
+   * on the shelf — the article's cover has to be the same object the reader
+   * picked up. The switcher passes it in: the two frontends resolve branding
+   * differently (one instance per publication vs. one worker for all of them),
+   * so a template must not reach for it itself.
+   */
+  publicationName: string;
   sanitizedContent: string;
   date: string | null;
   allLabels: string[];
@@ -12,45 +31,202 @@ interface Props {
   linkedinShareUrl: string;
 }
 
-const { post, sanitizedContent, date, allLabels, twitterShareUrl, linkedinShareUrl } = Astro.props;
+const {
+  post,
+  publicationName,
+  sanitizedContent,
+  date,
+  allLabels,
+  postUrl,
+  twitterShareUrl,
+  linkedinShareUrl,
+} = Astro.props;
+
 const citations = post.citations ?? [];
 const hasComments = Astro.slots.has('comments');
+const month = issueMonth(post.publishedAt);
+
+const minutes = readingMinutes(post);
+const words = wordCount(post);
+
+/**
+ * The standfirst must not repeat the cover. A post without a featured image
+ * already carries its preview text as the cover's deck, so the opening only
+ * borrows the preview when the cover is showing a picture instead.
+ */
+const standfirst = post.subtitle ?? (post.featuredImage ? getPreviewText(post, 240) : null);
+
+/** Never leave an empty ruled strip where the byline would be. */
+const hasByline = Boolean(post.author || (date && post.publishedAt) || minutes);
+
+/**
+ * The first two paragraphs open beside the cover; the rest reads below the
+ * shelf line. Splitting on the paragraph boundary keeps both halves valid
+ * HTML — a body that does not start with paragraphs simply opens with nothing
+ * beside the cover rather than with a broken fragment.
+ */
+const paragraphSplit = sanitizedContent.match(/^\s*(<p\b[\s\S]*?<\/p>\s*){1,2}/i);
+const lede = paragraphSplit ? paragraphSplit[0] : '';
+const body = paragraphSplit ? sanitizedContent.slice(paragraphSplit[0].length) : sanitizedContent;
+
+function domainOf(url: string): string | null {
+  try {
+    return new URL(url).hostname.replace(/^www\./, '');
+  } catch {
+    return null;
+  }
+}
+
+const sources = citations.map((citation) => ({
+  ...citation,
+  domain: citation.publisher ?? domainOf(citation.url),
+}));
 ---
 
-<main class="cs-article flex-1 px-6 py-10 mx-auto w-full max-w-[44rem]">
+<main class="flex-1">
   <article>
-    {getFirstTopic(post) && <p class="text-sm uppercase tracking-wide">{getFirstTopic(post)}</p>}
-    <h1 class="font-[var(--font-display)] text-4xl mb-2">{post.title}</h1>
-    {post.subtitle && <p class="text-xl mb-4">{post.subtitle}</p>}
-    <p class="text-sm mb-8">
-      {post.author}{date && post.publishedAt && <> · <time datetime={post.publishedAt}>{date}</time></>}
-    </p>
-    <div class="cs-prose" set:html={sanitizedContent} />
+    <header class="cs-opening" data-cs-opening>
+      <div class="cs-opening-cover">
+        <Cover
+          post={post}
+          index={0}
+          href={null}
+          asHeading
+          publicationName={publicationName}
+          loading="eager"
+        />
+      </div>
 
-    {citations.length > 0 && (
-      <section class="mt-10" aria-labelledby="cs-sources-h">
-        <h2 id="cs-sources-h" class="text-sm uppercase tracking-wide mb-3">Sources</h2>
-        <ol class="list-decimal pl-5 grid gap-1">
-          {citations.map((c) => (
-            <li><a href={c.url} target="_blank" rel="noopener noreferrer">{c.title}</a>{c.publisher && <span> — {c.publisher}</span>}</li>
-          ))}
-        </ol>
-      </section>
-    )}
+      <div class="cs-opening-text">
+        {standfirst && <p class="cs-standfirst">{standfirst}</p>}
 
-    {allLabels.length > 0 && (
-      <p class="mt-8 text-sm">{allLabels.map((l) => <span class="mr-3">{l}</span>)}</p>
-    )}
+        {hasByline && (
+          <p class="cs-byline">
+            {post.author && <span><b>{post.author}</b></span>}
+            {date && post.publishedAt && <time datetime={post.publishedAt}>{date}</time>}
+            {minutes && <span>{minutes} min read</span>}
+            {minutes && <span>{words.toLocaleString('en-US')} words</span>}
+          </p>
+        )}
 
-    <p class="mt-8 text-sm flex gap-4">
-      <a href={twitterShareUrl} target="_blank" rel="noopener noreferrer">Share on X</a>
-      <a href={linkedinShareUrl} target="_blank" rel="noopener noreferrer">Share on LinkedIn</a>
-    </p>
+        {lede && <div class="cs-prose" style="margin-top:1.6rem" set:html={lede} />}
+      </div>
+    </header>
+
+    <div class="cs-post">
+      <aside class="cs-aside" aria-hidden="true" data-cs-aside>
+        <Cover post={post} index={0} href={null} publicationName={publicationName} />
+      </aside>
+
+      <div class="cs-post-col">
+        <div class="cs-runhead" aria-hidden="true">
+          {month && <span>{month}</span>}
+          <span>{post.title}</span>
+        </div>
+
+        <div class="cs-prose" set:html={body} />
+
+        {sources.length > 0 && (
+          <section class="cs-block" aria-labelledby="cs-src-h">
+            <h2 class="cs-block-h" id="cs-src-h">
+              Sources <small>{sources.length} cited</small>
+            </h2>
+            <ol class="cs-src">
+              {sources.map((source) => (
+                <li>
+                  <span>
+                    <a href={source.url} target="_blank" rel="noopener noreferrer">
+                      {source.title}
+                    </a>
+                    {source.domain && <span class="cs-dom">{source.domain}</span>}
+                  </span>
+                </li>
+              ))}
+            </ol>
+          </section>
+        )}
+
+        {allLabels.length > 0 && (
+          <p class="cs-subjects">
+            <span class="cs-lbl">Subjects</span>
+            {allLabels.map((label) => <span>{label}</span>)}
+          </p>
+        )}
+
+        <div class="cs-share">
+          <span class="cs-lbl">Share</span>
+          <a href={twitterShareUrl} target="_blank" rel="noopener noreferrer">X</a>
+          <a href={linkedinShareUrl} target="_blank" rel="noopener noreferrer">LinkedIn</a>
+          <button type="button" data-cs-copy data-url={postUrl}>Copy link</button>
+        </div>
+
+        {hasComments && (
+          <section class="cs-block" aria-labelledby="cs-cmt-h">
+            <h2 class="cs-block-h" id="cs-cmt-h">Correspondence</h2>
+            <div class="cs-comments-body">
+              <slot name="comments" />
+            </div>
+          </section>
+        )}
+      </div>
+    </div>
   </article>
-
-  {hasComments && (
-    <section class="cs-comments mt-12" aria-label="Comments">
-      <slot name="comments" />
-    </section>
-  )}
 </main>
+
+<script>
+  /**
+   * The pinned facsimile is revealed only once the opening cover has left the
+   * screen, so the two are never both on screen claiming to be the same
+   * object. Everything is re-bound after a view transition.
+   */
+  let teardownPost: (() => void) | null = null;
+
+  function initPost() {
+    teardownPost?.();
+    teardownPost = null;
+
+    const cleanups: Array<() => void> = [];
+
+    const copy = document.querySelector<HTMLButtonElement>('[data-cs-copy]');
+    if (copy) {
+      const onClick = async () => {
+        const url = copy.getAttribute('data-url');
+        if (!url) return;
+        try {
+          await navigator.clipboard.writeText(url);
+          const original = copy.textContent;
+          copy.textContent = 'Copied';
+          window.setTimeout(() => {
+            copy.textContent = original;
+          }, 2000);
+        } catch {
+          // Clipboard API unavailable — leave the label alone.
+        }
+      };
+      copy.addEventListener('click', onClick);
+      cleanups.push(() => copy.removeEventListener('click', onClick));
+    }
+
+    const opening = document.querySelector('[data-cs-opening]');
+    const aside = document.querySelector<HTMLElement>('[data-cs-aside]');
+    if (opening && aside && 'IntersectionObserver' in window) {
+      const observer = new IntersectionObserver(
+        (entries) => {
+          const entry = entries[0];
+          const gone = !entry.isIntersecting && entry.boundingClientRect.top < 0;
+          aside.classList.toggle('is-stuck', gone);
+        },
+        { threshold: 0 },
+      );
+      observer.observe(opening);
+      cleanups.push(() => observer.disconnect());
+    }
+
+    teardownPost = () => {
+      for (const cleanup of cleanups) cleanup();
+    };
+  }
+
+  initPost();
+  document.addEventListener('astro:after-swap', initPost);
+</script>
