@@ -2,7 +2,7 @@
 // Screenshot a local HTML file with headless Chrome over the DevTools protocol.
 // No dependencies: uses Node's built-in WebSocket (Node 22+) and fetch.
 //
-//   node capture.mjs <file.html> <out.png> [--width 1440] [--dpr 1]
+//   node capture.mjs <file.html | http://url> <out.png> [--width 1440] [--dpr 1]
 //                    [--full | --height 900] [--scroll 0] [--reduced-motion]
 //                    [--accent #hex] [--eval "js expression"]
 //
@@ -82,7 +82,8 @@ try {
   await send("Runtime.enable");
   if (reduced) await send("Emulation.setEmulatedMedia", { features: [{ name: "prefers-reduced-motion", value: "reduce" }] });
   await send("Emulation.setDeviceMetricsOverride", { width, height, deviceScaleFactor: dpr, mobile: width < 700 });
-  await send("Page.navigate", { url: pathToFileURL(resolve(file)).href });
+  const url = /^https?:\/\//.test(file) ? file : pathToFileURL(resolve(file)).href;
+  await send("Page.navigate", { url });
   for (let i = 0; i < 100 && !events.some((e) => e.method === "Page.loadEventFired"); i++) await sleep(50);
   if (accent) await evaluate(`document.documentElement.style.setProperty("--publication-accent", ${JSON.stringify(accent)}); true`);
   await evaluate("document.fonts.ready.then(() => true)");
