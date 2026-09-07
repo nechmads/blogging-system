@@ -1,12 +1,17 @@
 ---
-/** Poster 404 body, rendered between the header and the footer. */
+/**
+ * 404. The claim is that there is nothing here, so it is set like any other
+ * claim: poster scale, left edge, one small line under it and one link out.
+ */
 ---
 
-<main class="po-notfound flex-1 flex items-center px-6 py-24">
-  <div class="mx-auto w-full max-w-[44rem]">
-    <p class="text-sm uppercase tracking-wide mb-3">Error 404</p>
-    <h1 class="font-[var(--font-display)] text-5xl mb-4">Nothing here.</h1>
-    <p class="mb-8">The page you are looking for does not exist or has been moved.</p>
-    <a href="/">&larr; Back to the home page</a>
+<main class="po-hero po-notfound" id="main" aria-labelledby="po-nf">
+  <p class="po-meta">error 404</p>
+
+  <h1 class="po-poster po-nf-title" id="po-nf">Nothing at this address.</h1>
+
+  <div class="po-hero-deck po-deck">
+    <p>The page you are looking for does not exist, or it has moved.</p>
+    <a class="po-more" href="/">&larr; Back to the front</a>
   </div>
 </main>

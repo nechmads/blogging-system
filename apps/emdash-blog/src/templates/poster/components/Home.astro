@@ -1,12 +1,18 @@
 ---
 /**
- * Poster home page body: everything between the header and the footer —
- * publication identity, the lead, the archive, and the "View all" link when
- * more posts exist than the home page shows.
+ * Poster home: the lead claim consumes the first screen, then the wall.
+ *
+ * Three shapes, not two. With no posts the first screen carries an honest
+ * empty state and there is no wall; with exactly one the lead already shows it
+ * and a wall would say "nothing published" directly under a published piece;
+ * beyond that the wall lists everything behind the lead.
  */
 import type { Post } from '@hotmetal/content-core';
 import type { PublicationBranding } from '../../../dl/publication';
 import PostList from './PostList.astro';
+import { formatDate } from '../../../lib/format';
+import { getPreviewText, getFirstTopic } from '../../../lib/post-utils';
+import { glue, titleTier, readingMinutes, highlightPhrase, clip } from '../lib/text';
 
 interface Props {
   branding: PublicationBranding;
@@ -17,10 +23,88 @@ interface Props {
 }
 
 const { branding, posts, hasMorePosts } = Astro.props;
-const standing = branding.tagline ?? branding.description;
+
+const lead = posts[0] ?? null;
+const rest = posts.slice(1);
+
+const leadDate = lead?.publishedAt ? formatDate(lead.publishedAt) : null;
+const leadTopic = lead ? getFirstTopic(lead) : null;
+const leadMinutes = lead ? readingMinutes(lead.content) : null;
+const leadMeta = [leadDate, leadTopic, leadMinutes ? `${leadMinutes} min read` : null].filter(
+  Boolean,
+) as string[];
+
+/**
+ * The deck is the lead's own hook, and its key phrase carries the single
+ * accent mark on this screen. The phrase is picked by rule (first sentence,
+ * else first clause, else the opening words) so it is the same on every
+ * render and needs no editorial input.
+ */
+const leadPreview = lead ? getPreviewText(lead, 240) : null;
+const leadDeck = leadPreview ? clip(leadPreview, 240) : null;
+const leadHighlight = leadDeck ? highlightPhrase(leadDeck) : null;
+
+/** The identity block: printed only when the publication has something to say
+    about itself, so a bare publication simply ends on the wall. */
+const standing = branding.tagline;
+const about = branding.description && branding.description !== standing ? branding.description : null;
+
+/* With nothing published the publication still has a claim to make — its
+   standing line, or failing that its name. The state itself is stated plainly
+   in the metadata row, where the lead's date would be, rather than by turning
+   the poster into an apology. */
+const emptyClaim = branding.tagline ?? branding.name;
+const emptyDeck = branding.description ?? 'The first piece will land here.';
 ---
 
-<main class="po-home flex-1 px-6 py-10">
-  {standing && <p class="po-standing max-w-[60ch] mb-8">{standing}</p>}
-  <PostList posts={posts} heading="Latest" showViewAll={hasMorePosts} />
-</main>
+{lead ? (
+  <main id="main">
+    <section class="po-hero" aria-labelledby="po-lead">
+      {leadMeta.length > 0 && <p class="po-meta">{leadMeta.join(' · ')}</p>}
+
+      <h1 class={`po-poster po-lead-title po-tier-${titleTier(lead.title)}`} id="po-lead">
+        <a href={`/${lead.slug}`} data-po-img={lead.featuredImage ?? undefined}>
+          {glue(lead.title)}
+        </a>
+      </h1>
+
+      <div class="po-hero-deck po-deck">
+        {lead.featuredImage && (
+          <img
+            class="po-band-fig"
+            src={lead.featuredImage}
+            alt=""
+            width="72"
+            height="72"
+            loading="lazy"
+          />
+        )}
+        {leadHighlight && (
+          <p><mark>{leadHighlight.mark}</mark>{leadHighlight.rest}</p>
+        )}
+        <a class="po-more" href={`/${lead.slug}`}>Read the piece &rarr;</a>
+      </div>
+    </section>
+
+    {rest.length > 0 && <PostList posts={rest} showViewAll={hasMorePosts} />}
+
+    {(standing || about) && (
+      <section class="po-about-block" aria-label={`About ${branding.name}`}>
+        {standing && <p class="po-standing">{standing}</p>}
+        {about && <p class="po-about">{about}</p>}
+      </section>
+    )}
+  </main>
+) : (
+  <main id="main">
+    <section class="po-hero" aria-labelledby="po-lead">
+      <p class="po-meta">nothing published yet</p>
+
+      <h1 class={`po-poster po-lead-title po-tier-${titleTier(emptyClaim)}`} id="po-lead">
+        <span>{glue(emptyClaim)}</span>
+      </h1>
+
+      <div class="po-hero-deck po-deck"><p>{emptyDeck}</p></div>
+    </section>
+  </main>
+)}

@@ -1,7 +1,12 @@
 ---
+/**
+ * The wall. Used on `/posts` with every published post, and by `Home.astro`
+ * for everything behind the lead. `heading` is a small lowercase label; the
+ * home page passes none, because a wall of posters does not need a sign
+ * saying it is a wall.
+ */
 import type { Post } from '@hotmetal/content-core';
-import { formatDate } from '../../../lib/format';
-import { getPreviewText, getFirstTopic } from '../../../lib/post-utils';
+import Band from './Band.astro';
 
 interface Props {
   posts: Post[];
@@ -9,28 +14,31 @@ interface Props {
   showViewAll?: boolean;
 }
 
-const { posts, heading = 'Archive', showViewAll = false } = Astro.props;
+const { posts, heading, showViewAll = false } = Astro.props;
+const labelId = heading ? 'po-wall-h' : undefined;
 ---
 
-<section class="po-list" aria-labelledby="po-list-h">
-  <h2 id="po-list-h" class="text-sm uppercase tracking-wide mb-4">{heading}</h2>
-  {posts.length > 0 ? (
-    <ul class="grid gap-6">
-      {posts.map((post) => (
-        <li>
-          <article>
-            <a href={`/${post.slug}`}><h3 class="font-[var(--font-display)] text-2xl">{post.title}</h3></a>
-            {getPreviewText(post, 160) && <p class="mt-1">{getPreviewText(post, 160)}</p>}
-            <p class="text-sm mt-1">
-              {post.publishedAt && <time datetime={post.publishedAt}>{formatDate(post.publishedAt)}</time>}
-              {getFirstTopic(post) && <span> · {getFirstTopic(post)}</span>}
-            </p>
-          </article>
-        </li>
-      ))}
-    </ul>
-  ) : (
-    <p>Nothing published yet.</p>
+<section
+  class="po-wall"
+  aria-labelledby={labelId}
+  aria-label={heading ? undefined : 'Archive'}
+>
+  {heading && (
+    <p class="po-meta po-wall-label" id={labelId}>{heading}</p>
   )}
-  {showViewAll && <p class="mt-6"><a href="/posts">View all &rarr;</a></p>}
+
+  {posts.length > 0 ? (
+    posts.map((post, i) => <Band post={post} side={i % 2 === 0 ? 'left' : 'right'} />)
+  ) : (
+    <div class="po-band">
+      <p class="po-poster po-band-title">Nothing published yet.</p>
+      <p class="po-deck po-empty-deck">
+        The first piece will land here.
+      </p>
+    </div>
+  )}
+
+  {showViewAll && posts.length > 0 && (
+    <p class="po-band"><a class="po-more" href="/posts">View all &rarr;</a></p>
+  )}
 </section>

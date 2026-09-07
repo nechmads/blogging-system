@@ -1,8 +1,13 @@
 ---
 /**
- * Poster header. `showDate` marks the home page (kept for parity with the
- * other templates' switcher calls); this template may render a different
- * masthead there.
+ * Poster header: the rail. On desktop it is two pieces — the publication name
+ * running vertically up the right edge of the first screen, and a small nav
+ * cluster fixed bottom-right. Under 760px both collapse into one thin sticky
+ * top strip. Both are in the DOM; CSS picks one.
+ *
+ * `showDate` marks the home page in the switchers. Poster's rail is identical
+ * on every page (the masthead *is* the identity, so it never changes rank), so
+ * the flag is accepted and deliberately unused.
  */
 interface Props {
   publicationName: string;
@@ -11,18 +16,49 @@ interface Props {
 }
 
 const { publicationName, logoUrl } = Astro.props;
+
 const currentPath = Astro.url.pathname;
+
+const navLinks = [
+  { href: '/', label: 'home' },
+  { href: '/posts', label: 'archive' },
+  { href: '/rss', label: 'rss' },
+] as const;
+
+/** The rail is narrow, so a long name is set a step smaller rather than clipped. */
+const mastheadStyle =
+  publicationName.trim().length > 34 ? 'font-size: 0.9375rem;' : undefined;
 ---
 
-<header class="po-header px-6 py-4 flex items-baseline justify-between">
-  <p class="po-wordmark font-[var(--font-display)] text-xl">
-    <a href="/">
-      {logoUrl ? <img src={logoUrl} alt={publicationName} class="h-8 w-auto" loading="eager" /> : publicationName}
+<header>
+  <p class:list={['po-masthead', logoUrl && 'po-masthead--logo']}>
+    <a href="/" style={logoUrl ? undefined : mastheadStyle}>
+      {logoUrl ? (
+        <img src={logoUrl} alt={publicationName} loading="eager" />
+      ) : (
+        publicationName
+      )}
     </a>
   </p>
-  <nav aria-label="Primary" class="po-nav flex gap-4 text-sm">
-    <a href="/" aria-current={currentPath === '/' ? 'page' : undefined}>Home</a>
-    <a href="/posts" aria-current={currentPath === '/posts' ? 'page' : undefined}>Archive</a>
-    <a href="/rss">RSS</a>
+
+  <nav class="po-rail-nav" aria-label="Site">
+    {navLinks.map(({ href, label }) => (
+      <a href={href} aria-current={currentPath === href ? 'page' : undefined}>{label}</a>
+    ))}
   </nav>
+
+  <div class="po-strip">
+    <a class="po-strip-name" href="/">
+      {logoUrl ? (
+        <img src={logoUrl} alt={publicationName} loading="eager" />
+      ) : (
+        publicationName
+      )}
+    </a>
+    <nav aria-label="Site">
+      {navLinks.slice(1).map(({ href, label }) => (
+        <a href={href} aria-current={currentPath === href ? 'page' : undefined}>{label}</a>
+      ))}
+    </nav>
+  </div>
 </header>

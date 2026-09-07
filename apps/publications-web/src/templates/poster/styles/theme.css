@@ -1,52 +1,1240 @@
 @import "tailwindcss";
 
 /* ============================================================================
-   Poster — SCAFFOLD. Replace with the real theme when porting the prototype.
+   Poster — the headline is the argument.
 
-   Every base rule is scoped under `html.poster` and every class is prefixed
-   `po-`. See press-machine/styles/theme.css for why: the switchers import
-   every template's BaseLayout, so tokens declared on bare :root would be
-   decided by bundle order.
+   The lead title fills the first screen edge to edge; the archive is a wall of
+   full-width bands separated by whitespace only; images exist only while you
+   reach for a title (hover/focus on fine pointers, a small inline square on
+   touch and narrow screens); the article is a calm reading column where poster
+   scale returns only in pull quotes. Pure black on white, one grey, and the
+   publication accent exactly once per screen as a derived marker tint.
+
+   Every class is prefixed `po-` and every base rule is scoped under
+   `html.poster`. The switchers import every template's BaseLayout, so tokens
+   declared on bare :root would be decided by bundle order.
    ========================================================================== */
 
 @theme {
   --color-paper: #ffffff;
   --color-ink: #000000;
+  --color-grey: #595959;
   --color-accent: #b4361f;
   --color-accent-ink: #b4361f;
-  --font-display: 'Bricolage Grotesque', -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
-  --font-body: 'Geist', -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
-  --font-sans: 'Bricolage Grotesque', -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+  --color-accent-tint: #f6dcd4;
+
+  /* Names the comment island's utilities resolve against (text-text,
+     bg-bg-card, border-border, bg-accent, --max-width-prose). */
+  --color-text: #000000;
+  --color-text-muted: #595959;
+  --color-bg-card: #ffffff;
+  --color-border: #000000;
+  --color-accent-hover: #000000;
+  --max-width-prose: 41rem;
+
+  --font-display: 'Bricolage Grotesque', 'Helvetica Neue', Arial, sans-serif;
+  --font-body: 'Geist', 'Helvetica Neue', Arial, sans-serif;
+  --font-sans: 'Bricolage Grotesque', 'Helvetica Neue', Arial, sans-serif;
 }
+
+/* ------------------------------------------------------------ tokens ----- */
 
 html.poster {
   --color-paper: #ffffff;
   --color-ink: #000000;
+  /* the one secondary-text grey: 7.0:1 on white */
+  --color-grey: #595959;
   --color-accent: #b4361f;
+  /* Fallbacks for the two derivations below, for engines without relative
+     colour syntax. They are the sample red's own tint and floor. */
+  --color-accent-tint: #f6dcd4;
   --color-accent-ink: #b4361f;
-  --font-display: 'Bricolage Grotesque', -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
-  --font-body: 'Geist', -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
-  --font-sans: 'Bricolage Grotesque', -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+
+  --font-display: 'Bricolage Grotesque', 'Helvetica Neue', Arial, sans-serif;
+  --font-body: 'Geist', 'Helvetica Neue', Arial, sans-serif;
+  --font-sans: 'Bricolage Grotesque', 'Helvetica Neue', Arial, sans-serif;
+
+  /* Right column reserved for the vertical masthead + fixed nav; the gutter
+     before it is wide enough that right-aligned band text never reads as one
+     stack with the nav cluster; the left edge answers the rail so the poster
+     reads as framed. */
+  --po-rail: 6rem;
+  --po-gutter: 2.5rem;
+  --po-edge: 5rem;
+  /* 41rem ≈ 66ch of Geist at 1.125rem */
+  --po-col: 41rem;
+
+  background: var(--color-paper);
+  color: var(--color-ink);
+  -webkit-text-size-adjust: 100%;
 }
 
+/* The publication's own hex, injected as an inline style on <html> by
+   BaseLayout. Higher specificity than the block above so it always wins. */
 html.poster[style*="--publication-accent"] {
   --color-accent: var(--publication-accent);
 }
 
+/* Every legibility-bearing colour is derived, never the raw hex.
+   tint:  L pinned at 0.93 and chroma capped at 0.08, so black text on it
+          stays ≥ 7:1 whatever the hue. The marker band behind the key phrase
+          and the hover fill on article links.
+   floor: L clamped to [0.2, 0.55], so a pale accent darkens to ≥ 3:1 on white
+          and a near-black one lifts enough to still read as a colour. Defined
+          and measured; links underline in ink so the accent appears exactly
+          once per screen. Any future small accent use must go through it. */
 @supports (color: oklch(from red l c h)) {
   html.poster {
-    --color-accent-ink: oklch(from var(--color-accent) clamp(0.25, l, 0.5) c h);
+    --color-accent-tint: oklch(from var(--color-accent) 0.93 min(c, 0.08) h);
+    --color-accent-ink: oklch(from var(--color-accent) clamp(0.2, l, 0.55) c h);
   }
 }
 
 html.poster body {
+  position: relative;
+  margin: 0;
   background-color: var(--color-paper);
   color: var(--color-ink);
+  font-family: var(--font-display);
+  font-optical-sizing: auto;
+  font-variation-settings: "opsz" 12;
+  font-size: 1rem;
+  line-height: 1.5;
+  /* nothing ever runs under the fixed nav or the vertical masthead */
+  padding-right: var(--po-rail);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* `:where()` so the reset carries no specificity: as a plain `.poster img`
+   (0,1,1) it silently out-ranked `.po-band-fig { display: none }` and the
+   inline squares showed on desktop, where the hover reveal owns imagery. */
+:where(.poster) img {
+  display: block;
+  max-width: 100%;
+}
+
+:where(.poster) a {
+  color: inherit;
+}
+
+/* Focus ring: ink, never the accent. */
+.poster :focus-visible {
+  outline: 3px solid var(--color-ink);
+  outline-offset: 4px;
+}
+
+.poster mark {
+  background: var(--color-accent-tint);
+  color: var(--color-ink);
+  padding: 0.02em 0.18em 0;
+  margin: 0 -0.05em;
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
+}
+
+/* --------------------------------------------------------- type roles ---- */
+
+/* The poster voice: one family, hierarchy from the axes and scale. The heavy
+   weight lives in exactly one role per page — titles on the home, the title
+   moment and pull quotes on the article. */
+.po-poster {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-stretch: 84%;
+  letter-spacing: -0.035em;
+  line-height: 0.9;
+  font-variation-settings: "opsz" 96;
+  /* `anywhere`, not `break-word`: only `anywhere` shrinks the min-content
+     contribution, and the hero is a grid whose single auto track cannot be
+     narrower than that. With `break-word` a one-word title ("Attention") kept
+     the track at its unbroken max-content width and ran under the rail. */
+  overflow-wrap: anywhere;
+  margin: 0;
+}
+
+.po-poster a {
+  text-decoration: none;
+}
+
+.po-poster a:hover {
+  text-decoration: underline;
+  text-decoration-thickness: 0.045em;
+  text-underline-offset: 0.05em;
+}
+
+/* The small tier: metadata, tags, labels — plain lowercase, black, date first. */
+.po-meta {
+  font-family: var(--font-display);
+  font-size: 0.9375rem;
+  font-weight: 400;
+  line-height: 1.4;
+  font-stretch: 100%;
+  font-variation-settings: "opsz" 12;
+  letter-spacing: 0;
+  text-transform: lowercase;
+  margin: 0;
+}
+
+.po-meta a {
+  text-decoration: none;
+}
+
+.po-meta a:hover,
+.po-link:hover {
+  text-decoration: underline;
+  text-decoration-thickness: 0.09em;
+  text-underline-offset: 0.15em;
+}
+
+.po-link {
+  font-weight: 500;
+  text-decoration: none;
+}
+
+.po-deck {
+  font-family: var(--font-display);
+  font-size: 1.0625rem;
+  line-height: 1.5;
+  font-weight: 400;
+  font-stretch: 100%;
+  font-variation-settings: "opsz" 12;
+  color: var(--color-grey);
+  margin: 0;
+}
+
+/* Title size tiers by character count. The lead's tier is the no-JS fallback
+   (with JS the lead is fitted to the fold); the article title is tiered only.
+   The wall is deliberately NOT tiered. */
+.po-tier-s   { --po-lead: 12vw;   --po-post: 8.5vw; }
+.po-tier-m   { --po-lead: 12.5vw; --po-post: 7.5vw; }
+.po-tier-l   { --po-lead: 10vw;   --po-post: 6vw; }
+.po-tier-xl  { --po-lead: 8vw;    --po-post: 5vw; }
+.po-tier-xxl { --po-lead: 6.5vw;  --po-post: 4.2vw; }
+
+@media (max-width: 759px) {
+  .po-tier-s   { --po-lead: 18vw;   --po-post: 14vw; }
+  .po-tier-m   { --po-lead: 18vw;   --po-post: 12vw; }
+  .po-tier-l   { --po-lead: 15vw;   --po-post: 10vw; }
+  .po-tier-xl  { --po-lead: 12.5vw; --po-post: 8.5vw; }
+  .po-tier-xxl { --po-lead: 11vw;   --po-post: 7.5vw; }
+}
+
+/* ------------------------------------------------------------- rail ------ */
+
+/* The vertical masthead lives in the first screen only, reading bottom to top
+   from just above the nav cluster; the nav cluster is fixed bottom-right. */
+.po-masthead {
+  position: absolute;
+  top: var(--po-gutter);
+  right: 0;
+  width: var(--po-rail);
+  height: min(calc(100svh - 13rem), 49rem);
+  display: flex;
+  justify-content: center;
+  align-items: flex-end;
+  margin: 0;
+}
+
+.po-masthead a {
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
+  text-decoration: none;
+  white-space: nowrap;
+  font-size: 1.0625rem;
+  font-weight: 500;
+  line-height: 1;
+  letter-spacing: 0.005em;
+}
+
+/* A logo is set upright at the top of the rail instead of rotated. */
+.po-masthead--logo {
+  align-items: flex-start;
+}
+
+.po-masthead--logo a {
+  writing-mode: horizontal-tb;
+  transform: none;
+}
+
+.po-masthead--logo img {
+  width: auto;
+  max-width: calc(var(--po-rail) - 1.5rem);
+  max-height: 6rem;
+  object-fit: contain;
+}
+
+.po-rail-nav {
+  position: fixed;
+  right: 0;
+  bottom: 0;
+  width: var(--po-rail);
+  padding: 1rem 0 var(--po-gutter);
+  z-index: 6;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.15em;
+  background: var(--color-paper);
+}
+
+.po-rail-nav a,
+.po-strip nav a {
+  font-size: 0.9375rem;
+  font-weight: 500;
+  line-height: 1.5;
+  text-decoration: none;
+  text-transform: lowercase;
+}
+
+.po-rail-nav a:hover,
+.po-rail-nav a[aria-current],
+.po-strip nav a:hover,
+.po-strip nav a[aria-current] {
+  text-decoration: underline;
+  text-decoration-thickness: 0.09em;
+  text-underline-offset: 0.15em;
+}
+
+.po-strip {
+  display: none;
+}
+
+/* ------------------------------------------------------------- hero ------ */
+
+/* Grid rows meta / title / deck / 1fr so the caption sits in the first screen;
+   with JS the fit script pins the height and moves the caption into the
+   title's negative space. */
+.po-hero {
+  position: relative;
+  min-height: min(100svh, 62rem);
+  display: grid;
+  grid-template-rows: auto auto auto 1fr;
+  padding: var(--po-gutter) var(--po-gutter) var(--po-gutter) var(--po-edge);
+}
+
+.po-hero > * {
+  min-width: 0;
+}
+
+.po-hero > .po-meta {
+  margin: 0 0 0.5rem;
+}
+
+.po-lead-title {
+  font-size: var(--po-lead);
+  text-wrap: pretty;
+  animation: po-settle 600ms cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}
+
+/* Load: the axes settle once, from wide and light to condensed and heavy. */
+@keyframes po-settle {
+  from {
+    font-weight: 300;
+    font-stretch: 100%;
+    letter-spacing: 0;
+  }
+  to {
+    font-weight: 800;
+    font-stretch: 84%;
+    letter-spacing: -0.035em;
+  }
+}
+
+.po-hero-deck {
+  grid-row: 3;
+  justify-self: start;
+  max-width: 38ch;
+  margin: 1.5rem 0 0;
+  font-size: 1.125rem;
+}
+
+.po-hero-deck.is-beside {
+  position: absolute;
+  grid-area: auto;
+  margin: 0;
+}
+
+.po-hero-deck p {
+  margin: 0;
+}
+
+/* The one action on the screen is not its smallest text. */
+.po-more {
+  display: inline-block;
+  margin-top: 0.9rem;
+  color: var(--color-ink);
+  font-size: 1.25rem;
+  font-weight: 500;
+  text-decoration: none;
+}
+
+.po-more:hover {
+  text-decoration: underline;
+  text-decoration-thickness: 0.09em;
+  text-underline-offset: 0.15em;
+}
+
+.po-hero-deck .po-band-fig {
+  margin: 0 0 1rem;
+}
+
+/* ------------------------------------------------------------- wall ------ */
+
+/* Full-width bands, alternating alignment, whitespace only between them
+   (rem, not vh, so document height never depends on the viewport). */
+.po-wall {
+  padding: 0 var(--po-gutter) 0 var(--po-edge);
+}
+
+.po-wall-label {
+  padding-top: var(--po-gutter);
+}
+
+.po-band {
+  margin: 6.25rem 0;
+}
+
+.po-band--right {
+  text-align: right;
+}
+
+/* One base size for every archive title — never a function of character
+   count. The fit script may grow a one-liner up to 1.3× so every band carries
+   comparable ink. */
+.po-band-title {
+  font-size: 5.5vw;
+  text-wrap: balance;
+  margin: 0.15em 0 0.35em;
+  letter-spacing: -0.025em;
+}
+
+.po-band-body {
+  display: flex;
+  gap: 1.25rem;
+  align-items: flex-start;
+}
+
+.po-band--right .po-band-body {
+  justify-content: flex-end;
+}
+
+.po-band-body .po-deck {
+  max-width: 46ch;
+  margin: 0;
+  order: 1;
+}
+
+/* The inline square: touch and narrow layouts only. */
+.po-band-fig {
+  display: none;
+  width: 72px;
+  height: 72px;
+  object-fit: cover;
+  flex: none;
+  order: 0;
+}
+
+.po-band--right .po-band-fig {
+  order: 2;
+}
+
+.po-tags {
+  margin: 0.9rem 0 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35em 0;
+  font-size: 0.9375rem;
+  font-weight: 400;
+  text-transform: lowercase;
+}
+
+.po-band--right .po-tags {
+  justify-content: flex-end;
+}
+
+.po-tags li + li::before {
+  content: "\00b7";
+  margin: 0 0.55em;
+  color: var(--color-grey);
+}
+
+/* Hover / focus reveal: the only place an image exists on desktop. Created by
+   the script, so it does not exist at all without JS. */
+.po-reveal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 240px;
+  height: 240px;
+  pointer-events: none;
+  opacity: 0;
+  z-index: 5;
+  will-change: transform;
+}
+
+.po-reveal.is-on {
+  opacity: 1;
+}
+
+.po-reveal img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .po-reveal {
+    transition: opacity 140ms ease-out;
+  }
+}
+
+/* -------------------------------------------------------- empty state ---- */
+
+.po-empty-deck {
+  max-width: 38ch;
+}
+
+/* ------------------------------------------------------- column frame ---- */
+
+/* The reading column is centred between the left edge and the rail. The
+   frame is a size container so the offset can be computed from its own
+   content width wherever it is used (including inside the column, where a
+   percentage would resolve against the column instead). The article, the
+   footer and the home's identity block all sit on this one grid. */
+.po-frame {
+  container-type: inline-size;
+  --po-col-offset: max(0px, calc((100cqw - var(--po-col)) / 2));
+}
+
+.po-col {
+  max-width: var(--po-col);
+  margin-left: var(--po-col-offset);
+}
+
+/* Poster-scale elements break out of the column to the page's left edge and
+   run wider than the column. */
+.po-break {
+  width: calc(100% + var(--po-col-offset) + 6rem);
+  max-width: none;
+  margin-left: calc(var(--po-col-offset) * -1);
+}
+
+/* ---------------------------------------------------------- article ------ */
+
+.po-article {
+  padding: 2.5rem var(--po-gutter) 0 var(--po-edge);
+}
+
+/* The title gets one poster moment — larger, out to the pull-quote edge —
+   before the page goes calm. */
+.po-post-head {
+  margin-bottom: 3rem;
+}
+
+.po-post-head .po-meta {
+  /* margin-bottom only, for the same reason as `.po-post-title`: a shorthand
+     here would out-rank `.po-break`'s inline start margin. */
+  margin-bottom: 1rem;
+}
+
+.po-post-fig {
+  width: 56px;
+  height: 56px;
+  object-fit: cover;
+  display: inline-block;
+  vertical-align: middle;
+  margin-right: 0.75rem;
+}
+
+.po-post-title {
+  font-size: var(--po-post);
+  text-wrap: balance;
+  /* margin-bottom only: `.po-break` owns the inline start margin, and a
+     shorthand here (declared later in the file) would silently cancel it. */
+  margin-bottom: 0.35em;
+}
+
+.po-post-sub {
+  font-family: var(--font-display);
+  font-size: 1.35rem;
+  line-height: 1.35;
+  font-weight: 400;
+  font-stretch: 100%;
+  font-variation-settings: "opsz" 12;
+  margin: 2rem 0 0;
+  max-width: 44ch;
+}
+
+/* ------------------------------------------------------------ prose ------ */
+
+/* `.po-prose`, not `.prose`: the sibling templates style a global `.prose`. */
+.po-prose {
+  font-family: var(--font-body);
+  font-size: 1.125rem;
+  line-height: 1.6;
+}
+
+.po-prose p {
+  margin: 0 0 1.35em;
+}
+
+.po-prose a {
+  color: var(--color-ink);
+  text-decoration: underline;
+  text-decoration-color: var(--color-ink);
+  text-decoration-thickness: 1.5px;
+  text-underline-offset: 0.16em;
+}
+
+.po-prose a:hover {
+  background: var(--color-accent-tint);
+}
+
+/* Lead-ins are medium, never bold: the heavy weight belongs to the title. */
+.po-prose strong,
+.po-prose b {
+  font-weight: 500;
+}
+
+.po-prose em {
+  font-style: italic;
+}
+
+.po-prose h2 {
+  font-family: var(--font-display);
+  font-optical-sizing: auto;
+  font-variation-settings: "opsz" 60;
+  font-size: 2.6rem;
+  line-height: 1.05;
+  font-weight: 400;
+  font-stretch: 80%;
+  letter-spacing: -0.015em;
+  margin: 2.6em 0 0.6em;
+  text-wrap: balance;
+}
+
+.po-prose h3 {
+  font-family: var(--font-display);
+  font-variation-settings: "opsz" 40;
+  font-size: 1.5rem;
+  line-height: 1.2;
+  font-weight: 500;
+  font-stretch: 90%;
+  margin: 2em 0 0.5em;
+}
+
+.po-prose h4 {
+  font-family: var(--font-display);
+  font-size: 1.125rem;
+  font-weight: 500;
+  margin: 1.6em 0 0.4em;
+}
+
+.po-prose ul,
+.po-prose ol {
+  margin: 0 0 1.35em;
+  padding-left: 1.4rem;
+}
+
+.po-prose ul {
+  list-style: disc;
+}
+
+.po-prose ol {
+  list-style: decimal;
+}
+
+.po-prose li {
+  margin: 0 0 0.4em;
+}
+
+.po-prose li > p {
+  margin: 0;
+}
+
+/* Inline code keeps the body face at medium weight — no mono in running
+   text. A code block is the one exception: real code without a monospace
+   face is unreadable, so it gets one, framed in the same black outline as
+   the forms. */
+.po-prose code {
+  font-family: inherit;
+  font-weight: 500;
+}
+
+.po-prose pre {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.875rem;
+  line-height: 1.55;
+  border: 2px solid var(--color-ink);
+  padding: 1rem 1.1rem;
+  margin: 0 0 1.5em;
+  overflow-x: auto;
+}
+
+.po-prose pre code {
+  font-family: inherit;
+  font-weight: 400;
+  white-space: pre;
+}
+
+.po-prose hr {
+  border: 0;
+  border-top: 2px solid var(--color-ink);
+  width: 6rem;
+  margin: 2.5em 0;
+}
+
+.po-prose img {
+  margin: 2em 0;
+}
+
+.po-prose figure {
+  margin: 2em 0;
+}
+
+.po-prose figure img {
+  margin: 0;
+}
+
+.po-prose figcaption {
+  font-family: var(--font-display);
+  font-size: 0.9375rem;
+  color: var(--color-grey);
+  margin-top: 0.5rem;
+}
+
+.po-prose table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 0 0 1.5em;
+  font-size: 1rem;
+}
+
+.po-prose th,
+.po-prose td {
+  text-align: left;
+  vertical-align: top;
+  padding: 0.5em 0.75em 0.5em 0;
+  border-bottom: 1px solid var(--color-ink);
+}
+
+.po-prose th {
+  font-weight: 500;
+}
+
+/* Pull quotes are the only loud moments on the article page: a blockquote is
+   set at poster scale and breaks out of the column to the page edge. */
+.po-prose blockquote {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-stretch: 84%;
+  letter-spacing: -0.02em;
+  line-height: 0.9;
+  font-variation-settings: "opsz" 96;
+  font-size: 4.4vw;
+  max-width: 28ch;
+  width: calc(100% + var(--po-col-offset) + 6rem);
+  margin: 1.2em 0 1.2em calc(var(--po-col-offset) * -1);
+  padding: 0;
+  border: 0;
+  text-wrap: balance;
+  overflow-wrap: break-word;
+}
+
+.po-prose blockquote p {
+  margin: 0;
+}
+
+.po-prose blockquote p + p {
+  margin-top: 0.5em;
+}
+
+.po-prose blockquote a {
+  text-decoration-thickness: 0.045em;
+  text-underline-offset: 0.05em;
+}
+
+/* -------------------------------------------------------- apparatus ------ */
+
+.po-section {
+  margin-top: 5rem;
+}
+
+.po-section-title {
+  font-family: var(--font-display);
+  font-size: 0.9375rem;
+  line-height: 1.4;
+  font-weight: 400;
+  font-stretch: 100%;
+  letter-spacing: 0;
+  text-transform: lowercase;
+  font-variation-settings: "opsz" 12;
+  margin: 0 0 1.2rem;
+}
+
+.po-post-tags {
+  margin: 2.5rem 0 0;
+}
+
+.po-share {
+  margin: 1.5rem 0 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.35em 0;
+}
+
+.po-share li + li::before {
+  content: "\00b7";
+  margin: 0 0.55em;
+  color: var(--color-grey);
+}
+
+.po-share a,
+.po-share button {
+  font: inherit;
+  color: inherit;
+  background: none;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+  text-decoration: none;
+  text-transform: lowercase;
+}
+
+.po-share a:hover,
+.po-share button:hover {
+  text-decoration: underline;
+  text-decoration-thickness: 0.09em;
+  text-underline-offset: 0.15em;
+}
+
+/* Sources: numbers in their own track on the column's left edge, the source
+   line under the link text and aligned to it. */
+.po-sources {
+  padding: 0;
+  margin: 0;
+  list-style: none;
+  counter-reset: po-src;
+  font-family: var(--font-body);
+  font-size: 0.9375rem;
+  line-height: 1.5;
+}
+
+.po-sources li {
+  margin: 0 0 0.55em;
+  display: grid;
+  grid-template-columns: 2rem 1fr;
+  break-inside: avoid;
+  counter-increment: po-src;
+}
+
+.po-sources li::before {
+  content: counter(po-src) ".";
+  font-family: var(--font-display);
+  font-variation-settings: "opsz" 12;
+  color: var(--color-grey);
+}
+
+.po-sources a {
+  color: var(--color-ink);
+  text-decoration: underline;
+  text-decoration-color: var(--color-ink);
+  text-decoration-thickness: 1.5px;
+  text-underline-offset: 0.16em;
+}
+
+.po-sources a:hover {
+  background: var(--color-accent-tint);
+}
+
+.po-src-d {
+  display: block;
+  color: var(--color-grey);
+  overflow-wrap: anywhere;
+}
+
+@media (min-width: 1024px) {
+  .po-sources {
+    columns: 2;
+    column-gap: 2.5rem;
+  }
+}
+
+/* Comments: the island's own utilities are neutralised into the template's
+   plain black-outline forms. These rules are unlayered, so they win over the
+   island's layered utilities without fighting specificity. */
+.po-comments {
   font-family: var(--font-body);
 }
 
-.poster a:focus-visible,
-.poster button:focus-visible {
-  outline: 2px solid var(--color-accent-ink);
-  outline-offset: 3px;
+.po-comments section {
+  max-width: none;
+  padding: 0;
+  margin: 0;
+}
+
+.po-comments h2 {
+  font-family: var(--font-display);
+  font-size: 0.9375rem;
+  line-height: 1.4;
+  font-weight: 400;
+  text-transform: lowercase;
+  font-variation-settings: "opsz" 12;
+}
+
+.po-comments h2 + button,
+.po-comments button[type="submit"] {
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-size: 1.0625rem;
+  line-height: 1.3;
+  color: var(--color-paper);
+  background: var(--color-ink);
+  border: 2px solid var(--color-ink);
+  border-radius: 0;
+  padding: 0.55em 1.2em;
+}
+
+.po-comments h2 + button:hover,
+.po-comments button[type="submit"]:hover:not(:disabled) {
+  background: var(--color-paper);
+  color: var(--color-ink);
+}
+
+.po-comments input,
+.po-comments textarea {
+  font: inherit;
+  font-size: 1.0625rem;
+  color: var(--color-ink);
+  background: var(--color-paper);
+  border: 2px solid var(--color-ink);
+  border-radius: 0;
+  padding: 0.6em 0.7em;
+  box-shadow: none;
+}
+
+.po-comments input:focus,
+.po-comments textarea:focus {
+  outline: 3px solid var(--color-ink);
+  outline-offset: 2px;
+  box-shadow: none;
+}
+
+.po-comments textarea {
+  min-height: 7.5em;
+  resize: vertical;
+}
+
+.po-comments label {
+  font-family: var(--font-display);
+  font-weight: 400;
+}
+
+/* ----------------------------------------------------------- footer ------ */
+
+.po-footer {
+  padding: 6rem var(--po-gutter) 6rem var(--po-edge);
+  container-type: inline-size;
+  --po-col-offset: max(0px, calc((100cqw - var(--po-col)) / 2));
+}
+
+/* The article page reads in a centred column, so it also ends on one. Every
+   other page keeps the footer on the page's own left edge. */
+html.poster body:has(.po-article) .po-footer-in {
+  max-width: var(--po-col);
+  margin-left: var(--po-col-offset);
+}
+
+.po-footer-row {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 2rem 4rem;
+}
+
+.po-site-name {
+  font-size: 2rem;
+  line-height: 1;
+  font-weight: 400;
+  font-stretch: 90%;
+  letter-spacing: -0.02em;
+  margin: 0 0 0.9rem;
+  font-variation-settings: "opsz" 40;
+}
+
+.po-site-name a {
+  text-decoration: none;
+}
+
+.po-site-name img {
+  height: 2.25rem;
+  width: auto;
+}
+
+.po-about {
+  font-family: var(--font-body);
+  color: var(--color-grey);
+  margin: 0;
+  line-height: 1.5;
+  max-width: 46ch;
+}
+
+.po-social,
+.po-footer-nav {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5em 1.25em;
+}
+
+.po-social a,
+.po-footer-nav a {
+  text-decoration: underline;
+  text-decoration-thickness: 0.09em;
+  text-underline-offset: 0.15em;
+  font-weight: 400;
+}
+
+.po-colophon {
+  color: var(--color-grey);
+  font-size: 0.9375rem;
+  margin: 3rem 0 0;
+}
+
+.po-colophon a {
+  text-decoration: underline;
+  text-decoration-thickness: 0.09em;
+  text-underline-offset: 0.15em;
+}
+
+/* The home's identity block: the publication finally introducing itself,
+   after the claims have had their say. */
+.po-about-block {
+  padding: 2rem var(--po-gutter) 0 var(--po-edge);
+}
+
+.po-standing {
+  font-family: var(--font-display);
+  font-size: 1.35rem;
+  line-height: 1.3;
+  font-weight: 400;
+  font-stretch: 100%;
+  font-variation-settings: "opsz" 24;
+  max-width: 34ch;
+  margin: 0 0 0.7rem;
+}
+
+/* ---------------------------------------------------------- not found ---- */
+
+.po-nf-title {
+  font-size: 12vw;
+  text-wrap: pretty;
+}
+
+/* ---------------------------------------------------------- motion -------- */
+
+@media (prefers-reduced-motion: reduce) {
+  .po-lead-title {
+    animation: none;
+  }
+  .po-reveal {
+    transition: none;
+  }
+}
+
+/* touch: no hover reveal, inline squares instead */
+@media (hover: none), (pointer: coarse) {
+  .po-band-fig {
+    display: block;
+  }
+  .po-reveal {
+    display: none;
+  }
+}
+
+/* ---------------------------------------------------------- narrow -------- */
+
+@media (max-width: 759px) {
+  html.poster {
+    --po-rail: 0px;
+    --po-gutter: 1rem;
+    --po-edge: 1rem;
+  }
+
+  html.poster body {
+    padding-right: 0;
+  }
+
+  .po-masthead,
+  .po-rail-nav {
+    display: none;
+  }
+
+  /* Both rail parts collapse into one sticky white strip. */
+  .po-strip {
+    display: flex;
+    position: sticky;
+    top: 0;
+    z-index: 6;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+    padding: 0.7rem var(--po-gutter);
+    background: var(--color-paper);
+  }
+
+  .po-strip-name {
+    font-weight: 500;
+    font-stretch: 90%;
+    font-size: 1.0625rem;
+    text-decoration: none;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    min-width: 0;
+  }
+
+  .po-strip-name img {
+    height: 1.75rem;
+    width: auto;
+  }
+
+  .po-strip nav {
+    display: flex;
+    gap: 0.8em;
+    flex: none;
+  }
+
+  /* No void on a phone: the deck sits under the title and the wall follows. */
+  .po-hero {
+    min-height: auto;
+    padding-top: 1.25rem;
+  }
+
+  .po-hero-deck {
+    max-width: none;
+    justify-self: stretch;
+    margin-top: 2rem;
+    font-size: 1.0625rem;
+  }
+
+  .po-more {
+    font-size: 1.125rem;
+  }
+
+  /* The alternation is dropped rather than flipped: every band reads left,
+     so the wall scans as one list. */
+  .po-band {
+    margin: 4rem 0;
+  }
+
+  .po-band--right,
+  .po-band--right .po-band-title {
+    text-align: left;
+  }
+
+  .po-band--right .po-band-body {
+    justify-content: flex-start;
+  }
+
+  .po-band--right .po-band-fig {
+    order: 0;
+  }
+
+  .po-band--right .po-tags {
+    justify-content: flex-start;
+  }
+
+  .po-band-title {
+    font-size: 10vw;
+  }
+
+  .po-band-fig {
+    display: block;
+  }
+
+  .po-band-body {
+    gap: 1rem;
+  }
+
+  .po-reveal {
+    display: none;
+  }
+
+  .po-frame {
+    --po-col-offset: 0px;
+  }
+
+  .po-break {
+    width: auto;
+    margin-left: 0;
+  }
+
+  .po-article {
+    padding-top: 1.5rem;
+  }
+
+  .po-post-sub {
+    font-size: 1.2rem;
+  }
+
+  .po-prose {
+    font-size: 1.0625rem;
+  }
+
+  .po-prose h2 {
+    font-size: 1.85rem;
+  }
+
+  .po-prose blockquote {
+    font-size: 9.5vw;
+    margin-left: 0;
+    max-width: none;
+    width: auto;
+  }
+
+  .po-section {
+    margin-top: 4.5rem;
+  }
+
+  .po-footer {
+    padding: 4rem var(--po-gutter) 4rem;
+  }
+
+  .po-footer-row {
+    flex-direction: column;
+    gap: 2rem;
+  }
+
+  .po-nf-title {
+    font-size: 18vw;
+  }
+}
+
+@media (min-width: 760px) and (max-width: 1023px) {
+  .po-hero-deck {
+    max-width: 34ch;
+  }
+}
+
+/* ------------------------------------------------------------- print ----- */
+
+@media print {
+  html.poster body {
+    padding-right: 0;
+  }
+  .po-masthead,
+  .po-rail-nav,
+  .po-strip,
+  .po-reveal,
+  .po-share {
+    display: none;
+  }
 }
