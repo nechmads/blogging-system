@@ -5,8 +5,9 @@ import type { Post } from '@hotmetal/content-core';
  * fetches HOME_POST_LIMIT + 1 so that `posts.length > HOME_POST_LIMIT` answers
  * "is there anything behind the View all link?" without a second query.
  *
- * Only `press-machine` and `one-signal` enforce it; the older templates slice
- * their own way and are unaffected by the extra post.
+ * `press-machine`, `one-signal`, `cover-stock`, `horizon` and `poster` enforce
+ * it; the older templates slice their own way and are unaffected by the extra
+ * post.
  */
 export const HOME_POST_LIMIT = 10;
 

@@ -1,0 +1,54 @@
+---
+/**
+ * The wall. Used on `/posts` with every published post, and by `Home.astro`
+ * for everything behind the lead. `heading` is a small lowercase label; the
+ * home page passes none, because a wall of posters does not need a sign
+ * saying it is a wall.
+ */
+import type { Post } from '@hotmetal/content-core';
+import Band from './Band.astro';
+
+interface Props {
+  posts: Post[];
+  heading?: string;
+  showViewAll?: boolean;
+  /**
+   * True when this wall IS the page (the /posts route) rather than a section of
+   * the home page. Only then may it own the `main` landmark and the `h1`.
+   */
+  standalone?: boolean;
+}
+
+const { posts, heading, showViewAll = false, standalone = false } = Astro.props;
+const labelId = heading ? 'po-wall-h' : undefined;
+
+/* On /posts this list is the page, so it owns the `main` landmark and the `h1`.
+   On the home page both already belong to `Home.astro`. */
+const Region = standalone ? 'main' : 'section';
+const Label = standalone ? 'h1' : 'p';
+---
+
+<Region
+  class="po-wall"
+  aria-labelledby={labelId}
+  aria-label={heading ? undefined : 'Archive'}
+>
+  {heading && (
+    <Label class="po-meta po-wall-label" id={labelId}>{heading}</Label>
+  )}
+
+  {posts.length > 0 ? (
+    posts.map((post, i) => <Band post={post} side={i % 2 === 0 ? 'left' : 'right'} />)
+  ) : (
+    <div class="po-band">
+      <p class="po-poster po-band-title">Nothing published yet.</p>
+      <p class="po-deck po-empty-deck">
+        The first piece will land here.
+      </p>
+    </div>
+  )}
+
+  {showViewAll && posts.length > 0 && (
+    <p class="po-band"><a class="po-more" href="/posts">View all &rarr;</a></p>
+  )}
+</Region>

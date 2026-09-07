@@ -1,0 +1,176 @@
+---
+/**
+ * The axis scroll-spy, shared by the home page and /posts. It moves the hollow
+ * cursor along the baseline as the reader travels back through the archive,
+ * marks the tick and the month numeral the cursor is standing in, and (on the
+ * home page only) collapses the expanded axis into the sticky strip.
+ *
+ * Renders no markup — only the behaviour for whatever scale is on the page.
+ */
+---
+
+<script>
+  interface HorizonSpy {
+    current(): string | null;
+    compact(): boolean;
+  }
+
+  declare global {
+    interface Window {
+      __horizon?: HorizonSpy;
+    }
+  }
+
+  let teardown: (() => void) | null = null;
+
+  function initAxisSpy() {
+    teardown?.();
+    teardown = null;
+
+    const axisEl = document.querySelector<HTMLElement>('[data-hz-axis]');
+    const entries = Array.from(document.querySelectorAll<HTMLElement>('.hz-entry'));
+    if (!axisEl || entries.length === 0) return;
+    /* Re-bound with a non-nullable type: the narrowing above does not reach the
+       nested update() closure, and publications-web typechecks with
+       astro/tsconfigs/strict where that is an error. */
+    const axis: HTMLElement = axisEl;
+
+    const cursor = axis.querySelector<HTMLElement>('.hz-cursor');
+    const expandable = axis.dataset.hzAxis === 'expanded';
+    const ticks = new Map<string, HTMLElement>();
+    for (const tick of Array.from(axis.querySelectorAll<HTMLAnchorElement>('.hz-tick'))) {
+      const id = tick.getAttribute('href')?.slice(1);
+      if (id && !ticks.has(id)) ticks.set(id, tick);
+    }
+    const months = Array.from(document.querySelectorAll<HTMLElement>('[data-hz-month]')).filter(
+      (el) => el.classList.contains('hz-month') || el.classList.contains('hz-rail-month'),
+    );
+
+    const stripHeight =
+      Number.parseInt(
+        getComputedStyle(document.documentElement).getPropertyValue('--hz-strip-h'),
+        10,
+      ) || 72;
+
+    let tops: number[] = [];
+    let compact = false;
+    let current: HTMLElement | null = null;
+    let queued = false;
+
+    function measure() {
+      tops = entries.map((entry) => entry.getBoundingClientRect().top + window.scrollY);
+    }
+
+    /**
+     * The current entry is the LAST one whose top is above the reading line —
+     * the strip plus a quarter of the viewport, capped at 200px so an anchor
+     * jump (which lands an entry just under the strip) never lets the next
+     * entry win. Deliberately not an IntersectionObserver with a negative
+     * rootMargin, which sticks on the first entry taller than the band.
+     */
+    function update() {
+      queued = false;
+      const y = window.scrollY;
+
+      if (expandable) {
+        if (!compact && y > 48) {
+          compact = true;
+          axis.classList.add('is-compact');
+        } else if (compact && y < 16) {
+          compact = false;
+          axis.classList.remove('is-compact');
+        }
+      }
+
+      const line = y + stripHeight + Math.min(200, Math.round(window.innerHeight * 0.25));
+      let index = 0;
+      for (let i = 0; i < tops.length; i += 1) {
+        if (tops[i] <= line) index = i;
+        else break;
+      }
+
+      const entry = entries[index];
+      if (entry === current) return;
+
+      if (current) {
+        current.classList.remove('is-current');
+        ticks.get(current.id)?.classList.remove('is-current');
+      }
+      current = entry;
+      entry.classList.add('is-current');
+      ticks.get(entry.id)?.classList.add('is-current');
+
+      const x = entry.getAttribute('data-x');
+      if (cursor && x) cursor.style.setProperty('--x', x);
+
+      /* The month the cursor is standing in is the one set in ink — not, as the
+         prototype had it, always the newest month on the axis. */
+      const monthKey = entry.dataset.hzMonth ?? null;
+      for (const month of months) {
+        month.classList.toggle('is-current', monthKey !== null && month.dataset.hzMonth === monthKey);
+      }
+    }
+
+    function schedule() {
+      if (queued) return;
+      queued = true;
+      window.requestAnimationFrame(update);
+    }
+
+    function remeasure() {
+      measure();
+      schedule();
+    }
+
+    /* Hovering or focusing a tick lights its entry, and the other way round. */
+    const hotHandlers: (() => void)[] = [];
+    function link(entry: HTMLElement, tick: HTMLElement | undefined) {
+      const on = () => {
+        entry.classList.add('is-hot');
+        tick?.classList.add('is-hot');
+      };
+      const off = () => {
+        entry.classList.remove('is-hot');
+        tick?.classList.remove('is-hot');
+      };
+      const targets: [HTMLElement, string, () => void][] = [
+        [entry, 'mouseenter', on],
+        [entry, 'mouseleave', off],
+        [entry, 'focusin', on],
+        [entry, 'focusout', off],
+      ];
+      if (tick) {
+        targets.push([tick, 'mouseenter', on], [tick, 'mouseleave', off], [tick, 'focus', on], [tick, 'blur', off]);
+      }
+      for (const [el, type, handler] of targets) {
+        el.addEventListener(type, handler);
+        hotHandlers.push(() => el.removeEventListener(type, handler));
+      }
+    }
+
+    for (const entry of entries) link(entry, ticks.get(entry.id));
+
+    window.addEventListener('scroll', schedule, { passive: true });
+    window.addEventListener('resize', remeasure);
+    window.addEventListener('load', remeasure);
+    document.fonts?.ready.then(remeasure);
+    measure();
+    update();
+
+    window.__horizon = {
+      current: () => current?.id ?? null,
+      compact: () => compact,
+    };
+
+    teardown = () => {
+      window.removeEventListener('scroll', schedule);
+      window.removeEventListener('resize', remeasure);
+      window.removeEventListener('load', remeasure);
+      for (const off of hotHandlers) off();
+      delete window.__horizon;
+    };
+  }
+
+  initAxisSpy();
+  document.addEventListener('astro:after-swap', initAxisSpy);
+</script>

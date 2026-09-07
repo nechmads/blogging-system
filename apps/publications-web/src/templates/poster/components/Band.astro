@@ -1,0 +1,63 @@
+---
+/**
+ * One poster in the wall: a full-width band of claim-scale title with small
+ * metadata above and a deck plus plain tags below. Bands alternate left/right
+ * and are separated by whitespace only — no rules, no containers, no cards.
+ *
+ * There is no image slot by construction. On a fine pointer the featured image
+ * is revealed while the title is hovered or focused (the script reads
+ * `data-po-img` off the link); on touch and narrow screens it is a small
+ * inline square beside the deck. A post with no image is not a special case.
+ */
+import type { Post } from '@hotmetal/content-core';
+import { formatDate } from '../../../lib/format';
+import { getPreviewText, getFirstTopic } from '../../../lib/post-utils';
+import { glue, readingMinutes, splitLabels, clip } from '../lib/text';
+
+interface Props {
+  post: Post;
+  /** Which edge this band is set against. */
+  side: 'left' | 'right';
+}
+
+const { post, side } = Astro.props;
+
+const date = post.publishedAt ? formatDate(post.publishedAt) : null;
+const topic = getFirstTopic(post);
+const minutes = readingMinutes(post.content);
+const preview = getPreviewText(post, 200);
+const deck = preview ? clip(preview, 200) : null;
+const tags = splitLabels(post.tags);
+
+const meta = [date, topic, minutes ? `${minutes} min read` : null].filter(Boolean) as string[];
+---
+
+<article class:list={['po-band', `po-band--${side}`]}>
+  {meta.length > 0 && <p class="po-meta">{meta.join(' · ')}</p>}
+
+  <h2 class="po-poster po-band-title">
+    <a href={`/${post.slug}`} data-po-img={post.featuredImage ?? undefined}>{glue(post.title)}</a>
+  </h2>
+
+  {(deck || post.featuredImage) && (
+    <div class="po-band-body">
+      {post.featuredImage && (
+        <img
+          class="po-band-fig"
+          src={post.featuredImage}
+          alt=""
+          width="72"
+          height="72"
+          loading="lazy"
+        />
+      )}
+      {deck && <p class="po-deck">{deck}</p>}
+    </div>
+  )}
+
+  {tags.length > 0 && (
+    <ul class="po-tags" aria-label="Tags">
+      {tags.map((tag) => <li>{tag}</li>)}
+    </ul>
+  )}
+</article>

@@ -1,0 +1,533 @@
+---
+import { ClientRouter } from 'astro:transitions';
+import HeadMeta from '../../../components/HeadMeta.astro';
+import themeUrl from '../styles/theme.css?url';
+
+interface Props {
+  title: string;
+  publicationName: string;
+  description?: string;
+  ogImage?: string;
+  canonicalUrl?: string;
+  accentColor?: string | null;
+  ogType?: string;
+  jsonLd?: Record<string, unknown>;
+  rssUrl?: string;
+  articlePublishedTime?: string;
+  articleModifiedTime?: string;
+  articleAuthor?: string;
+  articleTags?: string[];
+  articleSection?: string;
+  twitterSite?: string;
+  twitterCreator?: string;
+}
+
+const {
+  title,
+  publicationName,
+  description,
+  ogImage,
+  canonicalUrl,
+  accentColor,
+  ogType = 'website',
+  jsonLd,
+  rssUrl,
+  articlePublishedTime,
+  articleModifiedTime,
+  articleAuthor,
+  articleTags,
+  articleSection,
+  twitterSite,
+  twitterCreator,
+} = Astro.props;
+
+const HEX_COLOR_PATTERN = /^#[0-9a-fA-F]{3,8}$/;
+const validAccent = accentColor && HEX_COLOR_PATTERN.test(accentColor) ? accentColor : null;
+const accentStyle = validAccent ? `--publication-accent: ${validAccent};` : undefined;
+---
+
+<!--
+  The `poster` class on <html> scopes this template's tokens and base type so
+  they cannot be decided by bundle order. The stylesheet is linked by URL, not
+  imported, so only this template's CSS is requested on its pages.
+-->
+<html lang="en" class="poster" style={accentStyle}>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <!-- Poster fonts: Bricolage Grotesque (every display and UI role, hierarchy
+         carried by its opsz/wdth/wght axes) and Geist (the reading column). -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wdth,wght@12..96,75..100,200..800&family=Geist:wght@100..900&display=swap" rel="stylesheet" />
+
+    <link rel="stylesheet" href={themeUrl} />
+
+    <HeadMeta
+      {title}
+      {publicationName}
+      {description}
+      {ogImage}
+      {canonicalUrl}
+      {ogType}
+      {jsonLd}
+      {rssUrl}
+      {articlePublishedTime}
+      {articleModifiedTime}
+      {articleAuthor}
+      {articleTags}
+      {articleSection}
+      {twitterSite}
+      {twitterCreator}
+    />
+
+    <ClientRouter />
+  </head>
+  <body class="min-h-screen flex flex-col">
+    <slot />
+
+    <script>
+      /**
+       * Poster's two pieces of progressive enhancement. Without either, the
+       * page is already correct: the lead falls back to its CSS length tier,
+       * the wall to its one base size, and images stay reachable as the inline
+       * square on touch and narrow screens.
+       *
+       *  1. The fit — the lead title is measured against a stable reference
+       *     fold and the caption is placed in the void beside one of its
+       *     lines; a one-line wall title may grow within a bounded range.
+       *  2. The reveal — on a fine pointer, hovering or focusing a title shows
+       *     that post's featured image as a square that follows the cursor
+       *     (hover) or pins beside the title (keyboard focus).
+       *
+       * The ClientRouter is on, so everything is torn down and re-initialised
+       * on `astro:after-swap`.
+       */
+      const SIZE = 240;
+      const GAP = 24;
+      const PAD = 12;
+      /** The reference fold: 1440x900, clamped, so a taller viewport breaks
+          the title identically and only a short one shrinks it. */
+      const FOLD_MIN = 700;
+      const FOLD_MAX = 900;
+      /** A caption needs at least this much room beside a line to sit there. */
+      const DECK_MIN = 20 * 16;
+
+      let teardown: (() => void) | null = null;
+
+      function clamp(value: number, min: number, max: number): number {
+        return Math.max(min, Math.min(max, value));
+      }
+
+      function wide(): boolean {
+        return window.matchMedia('(min-width: 760px)').matches;
+      }
+
+      /* ------------------------------------------------------- the reveal -- */
+
+      function initReveal(cleanups: Array<() => void>) {
+        const links = Array.from(
+          document.querySelectorAll<HTMLAnchorElement>('a[data-po-img]'),
+        ).filter((link) => link.getAttribute('data-po-img'));
+        if (links.length === 0) return;
+
+        const box = document.createElement('div');
+        box.className = 'po-reveal';
+        box.setAttribute('aria-hidden', 'true');
+        const img = document.createElement('img');
+        img.alt = '';
+        box.appendChild(img);
+        document.body.appendChild(box);
+
+        const fine = window.matchMedia('(hover: hover) and (pointer: fine)');
+        const reduced = window.matchMedia('(prefers-reduced-motion: reduce)');
+
+        let active: HTMLAnchorElement | null = null;
+        let mode: 'hover' | 'focus' | null = null;
+        let pointerX = 0;
+        let x = 0;
+        let y = 0;
+        let frame = 0;
+        let snap = true;
+        let currentSize = SIZE;
+
+        function railWidth(): number {
+          return Number.parseFloat(getComputedStyle(document.body).paddingRight) || 0;
+        }
+
+        /** Where the square should be, in viewport coordinates, and how big. */
+        function target(link: HTMLAnchorElement): [number, number, number] {
+          const band = link.closest<HTMLElement>('.po-band, .po-hero');
+          const title = link.parentElement;
+          if (!band || !title) return [PAD, PAD, SIZE];
+
+          const right = band.classList.contains('po-band--right');
+          const rects = link.getClientRects();
+          let minLeft = Infinity;
+          let maxRight = -Infinity;
+          let widest = 0;
+          for (let i = 0; i < rects.length; i += 1) {
+            minLeft = Math.min(minLeft, rects[i].left);
+            maxRight = Math.max(maxRight, rects[i].right);
+            if (rects[i].width > rects[widest].width) widest = i;
+          }
+
+          /* The title block is tight to the glyphs (line-height .9) while the
+             inline link's own rects overshoot below the baseline, so the rects
+             give x and the block gives the line tops. */
+          const block = title.getBoundingClientRect();
+          const widestTop = block.top + widest * (block.height / Math.max(1, rects.length));
+
+          const companion =
+            band.querySelector<HTMLElement>('.po-band-body .po-deck, .po-hero-deck') ?? title;
+          const side = companion.getBoundingClientRect();
+          const sideX = right ? side.left - GAP - SIZE : side.right + GAP;
+
+          const next = band.nextElementSibling
+            ? band.nextElementSibling.getBoundingClientRect().top
+            : Infinity;
+          const maxX = window.innerWidth - railWidth() - SIZE - PAD;
+
+          /* Below the title, shrunk (never under 160px) so it never crosses
+             into the next band. */
+          const size = clamp(next - GAP - (block.bottom + GAP), 160, SIZE);
+          const below = Math.min(block.bottom + GAP, next - GAP - size);
+
+          if (mode === 'focus') {
+            /* Beside the title block, top-aligned and clear of its widest
+               line; failing that, on the band's empty side below it. */
+            if (!right && maxRight + GAP <= maxX) {
+              return [clamp(maxRight + GAP, PAD, maxX), widestTop, SIZE];
+            }
+            if (right && minLeft - GAP - SIZE >= PAD) {
+              return [clamp(minLeft - GAP - SIZE, PAD, maxX), widestTop, SIZE];
+            }
+            return [clamp(sideX, PAD, maxX), below, size];
+          }
+
+          let tx = pointerX - size / 2;
+          let ty = below;
+          /* Never over the title, and never over the deck or tags either. */
+          if (tx < side.right + GAP && tx + size > side.left - GAP) tx = sideX;
+          if (ty + size > window.innerHeight - PAD && block.top - GAP - size >= PAD) {
+            ty = block.top - GAP - size;
+          }
+          return [
+            clamp(tx, PAD, maxX),
+            clamp(ty, PAD, window.innerHeight - size - PAD),
+            size,
+          ];
+        }
+
+        function tick() {
+          if (!active) return;
+          const [tx, ty, size] = target(active);
+          if (size !== currentSize) {
+            currentSize = size;
+            box.style.width = `${size}px`;
+            box.style.height = `${size}px`;
+          }
+          if (snap || mode === 'focus' || reduced.matches) {
+            x = tx;
+            y = ty;
+          } else {
+            x += (tx - x) * 0.22;
+            y += (ty - y) * 0.22;
+          }
+          snap = false;
+          box.style.transform = `translate(${x.toFixed(1)}px, ${y.toFixed(1)}px)`;
+          frame = window.requestAnimationFrame(tick);
+        }
+
+        function show(link: HTMLAnchorElement, nextMode: 'hover' | 'focus') {
+          const src = link.getAttribute('data-po-img');
+          if (!src) return;
+          active = link;
+          mode = nextMode;
+          snap = true;
+          if (img.getAttribute('src') !== src) img.src = src;
+          box.classList.add('is-on');
+          window.cancelAnimationFrame(frame);
+          frame = window.requestAnimationFrame(tick);
+        }
+
+        function hide() {
+          active = null;
+          mode = null;
+          box.classList.remove('is-on');
+          window.cancelAnimationFrame(frame);
+        }
+
+        for (const link of links) {
+          link.addEventListener('pointerenter', (event) => {
+            if (event.pointerType !== 'mouse' || !fine.matches || !wide()) return;
+            pointerX = event.clientX;
+            show(link, 'hover');
+          });
+          link.addEventListener('pointermove', (event) => {
+            if (active === link && mode === 'hover') pointerX = event.clientX;
+          });
+          link.addEventListener('pointerleave', () => {
+            if (active === link && mode === 'hover') hide();
+          });
+          link.addEventListener('focus', () => {
+            if (!fine.matches || !wide()) return;
+            show(link, 'focus');
+          });
+          link.addEventListener('blur', () => {
+            if (active === link) hide();
+          });
+        }
+
+        const onResize = () => {
+          if (active) hide();
+        };
+        window.addEventListener('resize', onResize);
+
+        cleanups.push(() => {
+          window.removeEventListener('resize', onResize);
+          window.cancelAnimationFrame(frame);
+          box.remove();
+        });
+      }
+
+      /* ---------------------------------------------------------- the fit -- */
+
+      /** Visual line boxes of the inline link, from the block's tight step. */
+      function lineBoxes(block: HTMLElement) {
+        const link = block.firstElementChild;
+        if (!link) return [];
+        const rects = link.getClientRects();
+        const box = block.getBoundingClientRect();
+        const step = rects.length ? box.height / rects.length : box.height;
+        const out: Array<{ left: number; right: number; width: number; top: number; bottom: number }> = [];
+        for (let i = 0; i < rects.length; i += 1) {
+          out.push({
+            left: rects[i].left,
+            right: rects[i].right,
+            width: rects[i].width,
+            top: box.top + i * step,
+            bottom: box.top + (i + 1) * step,
+          });
+        }
+        return out;
+      }
+
+      function fitLead() {
+        const hero = document.querySelector<HTMLElement>('.po-hero');
+        const lead = document.querySelector<HTMLElement>('.po-lead-title');
+        const deck = hero?.querySelector<HTMLElement>('.po-hero-deck') ?? null;
+        if (!hero || !lead) return;
+
+        deck?.classList.remove('is-beside');
+        if (deck) deck.style.cssText = '';
+        lead.style.fontSize = '';
+
+        if (!wide()) {
+          hero.style.minHeight = '';
+          return;
+        }
+
+        hero.style.minHeight = `${Math.min(window.innerHeight, 62 * 16)}px`;
+
+        const fold = clamp(window.innerHeight, FOLD_MIN, FOLD_MAX);
+        const avail = lead.clientWidth;
+        const heroBox = hero.getBoundingClientRect();
+        const top = lead.getBoundingClientRect().top - heroBox.top;
+
+        /* The probe sits exactly over the lead, so its line boxes are the
+           lead's final geometry — the live title may still be settling. */
+        const probe = lead.cloneNode(true) as HTMLElement;
+        probe.removeAttribute('id');
+        probe.style.cssText =
+          `position:absolute;grid-area:auto;left:${lead.offsetLeft}px;top:${lead.offsetTop}px;` +
+          `visibility:hidden;pointer-events:none;animation:none;width:${avail}px`;
+        hero.appendChild(probe);
+        const probeLink = probe.firstElementChild;
+        if (!probeLink) {
+          probe.remove();
+          return;
+        }
+
+        /* Three lines is the ceiling, but a title can never take more lines
+           than it has breakable units: without this a one-word title grows
+           until the word itself has to break, and the fold ends on a single
+           orphaned letter. (`glue()` joins the last two words with a no-break
+           space, which is why the split keeps U+00A0 out of the separator.) */
+        const units = (lead.textContent ?? '').trim().split(/[^\S\u00a0]+/).filter(Boolean).length;
+        const maxLines = Math.max(1, Math.min(3, units));
+
+        /** Every size that fits the budget within the line ceiling. */
+        function scan(budget: number) {
+          const found: Array<{ size: number; fill: number; widths: number[] }> = [];
+          for (let s = 6; s <= 30; s += 0.25) {
+            probe.style.fontSize = `${s}vw`;
+            const rects = probeLink!.getClientRects();
+            if (
+              probe.offsetHeight > budget ||
+              probeLink!.scrollWidth > avail + 1 ||
+              rects.length > maxLines
+            ) {
+              break;
+            }
+            const widths: number[] = [];
+            for (let i = 0; i < rects.length; i += 1) widths.push(rects[i].width);
+            found.push({ size: s, fill: Math.max(...widths) / avail, widths });
+          }
+          return found;
+        }
+
+        /** Largest fill among sizes within `floor` of the cap; ties go larger. */
+        function pick(
+          found: Array<{ size: number; fill: number; widths: number[] }>,
+          floor: number,
+          ok: (candidate: { widths: number[] }) => boolean,
+        ) {
+          if (found.length === 0) return null;
+          const cap = found[found.length - 1].size;
+          let best: { size: number; fill: number; widths: number[] } | null = null;
+          for (let i = found.length - 1; i >= 0 && found[i].size >= cap * floor; i -= 1) {
+            if (!ok(found[i])) continue;
+            if (!best || found[i].fill > best.fill + 0.005) best = found[i];
+          }
+          return best;
+        }
+
+        /** The line the caption can sit beside: the last, else the shortest. */
+        function voidLine(widths: number[]): number {
+          const last = widths.length - 1;
+          if (avail - widths[last] - 32 >= DECK_MIN) return last;
+          let shortest = 0;
+          for (let i = 1; i < widths.length; i += 1) {
+            if (widths[i] < widths[shortest]) shortest = i;
+          }
+          return avail - widths[shortest] - 32 >= DECK_MIN ? shortest : -1;
+        }
+
+        let placed = false;
+
+        if (deck) {
+          /* Pass 1: the title owns the fold and leaves a void for the caption. */
+          const first = pick(scan(fold - top - 40), 0.75, (c) => voidLine(c.widths) >= 0);
+          if (first) {
+            lead.style.fontSize = `${first.size}vw`;
+            probe.style.fontSize = `${first.size}vw`;
+            const lines = lineBoxes(probe);
+            const leadBox = probe.getBoundingClientRect();
+            const index = voidLine(lines.map((line) => line.width));
+            if (index >= 0) {
+              const line = lines[index];
+              deck.classList.add('is-beside');
+              deck.style.maxWidth = `${Math.min(38 * 11, leadBox.right - line.right - 32)}px`;
+              deck.style.left = `${line.right - heroBox.left + 32}px`;
+              const deckTop = Math.max(
+                line.bottom - deck.offsetHeight - (line.bottom - line.top) * 0.06,
+                leadBox.top,
+              );
+              const deckBottom = deckTop + deck.offsetHeight;
+              const deckLeft = line.right + 32;
+              let hit = false;
+              for (let i = 0; i < lines.length; i += 1) {
+                if (i === index) continue;
+                if (
+                  lines[i].right + 32 > deckLeft &&
+                  lines[i].bottom > deckTop &&
+                  lines[i].top < deckBottom
+                ) {
+                  hit = true;
+                  break;
+                }
+              }
+              if (!hit && deckBottom <= heroBox.top + fold - 24) {
+                deck.style.top = `${deckTop - heroBox.top}px`;
+                placed = true;
+              } else {
+                deck.classList.remove('is-beside');
+                deck.style.cssText = '';
+              }
+            }
+          }
+        }
+
+        if (!placed) {
+          /* Pass 2: the caption sits under the title, and the title gives up
+             the caption's height. */
+          deck?.classList.remove('is-beside');
+          if (deck) deck.style.cssText = '';
+          const budget = fold - top - (deck ? deck.offsetHeight : 0) - 64;
+          const second = pick(scan(budget), 0.85, () => true);
+          lead.style.fontSize = second ? `${second.size}vw` : '';
+        }
+
+        probe.remove();
+      }
+
+      /**
+       * The wall keeps one base size — never a function of character count.
+       * The one bounded exception: a title that already fits on ONE line may
+       * grow up to 1.3x so every band carries comparable ink.
+       */
+      function fitWall() {
+        const titles = document.querySelectorAll<HTMLElement>('.po-band-title');
+        for (const title of titles) {
+          title.style.fontSize = '';
+          const link = title.firstElementChild;
+          if (!wide() || !link) continue;
+
+          const base = Number.parseFloat(getComputedStyle(title).fontSize);
+          const avail = title.clientWidth;
+          const oneLine = () => link.getClientRects().length === 1 && link.scrollWidth <= avail + 1;
+          if (!oneLine()) continue;
+
+          let low = base;
+          let high = base * 1.3;
+          title.style.fontSize = `${high}px`;
+          if (oneLine()) continue;
+          for (let i = 0; i < 6; i += 1) {
+            const mid = (low + high) / 2;
+            title.style.fontSize = `${mid}px`;
+            if (oneLine()) low = mid;
+            else high = mid;
+          }
+          title.style.fontSize = `${low}px`;
+        }
+      }
+
+      function fitAll() {
+        fitLead();
+        fitWall();
+      }
+
+      /* ----------------------------------------------------------- wiring -- */
+
+      function initPoster() {
+        teardown?.();
+        const cleanups: Array<() => void> = [];
+
+        initReveal(cleanups);
+
+        if (document.fonts?.ready) document.fonts.ready.then(fitAll).catch(() => fitAll());
+        else fitAll();
+
+        let lastWidth = window.innerWidth;
+        const onResize = () => {
+          /* Height-only changes (browser chrome, capture tools) never refit. */
+          if (window.innerWidth === lastWidth) return;
+          lastWidth = window.innerWidth;
+          fitAll();
+        };
+        window.addEventListener('resize', onResize);
+        cleanups.push(() => window.removeEventListener('resize', onResize));
+
+        teardown = () => {
+          for (const cleanup of cleanups) cleanup();
+          teardown = null;
+        };
+      }
+
+      initPoster();
+      document.addEventListener('astro:after-swap', initPoster);
+    </script>
+  </body>
+</html>

@@ -1,0 +1,34 @@
+---
+/**
+ * The 404, built from the same cover object as every issue — a plate that
+ * stands where the missing issue would. It is written out here rather than
+ * rendered through `Cover.astro` because there is no post behind it, and
+ * inventing one to satisfy the component would be the wrong kind of tidy.
+ */
+---
+
+<main class="flex-1">
+  <div class="cs-nf">
+    <div class="cs-cover cs-cover--deep cs-fit-xl cs-cover--noill">
+      <span class="cs-cv">
+        <span class="cs-cv-band">
+          <span>Missing issue</span>
+          <span>404</span>
+        </span>
+        <span class="cs-cv-title">
+          <span class="cs-cv-kicker">Not on the shelf</span>
+          <span class="cs-cv-h">This issue was never printed</span>
+        </span>
+        <span class="cs-cv-foot">
+          <span class="cs-cv-author">Out of catalogue</span>
+        </span>
+      </span>
+    </div>
+
+    <div class="cs-nf-text">
+      <h1>Nothing is filed at this address.</h1>
+      <p>The page you are looking for does not exist, or the issue has been moved.</p>
+      <a class="cs-back" href="/">&larr; Back to the shelf</a>
+    </div>
+  </div>
+</main>

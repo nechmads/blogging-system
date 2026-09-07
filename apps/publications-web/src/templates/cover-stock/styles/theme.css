@@ -1,0 +1,1340 @@
+@import "tailwindcss";
+
+/* ============================================================================
+   Cover Stock — every post is an issue, and every issue has a cover.
+
+   The cover is generated from type on one fixed grid (series band, title zone,
+   illustration zone, imprint foot), so it is finished whether a featured image
+   exists or not. The home page is a face-out shelf; the article opens on its
+   own cover.
+
+   Everything here is prefixed `cs-` and every base rule is scoped under
+   `html.cover-stock`. The page switchers import *every* template's BaseLayout
+   statically, so a sibling template's bare `:root` / `body` rules would
+   otherwise win on bundle order alone.
+   ========================================================================== */
+
+@theme {
+  --color-ground: oklch(93.5% 0.016 82);
+  --color-stock: oklch(97.5% 0.008 85);
+  --color-shelf: oklch(85% 0.022 78);
+  --color-ink: oklch(22% 0.012 60);
+  --color-ink-2: oklch(42% 0.012 60);
+  --color-rule: oklch(80% 0.014 80);
+
+  --color-accent: #b4361f;
+  --color-accent-ink: #b4361f;
+
+  --font-display: 'Fraunces', Georgia, 'Times New Roman', serif;
+  --font-body: 'Source Serif 4', Georgia, 'Times New Roman', serif;
+  --font-sans: 'Instrument Sans', system-ui, -apple-system, 'Segoe UI', Arial, sans-serif;
+}
+
+/* ------------------------------------------------------------ tokens ----- */
+
+html.cover-stock {
+  --color-ground: oklch(93.5% 0.016 82);
+  --color-stock: oklch(97.5% 0.008 85);
+  --color-shelf: oklch(85% 0.022 78);
+  --color-ink: oklch(22% 0.012 60);
+  --color-ink-2: oklch(42% 0.012 60);
+  --color-rule: oklch(80% 0.014 80);
+
+  --color-accent: #b4361f;
+
+  /* The type tokens are re-declared here for the same reason the colours are:
+     `@theme` can only emit them on `:root`, where they collide with every
+     sibling template's `:root` and the last stylesheet in the bundle wins. */
+  --font-display: 'Fraunces', Georgia, 'Times New Roman', serif;
+  --font-body: 'Source Serif 4', Georgia, 'Times New Roman', serif;
+  --font-sans: 'Instrument Sans', system-ui, -apple-system, 'Segoe UI', Arial, sans-serif;
+
+  --cs-pad: clamp(16px, 3.4vw, 48px);
+  --cs-lift: 160ms cubic-bezier(0.2, 0.7, 0.2, 1);
+  --cs-cover-w: clamp(300px, min(27vw, 46vh), 440px);
+
+  /* The derived accent family. Nothing that carries legibility uses the raw
+     publication hex: `--color-accent` is an arbitrary per-publication colour,
+     and a pale or a near-black one fails on this paper in opposite ways.
+     These four are the fallbacks for engines without relative colour; the
+     @supports block below replaces them with the measured derivations. */
+  --cs-accent-ink: color-mix(in oklab, var(--color-accent) 46%, #100f0c);
+  --cs-plate-deep: var(--cs-accent-ink);
+  --cs-plate-tint: color-mix(in srgb, var(--color-accent) 16%, #fff);
+  --cs-accent-line: color-mix(in oklab, var(--color-accent) 62%, #100f0c);
+
+  /* Sticky needs a scroll container that is not `overflow: hidden`, so the
+     horizontal safety valve is `clip` on the root, never on body. */
+  overflow-x: clip;
+  -webkit-text-size-adjust: 100%;
+}
+
+/* The publication's own hex, injected as an inline style on <html> by
+   BaseLayout. Higher specificity than the block above so it always wins. */
+html.cover-stock[style*="--publication-accent"] {
+  --color-accent: var(--publication-accent);
+}
+
+/* The derivations recorded in the design notes. Lightness is clamped into a
+   readable band and chroma capped, so a neon yellow and a near-black navy
+   both land on a plate that carries type at the measured floors. */
+@supports (color: oklch(from red l c h)) {
+  html.cover-stock {
+    --cs-accent-ink: oklch(from var(--color-accent) clamp(0.25, l, 0.42) min(c, 0.15) h);
+    --cs-plate-tint: oklch(from var(--color-accent) 0.92 min(c, 0.08) h);
+    --cs-accent-line: oklch(from var(--color-accent) clamp(0.3, l, 0.5) min(c, 0.17) h);
+  }
+}
+
+html.cover-stock body {
+  background-color: var(--color-ground);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  font-size: 1rem;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.cover-stock img {
+  display: block;
+  max-width: 100%;
+}
+
+/* Wrapped in `:where()` so the reset carries no specificity of its own and
+   every link colour below it still wins. */
+:where(.cover-stock) a {
+  color: inherit;
+}
+
+.cover-stock a:focus-visible,
+.cover-stock button:focus-visible,
+.cover-stock summary:focus-visible {
+  outline: 2px solid var(--cs-accent-ink);
+  outline-offset: 3px;
+}
+
+.cover-stock button {
+  font: inherit;
+  color: inherit;
+  background: none;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+}
+
+.cs-sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* ----------------------------------------------------------- imprint ----- */
+
+/* The publisher's mark, not a masthead: the publication name is small above
+   the shelf, and the covers are the page's largest objects. */
+.cs-imprint {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.35rem 1.25rem;
+  padding: 1.1rem var(--cs-pad) 0.9rem;
+  font-size: 0.82rem;
+  letter-spacing: 0.01em;
+}
+
+.cs-imprint-name {
+  margin: 0;
+  font-size: inherit;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+}
+
+.cs-imprint-name a {
+  text-decoration: none;
+}
+
+.cs-imprint-logo {
+  height: 1.6rem;
+  width: auto;
+}
+
+.cs-imprint nav {
+  margin-left: auto;
+  display: flex;
+  gap: 1.2rem;
+}
+
+.cs-imprint nav a {
+  text-decoration: none;
+  color: var(--color-ink-2);
+}
+
+.cs-imprint nav a:hover,
+.cs-imprint nav a[aria-current='page'] {
+  color: var(--color-ink);
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+}
+
+.cs-imprint nav a.cs-rss::before {
+  content: '';
+  display: inline-block;
+  width: 0.55em;
+  height: 0.55em;
+  margin-right: 0.35em;
+  border-radius: 50%;
+  background: var(--cs-accent-line);
+  vertical-align: 0.05em;
+}
+
+/* ------------------------------------------------------------- cover ----- */
+
+/* One grid for every issue — band / title / illustration / foot — sized in
+   container-query units so the same markup is a 440px face-out, a 250px
+   facsimile or a shelved back issue without a second set of rules. */
+.cs-cover {
+  container-type: inline-size;
+  position: relative;
+  display: block;
+  aspect-ratio: 2 / 3;
+  width: 100%;
+  text-decoration: none;
+  /* The article's opening is set in the body serif; the cover is a fixed
+     object and keeps its own sans on every page it appears. */
+  font-family: var(--font-sans);
+  color: var(--cs-fg);
+  background: var(--cs-bg);
+  --cs-fg: var(--color-ink);
+  --cs-bg: var(--color-stock);
+  --cs-cv-rule: var(--color-ink);
+}
+
+.cs-cover--deep {
+  --cs-bg: var(--cs-plate-deep);
+  --cs-fg: var(--color-stock);
+  --cs-cv-rule: var(--color-stock);
+}
+
+.cs-cover--tint {
+  --cs-bg: var(--cs-plate-tint);
+  --cs-fg: var(--color-ink);
+  --cs-cv-rule: var(--color-ink);
+}
+
+.cs-cover--paper {
+  --cs-bg: var(--color-stock);
+  --cs-fg: var(--color-ink);
+  --cs-cv-rule: var(--color-ink);
+}
+
+.cs-cv {
+  display: grid;
+  grid-template-rows: 14cqw 1fr 50cqw 12cqw;
+  height: 100%;
+}
+
+/* No image and no deck: the illustration row would be an empty panel, so it is
+   not reserved at all and the title zone takes the space. The cover still
+   reads as the same object — same band, same foot, same rules. */
+.cs-cover--noill .cs-cv {
+  grid-template-rows: 14cqw 1fr 12cqw;
+}
+
+.cs-cv > * {
+  display: block;
+  min-width: 0;
+}
+
+.cs-cv-band {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.8em;
+  padding: 0 6cqw;
+  font-size: max(0.6rem, 3.1cqw);
+  text-transform: uppercase;
+  letter-spacing: min(0.12em, 0.6cqw);
+  border-bottom: 1px solid var(--cs-cv-rule);
+}
+
+/* The paper plate is stock with an accent band, so its band carries the only
+   filled colour on the cover and takes paper type. */
+.cs-cover--paper .cs-cv-band {
+  background: var(--cs-accent-ink);
+  color: var(--color-stock);
+  border-bottom: 0;
+}
+
+.cs-cv-band > span {
+  white-space: nowrap;
+  overflow: clip;
+  text-overflow: ellipsis;
+}
+
+/* The series name yields first when the band is tight — a long publication
+   name ellipsises rather than pushing the issue's month off the cover. */
+.cs-cv-band > span:first-child {
+  min-width: 0;
+}
+
+.cs-cv-band > span + span {
+  flex: 0 0 auto;
+}
+
+.cs-cv-title {
+  padding: 5cqw 6cqw 4cqw;
+  display: flex;
+  flex-direction: column;
+  gap: 2.4cqw;
+  overflow: clip;
+}
+
+.cs-cv-kicker {
+  font-size: max(0.6rem, 3.1cqw);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  opacity: 0.85;
+}
+
+/* Fraunces is the single bold role in this template: the cover title, and the
+   article's own section heads. Nothing else is set in it. */
+.cs-cv-h {
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-optical-sizing: none;
+  font-variation-settings: 'opsz' 144;
+  line-height: 1.02;
+  letter-spacing: -0.01em;
+  text-wrap: balance;
+  hyphens: manual;
+  font-size: var(--cs-fs);
+}
+
+/* Title size steps down by title length, with a rem floor so a shelved cover
+   stays legible. A 70-character title lands on `s` and still clears the band. */
+.cs-fit-xl { --cs-fs: max(1.25rem, 14cqw); }
+.cs-fit-l { --cs-fs: max(1.15rem, 12cqw); }
+.cs-fit-m { --cs-fs: max(1rem, 10cqw); }
+.cs-fit-s { --cs-fs: max(0.95rem, 9cqw); }
+
+.cs-cv-ill {
+  border-top: 1px solid var(--cs-cv-rule);
+  overflow: clip;
+}
+
+.cs-cv-ill--deck {
+  padding: 4cqw 6cqw 0;
+}
+
+.cs-cover--paper .cs-cv-ill {
+  border-top-color: var(--color-rule);
+}
+
+/* The photo belongs to the plate: flush in the zone, greyscaled, then blended
+   so it takes the plate's hue — a derived duotone rather than an arbitrary
+   generated square dropped onto a designed cover. No text sits over it, so the
+   blend introduces no contrast pair. */
+.cs-cv-ill--img img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  filter: grayscale(1) contrast(1.05);
+  mix-blend-mode: luminosity;
+}
+
+.cs-cv-deck {
+  display: block;
+  font-family: var(--font-body);
+  font-style: italic;
+  font-weight: 400;
+  font-size: max(0.8rem, 4.7cqw);
+  line-height: 1.32;
+  text-wrap: pretty;
+}
+
+.cs-cv-foot {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1em;
+  padding: 0 6cqw;
+  font-size: max(0.6rem, 3cqw);
+  letter-spacing: 0.04em;
+  border-top: 1px solid var(--cs-cv-rule);
+  font-variant-numeric: tabular-nums;
+}
+
+.cs-cover--paper .cs-cv-foot {
+  border-top-color: var(--color-rule);
+}
+
+.cs-cv-foot > * {
+  white-space: nowrap;
+  overflow: clip;
+  text-overflow: ellipsis;
+}
+
+/* Below this the band's two labels collide on a shelved cover, so the month
+   steps out: the imprint foot already carries the issue's date, and what a
+   small cover needs to keep is the series it belongs to. */
+@container (max-width: 190px) {
+  .cs-cv-month {
+    display: none;
+  }
+}
+
+/* Container queries, so a date never runs under a neighbour on a small cover. */
+@container (max-width: 330px) {
+  .cs-cv-date-long { display: none; }
+}
+
+@container (min-width: 330px) {
+  .cs-cv-date-short { display: none; }
+}
+
+@container (max-width: 190px) {
+  .cs-cv-author { display: none; }
+  .cs-cv-foot { justify-content: flex-end; }
+}
+
+/* The issue cut by the shelf's edge shows its spine, never sliced type: the
+   plate colour with the series name turned 90°. */
+.cs-cv-spine {
+  display: none;
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 40px;
+  writing-mode: vertical-rl;
+  align-items: center;
+  justify-content: flex-start;
+  padding-top: 14px;
+  font-size: 0.62rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  color: var(--cs-fg);
+}
+
+.cs-cover--paper .cs-cv-spine {
+  background: var(--cs-accent-ink);
+  color: var(--color-stock);
+}
+
+.cs-cover.is-partial .cs-cv {
+  visibility: hidden;
+}
+
+.cs-cover.is-partial .cs-cv-spine {
+  display: flex;
+}
+
+/* The design's only shadow, and only on the lifted state. */
+a.cs-cover {
+  transition: transform var(--cs-lift), box-shadow var(--cs-lift);
+}
+
+a.cs-cover:hover,
+a.cs-cover:focus-visible {
+  transform: translateY(-8px);
+  box-shadow: 0 18px 26px -16px oklch(22% 0.02 60 / 0.55);
+}
+
+/* ------------------------------------------------------------- shelf ----- */
+
+.cs-shelf-wrap {
+  padding-top: 0.5rem;
+}
+
+.cs-shelf {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 0 clamp(20px, 3vw, 40px);
+  align-items: end;
+  padding-inline: var(--cs-pad);
+}
+
+.cs-lead {
+  width: var(--cs-cover-w);
+}
+
+/* The face-out issue fills both its title zone and its deck zone, leaving one
+   intentional margin rather than three accidental ones. */
+.cs-lead .cs-cv-h,
+.cs-opening-cover .cs-cv-h {
+  font-size: calc(var(--cs-fs) * 1.25);
+}
+
+.cs-lead .cs-cv-deck,
+.cs-opening-cover .cs-cv-deck {
+  font-size: max(0.95rem, 5.8cqw);
+}
+
+.cs-stack {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  min-width: 0;
+}
+
+/* With a single issue there is no row for the label to sit above. The stack
+   hugs its content, so it is the grid alignment — not the flex one — that has
+   to move: the line opens the column instead of sinking to the lead's foot. */
+.cs-stack--solo {
+  align-self: start;
+  padding-top: 0.5rem;
+}
+
+.cs-shelf-label {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 1.5rem 3rem;
+  padding: 0 0 0.2rem 4px;
+}
+
+.cs-shelf-note {
+  margin: 0;
+  font-family: var(--font-body);
+  font-style: italic;
+  font-size: clamp(1.05rem, 1.35vw, 1.25rem);
+  line-height: 1.35;
+  max-width: 32em;
+  text-wrap: pretty;
+}
+
+.cs-shelf-count {
+  margin: 0;
+  font-size: 0.82rem;
+  color: var(--color-ink-2);
+  white-space: nowrap;
+}
+
+/* The shelf scrolls natively; the spine of the next issue at the edge is the
+   affordance, so there are no pager buttons to hide the rest behind. */
+.cs-row {
+  display: flex;
+  align-items: flex-end;
+  gap: 16px;
+  overflow-x: auto;
+  overflow-y: clip;
+  scroll-snap-type: x proximity;
+  scroll-padding-left: 4px;
+  padding: 16px 0 0 4px;
+  scrollbar-width: none;
+  --cs-base: 18.5vw;
+}
+
+.cs-row::-webkit-scrollbar {
+  display: none;
+}
+
+.cs-row .cs-cover {
+  flex: 0 0 auto;
+  width: calc(var(--cs-base) * var(--cs-m, 1));
+  scroll-snap-align: start;
+}
+
+.cs-shelf-line {
+  height: 14px;
+  border-top: 2px solid var(--color-ink);
+  background: var(--color-shelf);
+}
+
+/* --------------------------------------------------------- catalogue ----- */
+
+.cs-section {
+  padding: 3.2rem var(--cs-pad) 0;
+}
+
+.cs-section-h {
+  display: flex;
+  align-items: baseline;
+  gap: 1rem;
+  margin: 0 0 1rem;
+  font-size: 0.82rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  font-weight: 500;
+}
+
+.cs-section-h h1,
+.cs-section-h h2 {
+  margin: 0;
+  font-size: inherit;
+  font-weight: inherit;
+  letter-spacing: inherit;
+}
+
+.cs-section-h small {
+  font-weight: 400;
+  letter-spacing: 0.02em;
+  text-transform: none;
+  color: var(--color-ink-2);
+  margin-left: 0.6rem;
+}
+
+.cs-cat-tools {
+  margin-left: auto;
+  display: flex;
+  align-items: baseline;
+  gap: 1.2rem;
+}
+
+.cs-cat-all,
+.cs-viewall {
+  font-size: 0.78rem;
+  letter-spacing: 0.06em;
+  color: var(--color-ink-2);
+  border-bottom: 1px solid var(--cs-accent-line);
+  padding-bottom: 1px;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.cs-cat-all:hover,
+.cs-cat-all[aria-pressed='true'],
+.cs-viewall:hover {
+  color: var(--color-ink);
+}
+
+.cs-cat {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  border-top: 1px solid var(--color-ink);
+}
+
+.cs-cat li {
+  border-bottom: 1px solid var(--color-rule);
+}
+
+/* A due-date card: the date is the scanning key, stamped in its own column. */
+.cs-cat-row {
+  display: grid;
+  grid-template-columns: 7.2rem minmax(0, 1fr) 9rem 4rem;
+  gap: 0.5rem 1.2rem;
+  align-items: baseline;
+  padding: 0.85rem 0;
+  font-variant-numeric: tabular-nums;
+  text-decoration: none;
+  color: inherit;
+}
+
+.cs-cat-date {
+  color: var(--cs-accent-ink);
+}
+
+.cs-cat-title {
+  font-size: 1.02rem;
+  font-weight: 500;
+}
+
+.cs-cat-row:hover .cs-cat-title {
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+  text-decoration-color: var(--cs-accent-line);
+}
+
+.cs-cat-kicker,
+.cs-cat-read {
+  color: var(--color-ink-2);
+  font-size: 0.85rem;
+}
+
+.cs-cat-read {
+  text-align: right;
+}
+
+.cs-cat-back {
+  padding: 0 0 1rem 8.4rem;
+}
+
+.cs-cat-back[hidden] {
+  display: none;
+}
+
+.cs-cat-back p {
+  margin: 0;
+  font-family: var(--font-body);
+  font-style: italic;
+  font-size: 1.08rem;
+  line-height: 1.4;
+  max-width: 60ch;
+}
+
+.cs-empty {
+  margin: 0;
+  padding: 2.5rem 0 0;
+  font-family: var(--font-body);
+  font-style: italic;
+  font-size: 1.15rem;
+  color: var(--color-ink-2);
+  max-width: 46ch;
+}
+
+/* ---------------------------------------------------------- colophon ----- */
+
+.cs-colophon {
+  display: grid;
+  grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr);
+  gap: 2rem clamp(24px, 5vw, 80px);
+  padding: 3.6rem var(--cs-pad) 0;
+}
+
+.cs-colophon h2 {
+  margin: 0 0 0.6rem;
+  font-size: 0.74rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  font-weight: 400;
+  color: var(--color-ink-2);
+}
+
+.cs-about {
+  font-family: var(--font-body);
+  font-size: 1.08rem;
+  line-height: 1.55;
+  max-width: 56ch;
+  margin: 0;
+}
+
+.cs-subjects-idx {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.2rem 0.9rem;
+  font-size: 0.92rem;
+  color: var(--color-ink-2);
+}
+
+/* ------------------------------------------------------------ footer ----- */
+
+/* `auto`, not a fixed margin: a short page (an empty shelf, /posts on a young
+   publication) must still end on the footer band at the bottom of the screen,
+   and the separation from the content above is carried by the band's own top
+   padding instead. */
+.cs-foot {
+  margin-top: auto;
+  border-top: 2px solid var(--color-ink);
+  background: var(--color-shelf);
+}
+
+.cs-foot-in {
+  padding: clamp(2rem, 4vw, 3rem) var(--cs-pad) 2.2rem;
+  font-size: 0.85rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem 2rem;
+  align-items: baseline;
+}
+
+.cs-foot p {
+  margin: 0;
+}
+
+.cs-foot-name {
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+}
+
+.cs-foot-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.cs-foot-links a {
+  text-decoration-color: var(--cs-accent-line);
+  text-underline-offset: 0.2em;
+}
+
+.cs-foot-fine {
+  width: 100%;
+  color: var(--color-ink-2);
+}
+
+/* -------------------------------------------------------------- post ----- */
+
+/* One reading axis: the opening and the body share the same two columns,
+   centred as a pair, so the cover never appears to move sideways. */
+.cs-opening,
+.cs-post {
+  display: grid;
+  grid-template-columns: var(--cs-cover-w) minmax(0, 68ch);
+  gap: 0 clamp(28px, 4vw, 64px);
+  justify-content: center;
+  font-family: var(--font-body);
+  font-size: 1.125rem;
+}
+
+.cs-opening {
+  align-items: stretch;
+  padding: 0.5rem var(--cs-pad) 0;
+}
+
+.cs-opening-cover {
+  align-self: end;
+}
+
+/* The standfirst's first baseline sits on the cover's title baseline, and the
+   opening then runs down to the shelf line. */
+.cs-opening-text {
+  padding: calc(var(--cs-cover-w) * 0.325) 0 1.6rem;
+  line-height: 1.6;
+}
+
+.cs-standfirst {
+  font-size: clamp(1.35rem, 1.9vw, 1.7rem);
+  line-height: 1.35;
+  margin: 0 0 1.1rem;
+  text-wrap: pretty;
+}
+
+.cs-byline {
+  font-family: var(--font-sans);
+  font-size: 0.85rem;
+  color: var(--color-ink-2);
+  margin: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem 0.9rem;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.5;
+}
+
+.cs-byline b {
+  font-weight: 500;
+  color: var(--color-ink);
+}
+
+/* The shelf line belongs to the cover, not to the text, so it is drawn by the
+   cover's own column rather than by a second grid laid over the page: a
+   parallel grid has to guess this one's track widths, and when the reading
+   column's track collapses the line slides out from under the cover it is
+   supposed to be standing on. It also must not cross the reading measure. */
+.cs-opening-cover::after {
+  content: '';
+  display: block;
+  height: 14px;
+  border-top: 2px solid var(--color-ink);
+  background: var(--color-shelf);
+}
+
+.cs-post {
+  padding: 2.6rem var(--cs-pad) 0;
+  align-items: start;
+}
+
+/* The same cover object, half size, pinned at the same left edge it occupied
+   in the opening — it shrinks in place rather than jumping across the column. */
+.cs-aside {
+  position: sticky;
+  top: 1.25rem;
+  justify-self: start;
+  width: min(250px, 100%);
+  visibility: hidden;
+  opacity: 0;
+  transition: opacity 220ms ease;
+}
+
+.cs-aside.is-stuck {
+  visibility: visible;
+  opacity: 1;
+}
+
+.cs-post-col {
+  min-width: 0;
+  line-height: 1.6;
+}
+
+/* The narrow-screen running head: the issue's identity stays on screen once
+   the cover has scrolled away. Desktop uses the pinned facsimile instead. */
+.cs-runhead {
+  display: none;
+}
+
+/* `.cs-prose`, not `.prose`: the sibling templates all style a global `.prose`
+   and their stylesheets share this page's bundle. */
+/* A long URL or token in the body must not push the reading measure wider
+   than the column it was designed for. */
+.cs-prose {
+  overflow-wrap: break-word;
+}
+
+.cs-prose > :first-child {
+  margin-top: 0;
+}
+
+.cs-prose p {
+  margin: 0 0 1.15em;
+}
+
+.cs-prose h2 {
+  font-family: var(--font-display);
+  font-weight: 500;
+  font-optical-sizing: none;
+  font-variation-settings: 'opsz' 72;
+  font-size: clamp(1.5rem, 2.6vw, 1.9rem);
+  line-height: 1.15;
+  margin: 2.2em 0 0.5em;
+  letter-spacing: -0.01em;
+  text-wrap: balance;
+  scroll-margin-top: 4.5rem;
+}
+
+.cs-prose h3 {
+  font-family: var(--font-display);
+  font-weight: 500;
+  font-optical-sizing: none;
+  font-variation-settings: 'opsz' 48;
+  font-size: clamp(1.2rem, 2vw, 1.4rem);
+  line-height: 1.2;
+  margin: 1.8em 0 0.45em;
+}
+
+.cs-prose a {
+  color: var(--color-ink);
+  text-decoration: underline;
+  text-decoration-color: var(--cs-accent-line);
+  text-decoration-thickness: 2px;
+  text-underline-offset: 0.16em;
+}
+
+.cs-prose a:hover {
+  text-decoration-color: var(--color-ink);
+}
+
+.cs-prose strong {
+  font-weight: 600;
+}
+
+.cs-prose em {
+  font-style: italic;
+}
+
+.cs-prose ul,
+.cs-prose ol {
+  padding-left: 1.3rem;
+  margin: 0 0 1.15em;
+}
+
+.cs-prose li {
+  margin-bottom: 0.35em;
+}
+
+.cs-prose blockquote {
+  margin: 2rem 0;
+  padding: 0 0 0 1.2rem;
+  border-left: 2px solid var(--cs-accent-line);
+}
+
+.cs-prose blockquote p {
+  font-style: italic;
+  margin: 0;
+}
+
+.cs-prose figure {
+  margin: 2rem 0;
+}
+
+.cs-prose figcaption {
+  margin-top: 0.5rem;
+  font-family: var(--font-sans);
+  font-size: 0.78rem;
+  color: var(--color-ink-2);
+}
+
+.cs-prose img {
+  margin: 2rem 0;
+}
+
+.cs-prose code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.88em;
+  background: var(--color-stock);
+  padding: 0.05em 0.3em;
+}
+
+.cs-prose pre {
+  background: var(--color-stock);
+  border: 1px solid var(--color-rule);
+  padding: 1rem;
+  overflow-x: auto;
+  margin: 1.5rem 0;
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+.cs-prose pre code {
+  background: none;
+  padding: 0;
+  white-space: pre;
+}
+
+.cs-prose hr {
+  border: 0;
+  border-top: 1px solid var(--color-rule);
+  margin: 2.4rem 0;
+}
+
+.cs-prose table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1.8rem 0;
+  font-size: 0.95rem;
+}
+
+.cs-prose th,
+.cs-prose td {
+  text-align: left;
+  padding: 0.5rem 0.6rem;
+  border-bottom: 1px solid var(--color-rule);
+}
+
+/* --------------------------------------------------------- apparatus ----- */
+
+.cs-block {
+  margin-top: 3rem;
+  padding-top: 1rem;
+  border-top: 2px solid var(--color-ink);
+}
+
+.cs-block-h {
+  font-family: var(--font-sans);
+  font-weight: 500;
+  font-size: 0.82rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  margin: 0 0 0.9rem;
+}
+
+.cs-block-h small {
+  font-weight: 400;
+  letter-spacing: 0.02em;
+  text-transform: none;
+  color: var(--color-ink-2);
+  margin-left: 0.6rem;
+}
+
+/* Sources are a stamped column of numbers, the catalogue's card-index logic
+   applied to the article's references. */
+.cs-src {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  counter-reset: cssrc;
+  font-family: var(--font-sans);
+  font-size: 0.92rem;
+  line-height: 1.4;
+}
+
+.cs-src li {
+  display: grid;
+  grid-template-columns: 2.6rem minmax(0, 1fr);
+  gap: 0.6rem;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid var(--color-rule);
+  counter-increment: cssrc;
+}
+
+.cs-src li::before {
+  content: counter(cssrc, decimal-leading-zero);
+  font-variant-numeric: tabular-nums;
+  color: var(--cs-accent-ink);
+}
+
+.cs-src a {
+  text-decoration-color: var(--cs-accent-line);
+  text-underline-offset: 0.2em;
+}
+
+.cs-src .cs-dom {
+  color: var(--color-ink-2);
+  margin-left: 0.5rem;
+}
+
+.cs-subjects {
+  font-family: var(--font-sans);
+  font-size: 0.92rem;
+  margin: 1.6rem 0 0;
+  color: var(--color-ink-2);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem 0.9rem;
+  align-items: baseline;
+}
+
+.cs-subjects .cs-lbl {
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-size: 0.78rem;
+}
+
+.cs-share {
+  margin-top: 1.6rem;
+  font-family: var(--font-sans);
+  font-size: 0.85rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem 1.2rem;
+  align-items: baseline;
+  color: var(--color-ink-2);
+}
+
+.cs-share .cs-lbl {
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-size: 0.78rem;
+}
+
+.cs-share a,
+.cs-share button {
+  color: var(--color-ink);
+  text-decoration: underline;
+  text-decoration-color: var(--cs-accent-line);
+  text-underline-offset: 0.2em;
+}
+
+.cs-comments-body {
+  margin-top: 1.2rem;
+  font-family: var(--font-sans);
+}
+
+/* ----------------------------------------------------------- notfound ---- */
+
+.cs-nf {
+  display: grid;
+  grid-template-columns: var(--cs-cover-w) minmax(0, 46ch);
+  gap: 0 clamp(28px, 4vw, 64px);
+  justify-content: center;
+  align-items: end;
+  padding: 2rem var(--cs-pad) 0;
+}
+
+.cs-nf-text {
+  padding-bottom: 1.5rem;
+  font-family: var(--font-body);
+}
+
+.cs-nf-text h1 {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-optical-sizing: none;
+  font-variation-settings: 'opsz' 96;
+  font-size: clamp(2rem, 4vw, 3rem);
+  line-height: 1.05;
+  letter-spacing: -0.015em;
+  margin: 0 0 0.8rem;
+  text-wrap: balance;
+}
+
+.cs-nf-text p {
+  margin: 0 0 1.4rem;
+  font-size: 1.125rem;
+  line-height: 1.5;
+}
+
+.cs-back {
+  font-family: var(--font-sans);
+  font-size: 0.85rem;
+  letter-spacing: 0.06em;
+  text-decoration: none;
+  border-bottom: 1px solid var(--cs-accent-line);
+  padding-bottom: 2px;
+}
+
+.cs-back:hover {
+  border-bottom-color: var(--color-ink);
+}
+
+/* -------------------------------------------------------- responsive ----- */
+
+@media (prefers-reduced-motion: reduce) {
+  a.cs-cover,
+  .cs-aside {
+    transition: none;
+  }
+  a.cs-cover:hover,
+  a.cs-cover:focus-visible {
+    transform: none;
+  }
+}
+
+@media (max-width: 1100px) {
+  .cs-cat-row {
+    grid-template-columns: 7.2rem minmax(0, 1fr) 4rem;
+  }
+  .cs-cat-kicker {
+    display: none;
+  }
+}
+
+@media (max-width: 860px) {
+  .cs-opening,
+  .cs-post,
+  .cs-nf {
+    grid-template-columns: 1fr;
+    gap: 0;
+  }
+  .cs-opening-cover .cs-cover,
+  .cs-nf .cs-cover {
+    aspect-ratio: 3 / 4;
+  }
+  .cs-opening-cover .cs-cv,
+  .cs-nf .cs-cv {
+    grid-template-rows: 12cqw 1fr 44cqw 10cqw;
+  }
+  .cs-opening-cover .cs-cover--noill .cs-cv,
+  .cs-nf .cs-cover--noill .cs-cv {
+    grid-template-rows: 12cqw 1fr 10cqw;
+  }
+  .cs-opening-cover .cs-cv-deck {
+    font-size: max(0.95rem, 5.3cqw);
+  }
+  .cs-opening-text {
+    padding: 1.4rem 0 0;
+    max-width: 66ch;
+  }
+  .cs-opening-cover::after {
+    display: none;
+  }
+  .cs-post {
+    padding-top: 0;
+  }
+  .cs-aside {
+    display: none;
+  }
+  .cs-nf-text {
+    padding-top: 1.5rem;
+  }
+  .cs-runhead {
+    display: flex;
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    gap: 0.8rem;
+    align-items: center;
+    margin: 0 calc(-1 * var(--cs-pad)) 1.4rem;
+    padding: 0.5rem var(--cs-pad);
+    background: var(--cs-plate-deep);
+    color: var(--color-stock);
+    font-family: var(--font-sans);
+    font-size: 0.75rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+  .cs-runhead span:first-child {
+    flex: 0 0 auto;
+  }
+  .cs-runhead span:last-child {
+    overflow: clip;
+    text-overflow: ellipsis;
+    min-width: 0;
+  }
+}
+
+@media (max-width: 700px) {
+  .cs-imprint {
+    font-size: 0.78rem;
+    gap: 0.3rem 0.9rem;
+  }
+  .cs-imprint nav {
+    width: 100%;
+    margin-left: 0;
+    gap: 1rem;
+  }
+  .cs-shelf {
+    grid-template-columns: 1fr;
+    gap: 0;
+    padding-left: 0;
+    padding-right: 0;
+  }
+  .cs-lead {
+    width: auto;
+    margin: 0 var(--cs-pad);
+    aspect-ratio: 3 / 4;
+  }
+  .cs-lead .cs-cv {
+    grid-template-rows: 12cqw 1fr 44cqw 10cqw;
+  }
+  .cs-lead.cs-cover--noill .cs-cv {
+    grid-template-rows: 12cqw 1fr 10cqw;
+  }
+  .cs-lead .cs-cv-deck {
+    font-size: max(0.95rem, 5.3cqw);
+  }
+  .cs-shelf-label {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.6rem;
+    padding: 1.6rem 0 0.4rem var(--cs-pad);
+  }
+  .cs-shelf-note {
+    font-size: 1rem;
+  }
+  .cs-shelf-count {
+    white-space: normal;
+  }
+  .cs-row {
+    --cs-base: 38vw;
+    padding: 14px 0 0 var(--cs-pad);
+    gap: 12px;
+    scroll-snap-type: x mandatory;
+    scroll-padding-left: var(--cs-pad);
+  }
+  .cs-cat-row {
+    grid-template-columns: 7.2rem minmax(0, 1fr);
+    gap: 0.2rem 0.8rem;
+  }
+  .cs-cat-title {
+    grid-column: 1 / -1;
+    grid-row: 2;
+  }
+  .cs-cat-read {
+    grid-column: 2;
+    grid-row: 1;
+    text-align: right;
+  }
+  .cs-cat-back {
+    padding-left: 0;
+  }
+  .cs-section-h {
+    flex-wrap: wrap;
+  }
+  .cs-colophon {
+    grid-template-columns: 1fr;
+  }
+  .cs-post-col {
+    font-size: 1.06rem;
+  }
+}
+
+/* --------------------------------------------------------------- print --- */
+
+/* Print drops background graphics by default, which would leave every deep
+   plate an empty box and every duotone blank. On paper the covers print as
+   plain greyscale. */
+@media print {
+  .cs-cv-ill--img img {
+    mix-blend-mode: normal;
+    filter: grayscale(1) contrast(1.05);
+  }
+  .cs-aside,
+  .cs-runhead,
+  .cs-share {
+    display: none;
+  }
+}

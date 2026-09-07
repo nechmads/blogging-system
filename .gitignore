@@ -42,3 +42,4 @@ firebase-debug.log
 # ran to ~70MB, which does not belong in clone history.
 design-prototypes/**/_shots/
 design-prototypes/**/*.zip
+__pycache__/

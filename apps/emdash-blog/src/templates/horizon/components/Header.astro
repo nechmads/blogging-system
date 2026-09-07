@@ -1,0 +1,62 @@
+---
+interface Props {
+  publicationName: string;
+  logoUrl: string | null;
+  showDate?: boolean;
+}
+
+/**
+ * On the home page the axis IS the header — it needs the posts, so `Home.astro`
+ * draws it, masthead and all, and this component contributes only the skip
+ * link that would otherwise be missing above it.
+ *
+ * Everywhere else it renders the thin sticky strip: the wordmark, the standing
+ * links, and the right end of the axis with the accent "now" pennant. The strip
+ * is one line high at every width — a header that stacks on a phone puts the
+ * reader further from the text on the screen that has the least of it.
+ *
+ * The article page adds its own date tick and reading-progress line to this
+ * strip from a fixed overlay (see PostContent), because the switchers never
+ * hand this component a post.
+ */
+const { publicationName, logoUrl, showDate = false } = Astro.props;
+
+const currentPath = Astro.url.pathname;
+
+const navLinks = [
+  { href: '/posts', label: 'Archive' },
+  { href: '/rss', label: 'RSS' },
+] as const;
+---
+
+{showDate ? (
+  <a class="hz-skip" href="#hz-archive">Skip to the archive</a>
+) : (
+  <header class="hz-strip">
+    <div class="hz-strip-in">
+      <p class="hz-wordmark">
+        <a href="/">
+          {logoUrl ? (
+            <img src={logoUrl} alt={publicationName} loading="eager" />
+          ) : (
+            <span>{publicationName}</span>
+          )}
+        </a>
+      </p>
+
+      <nav class="hz-nav" aria-label="Primary">
+        {navLinks.map(({ href, label }) => (
+          <a href={href} aria-current={currentPath === href ? 'page' : undefined}>{label}</a>
+        ))}
+      </nav>
+
+      {/* The right end of the axis, kept on every page: a short rule and the
+          one accent mark. Pages that know their own dates draw the rest of the
+          scale over this, registered to the same columns. */}
+      <div class="hz-scale hz-strip-scale" aria-hidden="true">
+        <span class="hz-now-rule"></span>
+        <span class="hz-now" style="--x:1"></span>
+      </div>
+    </div>
+  </header>
+)}

@@ -1,0 +1,66 @@
+---
+import type { AxisEntry } from '../lib/axis';
+
+interface Props {
+  entry: AxisEntry;
+  /** The newest entry, set at lead size. */
+  isLead?: boolean;
+  /**
+   * Hang the lead from its own tick, right-aligned to it. Only true when that
+   * tick is far enough right for a headline to grow leftward from it without
+   * crossing the identity column — see Home.astro.
+   */
+  pinned?: boolean;
+}
+
+const { entry, isLead = false, pinned = false } = Astro.props;
+const { post } = entry;
+
+const style = [
+  entry.x === null ? null : `--x:${entry.x.toFixed(4)}`,
+  pinned ? null : `--gap:${entry.gapPx}px`,
+]
+  .filter(Boolean)
+  .join(';');
+---
+
+<article
+  class:list={[
+    'hz-entry',
+    isLead && 'hz-entry--lead',
+    pinned && 'is-pinned',
+    post.featuredImage && 'has-img',
+    entry.x === null && 'hz-entry--undated',
+    entry.x !== null && entry.x > 0.6 && 'is-right',
+  ]}
+  id={entry.id}
+  data-x={entry.x === null ? undefined : entry.x.toFixed(4)}
+  data-hz-month={entry.monthKey ?? undefined}
+  style={style}
+>
+  <div class="hz-mark">
+    <p class="hz-kicker">
+      {entry.iso && entry.dateLabel ? (
+        <time datetime={entry.iso}>{entry.dateLabel}</time>
+      ) : (
+        <span class="hz-when">Undated</span>
+      )}
+      {entry.topic && <> &middot; {entry.topic}</>}
+      {entry.minutes && <> &middot; {entry.minutes} min read</>}
+    </p>
+
+    {/* An annotation clipped to the chart, not a hero. Absent images cost the
+        entry nothing but its leader length — the slice, notch and meta stay put. */}
+    {post.featuredImage && (
+      <a class="hz-annot" href={entry.href} tabindex="-1" aria-hidden="true">
+        <img src={post.featuredImage} alt="" width="1024" height="1024" loading="lazy" />
+      </a>
+    )}
+  </div>
+
+  <div class="hz-ebody">
+    <h2><a href={entry.href}>{post.title}</a></h2>
+    {entry.dek && <p class="hz-dek">{entry.dek}</p>}
+    {isLead && <a class="hz-readlink" href={entry.href}>Read the piece &rarr;</a>}
+  </div>
+</article>

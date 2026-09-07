@@ -30,6 +30,23 @@ import SignalHeader from '../templates/one-signal/components/Header.astro';
 import SignalPostList from '../templates/one-signal/components/PostList.astro';
 import SignalFooter from '../templates/one-signal/components/Footer.astro';
 
+// CoverStock template
+import CoverStockBaseLayout from '../templates/cover-stock/layouts/BaseLayout.astro';
+import CoverStockHeader from '../templates/cover-stock/components/Header.astro';
+import CoverStockPostList from '../templates/cover-stock/components/PostList.astro';
+import CoverStockFooter from '../templates/cover-stock/components/Footer.astro';
+
+// Horizon template
+import HorizonBaseLayout from '../templates/horizon/layouts/BaseLayout.astro';
+import HorizonHeader from '../templates/horizon/components/Header.astro';
+import HorizonPostList from '../templates/horizon/components/PostList.astro';
+import HorizonFooter from '../templates/horizon/components/Footer.astro';
+
+// Poster template
+import PosterBaseLayout from '../templates/poster/layouts/BaseLayout.astro';
+import PosterHeader from '../templates/poster/components/Header.astro';
+import PosterPostList from '../templates/poster/components/PostList.astro';
+import PosterFooter from '../templates/poster/components/Footer.astro';
 // Bold template
 import BoldBaseLayout from '../templates/bold/layouts/BaseLayout.astro';
 import BoldHeader from '../templates/bold/components/Header.astro';
@@ -56,7 +73,37 @@ const layoutProps = {
 };
 ---
 
-{templateId === 'press-machine' ? (
+{templateId === 'cover-stock' ? (
+  <CoverStockBaseLayout {...layoutProps}>
+    <CoverStockHeader publicationName={branding.name} logoUrl={branding.logoUrl} />
+    <CoverStockPostList posts={posts} heading="All posts" showViewAll={false} standalone />
+    <CoverStockFooter
+      publicationName={branding.name}
+      publicationSlug={branding.slug}
+      socialLinks={branding.socialLinks}
+    />
+  </CoverStockBaseLayout>
+) : templateId === 'horizon' ? (
+  <HorizonBaseLayout {...layoutProps}>
+    <HorizonHeader publicationName={branding.name} logoUrl={branding.logoUrl} />
+    <HorizonPostList posts={posts} heading="All posts" showViewAll={false} standalone />
+    <HorizonFooter
+      publicationName={branding.name}
+      publicationSlug={branding.slug}
+      socialLinks={branding.socialLinks}
+    />
+  </HorizonBaseLayout>
+) : templateId === 'poster' ? (
+  <PosterBaseLayout {...layoutProps}>
+    <PosterHeader publicationName={branding.name} logoUrl={branding.logoUrl} />
+    <PosterPostList posts={posts} heading="All posts" showViewAll={false} standalone />
+    <PosterFooter
+      publicationName={branding.name}
+      publicationSlug={branding.slug}
+      socialLinks={branding.socialLinks}
+    />
+  </PosterBaseLayout>
+) : templateId === 'press-machine' ? (
   <PressBaseLayout {...layoutProps}>
     <PressHeader publicationName={branding.name} logoUrl={branding.logoUrl} />
     <div class="pt-10">

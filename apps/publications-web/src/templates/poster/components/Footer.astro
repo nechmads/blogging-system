@@ -1,0 +1,63 @@
+---
+/**
+ * The footer: the publication name at a middling display size, plain
+ * underlined links, one grey colophon line. No rules and no boxes —
+ * separation is whitespace, as everywhere else on this template.
+ *
+ * On the article page it resolves against the reading column rather than the
+ * page edge (see `body:has(.po-article)` in theme.css), so the page ends on
+ * the same grid it was read on. The publication's standing line and
+ * description belong to the home page's identity block, which is the only
+ * place with the branding to print them.
+ */
+import type { SocialLinks } from '@hotmetal/data-layer';
+
+interface Props {
+  publicationName: string;
+  publicationSlug: string;
+  socialLinks: SocialLinks | null;
+}
+
+const { publicationName, socialLinks } = Astro.props;
+
+const year = new Date().getFullYear();
+
+const links = [
+  socialLinks?.twitter ? { href: socialLinks.twitter, label: 'X', external: true } : null,
+  socialLinks?.linkedin ? { href: socialLinks.linkedin, label: 'LinkedIn', external: true } : null,
+  socialLinks?.github ? { href: socialLinks.github, label: 'GitHub', external: true } : null,
+  socialLinks?.website ? { href: socialLinks.website, label: 'Website', external: true } : null,
+  { href: '/posts', label: 'Archive', external: false },
+  { href: '/rss', label: 'RSS', external: false },
+].filter((link): link is { href: string; label: string; external: boolean } => link !== null);
+---
+
+<footer class="po-footer mt-auto">
+  <div class="po-footer-in">
+    <div class="po-footer-row">
+      <p class="po-site-name">
+        <a href="/">{publicationName}</a>
+      </p>
+
+      <ul class="po-social" aria-label="Elsewhere">
+        {links.map(({ href, label, external }) => (
+          <li>
+            <a
+              href={href}
+              target={external ? '_blank' : undefined}
+              rel={external ? 'noopener noreferrer' : undefined}
+            >
+              {label}
+            </a>
+          </li>
+        ))}
+      </ul>
+    </div>
+
+    <p class="po-colophon">
+      &copy; {year} {publicationName} &middot; set in Bricolage Grotesque &amp; Geist &middot;
+      powered by{' '}
+      <a href="https://hotmetalapp.com" target="_blank" rel="noopener noreferrer">Hot&nbsp;Metal</a>
+    </p>
+  </div>
+</footer>

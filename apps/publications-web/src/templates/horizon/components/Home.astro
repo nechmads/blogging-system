@@ -1,0 +1,150 @@
+---
+import type { Post } from '@hotmetal/content-core';
+import type { PublicationBranding } from '../../../dl/publication';
+import { parseTopics } from '../../../lib/post-utils';
+import { buildAxis } from '../lib/axis';
+import AxisList from './AxisList.astro';
+import AxisSpy from './AxisSpy.astro';
+import Scale from './Scale.astro';
+
+interface Props {
+  branding: PublicationBranding;
+  /** At most HOME_POST_LIMIT posts, newest first. */
+  posts: Post[];
+  /** True when /posts has more than the home page shows. */
+  hasMorePosts: boolean;
+}
+
+/**
+ * The home page. The axis is the header: it carries the masthead, it is the
+ * navigation, and its order, gaps and clustering are the archive's composition.
+ * `Header.astro` deliberately renders nothing but a skip link here — the axis
+ * needs the posts, which only this component is given.
+ *
+ * "Now" is render time, so the right end of the axis is always today.
+ */
+const { branding, posts, hasMorePosts } = Astro.props;
+
+const now = new Date();
+const axis = buildAxis(posts, now);
+
+/**
+ * The identity column is marginalia beside a lead that hangs from a tick in the
+ * right 40% of the axis. When the newest post sits further left — one post, or
+ * a publication that has been quiet long enough for "now" to dominate the
+ * scale — the lead cannot grow leftward without running through that column, so
+ * the lead becomes an ordinary (still largest) slice and the identity block
+ * returns to the flow above the archive.
+ */
+const PIN_LEAD_MIN_X = 0.6;
+const leadEntry = axis.entries[0] ?? null;
+const pinLead = leadEntry !== null && leadEntry.x !== null && leadEntry.x >= PIN_LEAD_MIN_X;
+
+const standing = branding.description ?? branding.tagline;
+const currentPath = Astro.url.pathname;
+
+const navLinks = [
+  { href: '/posts', label: 'Archive' },
+  { href: '/rss', label: 'RSS' },
+] as const;
+
+const identLinks = [
+  branding.socialLinks?.twitter ? { href: branding.socialLinks.twitter, label: 'X', external: true } : null,
+  branding.socialLinks?.linkedin ? { href: branding.socialLinks.linkedin, label: 'LinkedIn', external: true } : null,
+  branding.socialLinks?.github ? { href: branding.socialLinks.github, label: 'GitHub', external: true } : null,
+  branding.socialLinks?.website ? { href: branding.socialLinks.website, label: 'Website', external: true } : null,
+  { href: '/rss', label: 'RSS', external: false },
+].filter((link): link is { href: string; label: string; external: boolean } => link !== null);
+
+/** The subjects this publication actually files under, in the order they appear. */
+const MAX_TOPICS = 18;
+const topics: string[] = [];
+for (const post of posts) {
+  const labels = [
+    ...parseTopics(post),
+    ...(post.tags ? post.tags.split(',').map((t) => t.trim()).filter(Boolean) : []),
+  ];
+  for (const label of labels) {
+    if (topics.length >= MAX_TOPICS) break;
+    if (!topics.some((existing) => existing.toLowerCase() === label.toLowerCase())) {
+      topics.push(label);
+    }
+  }
+}
+---
+
+{/*
+  With nothing dated there is no axis to draw — not an empty ruler. The header
+  falls back to a plain masthead and the page says so in words.
+*/}
+<header
+  class:list={['hz-axis', !axis.hasAxis && 'hz-axis--bare']}
+  data-hz-axis={axis.hasAxis ? 'expanded' : undefined}
+>
+  <div class="hz-axis-in">
+    <div class="hz-mast">
+      <h1 class="hz-wordmark">
+        <a href="/">
+          {branding.logoUrl ? (
+            <img src={branding.logoUrl} alt={branding.name} loading="eager" />
+          ) : (
+            <span>{branding.name}</span>
+          )}
+        </a>
+      </h1>
+      {branding.tagline && <span class="hz-tagline">{branding.tagline}</span>}
+    </div>
+
+    <nav class="hz-nav" aria-label="Primary">
+      {navLinks.map(({ href, label }) => (
+        <a href={href} aria-current={currentPath === href ? 'page' : undefined}>{label}</a>
+      ))}
+    </nav>
+
+    {axis.hasAxis && <Scale axis={axis} showCursor />}
+  </div>
+</header>
+
+<main class:list={['hz-page', !pinLead && 'hz-page--stacked']}>
+  {(standing || identLinks.length > 0) && (
+    <aside class="hz-ident" aria-label="About this publication">
+      {standing && <p>{standing}</p>}
+      <p class="hz-links">
+        {identLinks.map(({ href, label, external }) => (
+          <a
+            href={href}
+            target={external ? '_blank' : undefined}
+            rel={external ? 'noopener noreferrer' : undefined}
+          >
+            {label}
+          </a>
+        ))}
+      </p>
+    </aside>
+  )}
+
+  {posts.length > 0 ? (
+    <AxisList axis={axis} withLead pinLead={pinLead} id="hz-archive" />
+  ) : (
+    <div class="hz-empty" id="hz-archive">
+      <p>Nothing has been published yet. The first piece will appear here, dated.</p>
+    </div>
+  )}
+
+  {hasMorePosts && (
+    <p class="hz-viewall"><a href="/posts">View all posts &rarr;</a></p>
+  )}
+
+  {topics.length > 0 && (
+    <section class="hz-topics" aria-labelledby="hz-topics-h">
+      <p class="hz-label" id="hz-topics-h">Topics</p>
+      {/* Plain labels, not links: this template has no per-topic route, and an
+          underline here would promise a page that does not exist. */}
+      <ul class="hz-tag-list">
+        {topics.map((topic) => <li>{topic}</li>)}
+      </ul>
+    </section>
+  )}
+</main>
+
+<AxisSpy />

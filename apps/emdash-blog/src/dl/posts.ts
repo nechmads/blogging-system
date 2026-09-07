@@ -30,6 +30,20 @@ function renderBodyHtml(data: NonNullable<PostEntry>['data']): string {
               const alt = value?.alt ? ` alt="${escapeAttr(value.alt)}"` : ' alt=""';
               return `<img src="${escapeAttr(src)}"${alt} loading="lazy" />`;
             },
+            // Fenced code. `markdownToPortableText` emits these as a `code`
+            // block, and an unregistered type does not throw — @portabletext
+            // renders the words `Unknown block type "code"…` into the article,
+            // so every fenced block in every template printed that instead of
+            // the code. The language becomes a `language-*` class, which the
+            // sanitizer keeps and a highlighter can pick up later.
+            code: ({ value }: { value: { code?: string; language?: string } }) => {
+              const code = value?.code;
+              if (!code) return '';
+              const cls = value?.language
+                ? ` class="language-${escapeAttr(value.language)}"`
+                : '';
+              return `<pre><code${cls}>${escapeText(code)}</code></pre>`;
+            },
           },
         },
       });
@@ -42,6 +56,11 @@ function renderBodyHtml(data: NonNullable<PostEntry>['data']): string {
 
 function escapeAttr(value: string): string {
   return value.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
+}
+
+/** Text content, not an attribute: `<` and `&` are what matter inside an element. */
+function escapeText(value: string): string {
+  return value.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 }
 
 /**

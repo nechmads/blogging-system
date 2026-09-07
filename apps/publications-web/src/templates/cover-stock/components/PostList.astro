@@ -1,0 +1,132 @@
+---
+/**
+ * The catalogue — the same issues as the shelf, as a library card index.
+ *
+ * The shelf is for browsing; this is for scanning, so it is a plain list with
+ * the date stamped in its own column (the reader's main scanning key) and no
+ * thumbnails at all. It carries no issue numbers: this component renders both
+ * the home page's slice and the complete archive on /posts, and a number
+ * derived from position would disagree between the two. The date is true on
+ * both pages.
+ */
+import type { Post } from '@hotmetal/content-core';
+import { getFirstTopic, getPreviewText } from '../../../lib/post-utils';
+import { isoDate, readingMinutes } from '../lib/issue';
+
+interface Props {
+  posts: Post[];
+  heading?: string;
+  showViewAll?: boolean;
+  /**
+   * True when this list IS the page (the /posts route) rather than a section of
+   * the home page. Only then may it own the `main` landmark and the `h1`; on the
+   * home page both already belong to `Home.astro`.
+   */
+  standalone?: boolean;
+}
+
+const {
+  posts,
+  heading = 'Catalogue',
+  showViewAll = false,
+  standalone = false,
+} = Astro.props;
+
+const Region = standalone ? 'main' : 'section';
+const Heading = standalone ? 'h1' : 'h2';
+
+const rows = posts.map((post) => ({
+  post,
+  date: isoDate(post.publishedAt),
+  kicker: getFirstTopic(post),
+  minutes: readingMinutes(post),
+  deck: getPreviewText(post, 200),
+}));
+
+/* The "turn it over" control only earns its place when there are backs to read. */
+const hasBacks = rows.some((row) => row.deck);
+---
+
+<Region class="cs-section" id="cs-catalogue" aria-labelledby="cs-cat-h">
+  <div class="cs-section-h">
+    <Heading id="cs-cat-h">
+      {heading}
+      {posts.length > 0 && (
+        <small>{posts.length} {posts.length === 1 ? 'issue' : 'issues'}, newest first</small>
+      )}
+    </Heading>
+
+    {(hasBacks || showViewAll) && (
+      <div class="cs-cat-tools">
+        {/*
+          The control is server-rendered `hidden` and revealed by the script
+          below. The summaries it toggles are themselves `hidden` attributes
+          that only script can clear, so with JavaScript off the button would
+          be a focusable control that can never do anything.
+        */}
+        {hasBacks && (
+          <button class="cs-cat-all" type="button" aria-pressed="false" data-cs-backs hidden>
+            Show summaries
+          </button>
+        )}
+        {showViewAll && <a class="cs-viewall" href="/posts">Every issue &rarr;</a>}
+      </div>
+    )}
+  </div>
+
+  {rows.length > 0 ? (
+    <ol class="cs-cat">
+      {rows.map(({ post, date, kicker, minutes, deck }) => (
+        <li>
+          <a class="cs-cat-row" href={`/${post.slug}`}>
+            {date && post.publishedAt ? (
+              <time class="cs-cat-date" datetime={post.publishedAt}>{date}</time>
+            ) : (
+              <span class="cs-cat-date">&mdash;</span>
+            )}
+            <span class="cs-cat-title">{post.title}</span>
+            <span class="cs-cat-kicker">{kicker ?? ''}</span>
+            <span class="cs-cat-read">{minutes ? `${minutes} min` : ''}</span>
+          </a>
+
+          {deck && (
+            <div class="cs-cat-back" hidden>
+              <p>{deck}</p>
+            </div>
+          )}
+        </li>
+      ))}
+    </ol>
+  ) : (
+    <p class="cs-empty">No issues in the catalogue yet.</p>
+  )}
+</Region>
+
+<script>
+  /**
+   * One control turns every issue over at once (the back of a book, not a
+   * per-row disclosure). Re-bound after a view transition; the ClientRouter
+   * swaps the DOM, so the previous listener's element is gone with it.
+   */
+  function initCatalogueBacks() {
+    const toggle = document.querySelector<HTMLButtonElement>('[data-cs-backs]');
+    if (!toggle) return;
+
+    /* Scripting is available, so the control can now earn its place. */
+    toggle.hidden = false;
+
+    toggle.addEventListener('click', () => {
+      const on = toggle.getAttribute('aria-pressed') !== 'true';
+      toggle.setAttribute('aria-pressed', String(on));
+      toggle.textContent = on ? 'Hide summaries' : 'Show summaries';
+      document
+        .querySelectorAll<HTMLElement>('.cs-cat-back')
+        .forEach((back) => {
+          back.hidden = !on;
+        });
+    });
+  }
+
+  initCatalogueBacks();
+  document.addEventListener('astro:after-swap', initCatalogueBacks);
+</script>

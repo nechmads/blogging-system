@@ -1,0 +1,63 @@
+---
+/**
+ * The imprint line — a publisher's mark, not a masthead. The covers are the
+ * largest objects on every page in this template, so the publication name sits
+ * small above them.
+ *
+ * `showDate` marks the home page (the prop name is the switchers' shared
+ * contract). Here it decides the document outline rather than a dateline: on
+ * the home page the imprint *is* the h1, because the page's subject is the
+ * publication; on an article the h1 belongs to the issue's own cover.
+ */
+interface Props {
+  publicationName: string;
+  logoUrl: string | null;
+  showDate?: boolean;
+}
+
+const { publicationName, logoUrl, showDate = false } = Astro.props;
+
+const currentPath = Astro.url.pathname;
+
+const navLinks = [
+  { href: '/', label: 'Shelf' },
+  { href: '/posts', label: 'Catalogue' },
+  { href: '/rss', label: 'RSS' },
+] as const;
+---
+
+<header class="cs-imprint">
+  {showDate ? (
+    <h1 class="cs-imprint-name">
+      <a href="/">
+        {logoUrl ? (
+          <img class="cs-imprint-logo" src={logoUrl} alt={publicationName} loading="eager" />
+        ) : (
+          publicationName
+        )}
+      </a>
+    </h1>
+  ) : (
+    <p class="cs-imprint-name">
+      <a href="/">
+        {logoUrl ? (
+          <img class="cs-imprint-logo" src={logoUrl} alt={publicationName} loading="eager" />
+        ) : (
+          publicationName
+        )}
+      </a>
+    </p>
+  )}
+
+  <nav aria-label="Primary">
+    {navLinks.map(({ href, label }) => (
+      <a
+        href={href}
+        class:list={[label === 'RSS' ? 'cs-rss' : null]}
+        aria-current={currentPath === href ? 'page' : undefined}
+      >
+        {label}
+      </a>
+    ))}
+  </nav>
+</header>

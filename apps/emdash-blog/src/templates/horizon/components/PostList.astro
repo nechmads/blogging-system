@@ -1,0 +1,69 @@
+---
+import type { Post } from '@hotmetal/content-core';
+import { buildAxis } from '../lib/axis';
+import AxisList from './AxisList.astro';
+import AxisSpy from './AxisSpy.astro';
+import Scale from './Scale.astro';
+
+interface Props {
+  posts: Post[];
+  heading?: string;
+  showViewAll?: boolean;
+  /**
+   * True when this list IS the page (the /posts route). Horizon's home page
+   * draws its own axis rather than reusing this component, so in practice it is
+   * always true here — the prop keeps the three templates on one contract.
+   */
+  standalone?: boolean;
+}
+
+/**
+ * The full archive (/posts). The sticky strip above it is rendered by
+ * `Header.astro`, which is never given the posts, so this page draws the rest
+ * of the scale — segments, breaks, month numerals, every tick and the reader's
+ * cursor — into a fixed overlay registered to the strip's own columns.
+ *
+ * No entry is promoted to a lead here: on the archive every piece is one slice
+ * of the same axis.
+ */
+const { posts, heading = 'All posts', showViewAll = false, standalone = true } = Astro.props;
+
+const Region = standalone ? 'main' : 'section';
+const Heading = standalone ? 'h1' : 'h2';
+
+const axis = buildAxis(posts, new Date());
+const dated = axis.entries.filter((entry) => entry.x !== null).length;
+const undated = axis.entries.length - dated;
+---
+
+{axis.hasAxis && (
+  <div class="hz-strip-marks" data-hz-axis="strip">
+    <div class="hz-strip-in">
+      <Scale axis={axis} class="hz-strip-scale" showNow={false} showCursor label="Posts by date" />
+    </div>
+  </div>
+)}
+
+<Region class="hz-page hz-page--list">
+  <div class="hz-listhead">
+    <Heading class="hz-listtitle">{heading}</Heading>
+    <p class="hz-label hz-num">
+      {axis.entries.length} {axis.entries.length === 1 ? 'piece' : 'pieces'}
+      {undated > 0 && <> &middot; {undated} undated</>}
+    </p>
+  </div>
+
+  {posts.length > 0 ? (
+    <AxisList axis={axis} id="hz-archive" />
+  ) : (
+    <div class="hz-empty" id="hz-archive">
+      <p>Nothing has been published yet. The first piece will appear here, dated.</p>
+    </div>
+  )}
+
+  {showViewAll && (
+    <p class="hz-viewall"><a href="/posts">View all posts &rarr;</a></p>
+  )}
+</Region>
+
+<AxisSpy />

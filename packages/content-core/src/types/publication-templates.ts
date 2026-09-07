@@ -45,6 +45,24 @@ export const PUBLICATION_TEMPLATES = [
     description:
       'A dark dispatch log: a numbered index instead of cards, with a long-form reading column.',
   },
+  {
+    id: 'cover-stock',
+    name: 'Cover Stock',
+    description:
+      'Every post gets a typographic cover: a face-out bookshelf home page, and an article that opens on its own cover.',
+  },
+  {
+    id: 'horizon',
+    name: 'Horizon',
+    description:
+      'Time is the spine: a large date axis across the top, posts hung from their real dates, and only "now" in colour.',
+  },
+  {
+    id: 'poster',
+    name: 'Poster',
+    description:
+      'The headline is the argument: the lead title fills the first screen, the archive is a wall of type, images appear only on hover.',
+  },
 ] as const satisfies readonly PublicationTemplate[]
 
 /** The id of a template that actually exists, narrowed from the list above. */

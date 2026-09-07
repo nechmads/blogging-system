@@ -1,0 +1,383 @@
+---
+import type { Post } from '@hotmetal/content-core';
+import { getFirstTopic } from '../../../lib/post-utils';
+import { daysAgoLabel, elapsedFigure, readingMinutes, shortDate } from '../lib/axis';
+
+interface Props {
+  post: Post;
+  /** The switcher passes branding in; the two frontends resolve it differently. */
+  publicationName: string;
+  sanitizedContent: string;
+  date: string | null;
+  allLabels: string[];
+  postUrl: string;
+  twitterShareUrl: string;
+  linkedinShareUrl: string;
+}
+
+const {
+  post,
+  publicationName,
+  sanitizedContent,
+  date,
+  allLabels,
+  postUrl,
+  twitterShareUrl,
+  linkedinShareUrl,
+} = Astro.props;
+
+const firstTopic = getFirstTopic(post);
+const citations = post.citations ?? [];
+const hasComments = Astro.slots.has('comments');
+
+const now = new Date();
+const published = post.publishedAt ? new Date(post.publishedAt) : null;
+const publishedValid = published && !Number.isNaN(published.getTime()) ? published : null;
+
+const minutes = readingMinutes(post.content);
+const elapsed = publishedValid ? elapsedFigure(publishedValid, now) : null;
+const sinceLabel = publishedValid ? daysAgoLabel(publishedValid, now) : null;
+const tickLabel = publishedValid ? shortDate(publishedValid) : null;
+
+/* ------------------------------------------------------------- contents --- */
+
+const ENTITIES: Record<string, string> = {
+  amp: '&',
+  lt: '<',
+  gt: '>',
+  quot: '"',
+  apos: "'",
+  nbsp: ' ',
+};
+
+function decodeEntities(value: string): string {
+  return value.replace(/&(#x?[0-9a-f]+|[a-z]+);/gi, (match, entity: string) => {
+    if (entity.startsWith('#x') || entity.startsWith('#X')) {
+      const code = Number.parseInt(entity.slice(2), 16);
+      return Number.isNaN(code) ? match : String.fromCodePoint(code);
+    }
+    if (entity.startsWith('#')) {
+      const code = Number.parseInt(entity.slice(1), 10);
+      return Number.isNaN(code) ? match : String.fromCodePoint(code);
+    }
+    return ENTITIES[entity.toLowerCase()] ?? match;
+  });
+}
+
+function slugify(value: string): string {
+  return value
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .slice(0, 60);
+}
+
+/** An id we are willing to reuse verbatim as an anchor target. */
+const SAFE_ID = /^[A-Za-z][A-Za-z0-9._:-]*$/;
+
+interface Heading {
+  id: string;
+  text: string;
+}
+
+const headings: Heading[] = [];
+const usedIds = new Set<string>();
+
+/**
+ * The contents rail is built from the article's own H2s, giving each a stable
+ * anchor. The content is already sanitized, and every id written here is either
+ * an existing conservative id or a freshly slugified one, so no untrusted text
+ * reaches the attribute. (Same approach as press-machine.)
+ */
+const contentWithAnchors = sanitizedContent.replace(
+  /<h2\b([^>]*)>([\s\S]*?)<\/h2>/gi,
+  (match: string, attrs: string, inner: string) => {
+    const text = decodeEntities(inner.replace(/<[^>]*>/g, ' ')).replace(/\s+/g, ' ').trim();
+    if (!text) return match;
+
+    const existing = /\sid\s*=\s*["']([^"']*)["']/i.exec(attrs);
+    const candidate =
+      existing && SAFE_ID.test(existing[1])
+        ? existing[1]
+        : slugify(text) || `section-${headings.length + 1}`;
+
+    let id = candidate;
+    let suffix = 2;
+    while (usedIds.has(id)) {
+      id = `${candidate}-${suffix}`;
+      suffix += 1;
+    }
+    usedIds.add(id);
+    headings.push({ id, text });
+
+    const rest = existing ? attrs.replace(existing[0], '') : attrs;
+    return `<h2 id="${id}"${rest}>${inner}</h2>`;
+  },
+);
+
+/** One heading is not a table of contents — the rail earns its margin at two. */
+const showContents = headings.length >= 2;
+
+function hostOf(url: string): string {
+  try {
+    return new URL(url).hostname.replace(/^www\./, '');
+  } catch {
+    return '';
+  }
+}
+---
+
+{/*
+  The article's own marks on the shared sticky strip: its date at the origin of
+  the scale, "now" already drawn there by the header, and the reading-progress
+  hairline along the strip's bottom edge. It is a fixed overlay rather than part
+  of the strip because the switchers never hand `Header.astro` a post; both use
+  the same `.hz-strip-in` / `.hz-strip-scale` geometry, so they stay registered.
+*/}
+<div class="hz-strip-marks at-top" data-hz-progress>
+  <div class="hz-strip-in">
+    {publishedValid && post.publishedAt && (
+      <div class="hz-scale hz-strip-scale" aria-hidden="true">
+        <span class="hz-seg" style="--x0:0;--x1:1"></span>
+        <span class="hz-tick is-post" style="--x:0"><span>{tickLabel}</span></span>
+      </div>
+    )}
+    <span
+      class="hz-progress"
+      role="progressbar"
+      aria-label="Reading progress"
+      aria-valuemin="0"
+      aria-valuemax="100"
+      aria-valuenow="0"
+    ></span>
+  </div>
+</div>
+
+<main class="hz-post">
+  <header class="hz-post-head">
+    {(firstTopic || minutes) && (
+      <p class="hz-kicker">
+        {firstTopic}
+        {firstTopic && minutes && <> &middot; </>}
+        {minutes && <>{minutes} min read</>}
+      </p>
+    )}
+
+    <h1>{post.title}</h1>
+
+    {post.subtitle && <p class="hz-sub">{post.subtitle}</p>}
+
+    <p class="hz-meta">
+      {post.author && <span>{post.author}</span>}
+      {date && post.publishedAt && (
+        <span><time datetime={post.publishedAt}>{date}</time></span>
+      )}
+      {sinceLabel && <span>{sinceLabel}</span>}
+    </p>
+
+    {/* A single square annotation beside the opening, never a hero band. */}
+    {post.featuredImage && (
+      <img
+        class="hz-post-annot"
+        src={post.featuredImage}
+        alt=""
+        width="1024"
+        height="1024"
+        loading="eager"
+      />
+    )}
+  </header>
+
+  {(elapsed || showContents) && (
+    <aside class="hz-aside" aria-label="About this piece">
+      {elapsed && (
+        <p class="hz-elapsed"><b>{elapsed.figure}</b><span>{elapsed.caption}</span></p>
+      )}
+      {showContents && (
+        <>
+          <p class="hz-toc-label" id="hz-toc-h">In this piece</p>
+          <ol class="hz-toc" data-hz-toc aria-labelledby="hz-toc-h">
+            {headings.map((heading) => (
+              <li data-for={heading.id}><a href={`#${heading.id}`}>{heading.text}</a></li>
+            ))}
+          </ol>
+        </>
+      )}
+    </aside>
+  )}
+
+  <div class="hz-prose" set:html={contentWithAnchors} />
+
+  <footer class="hz-tail">
+    {allLabels.length > 0 && (
+      <section aria-labelledby="hz-filed-h">
+        <p class="hz-label" id="hz-filed-h">Filed under</p>
+        <ul class="hz-tag-list">
+          {allLabels.map((label) => <li>{label}</li>)}
+        </ul>
+      </section>
+    )}
+
+    <section aria-labelledby="hz-share-h">
+      <p class="hz-label" id="hz-share-h">Share</p>
+      <div class="hz-share">
+        <a href={twitterShareUrl} target="_blank" rel="noopener noreferrer">X</a>
+        <a href={linkedinShareUrl} target="_blank" rel="noopener noreferrer">LinkedIn</a>
+        <button id="hz-copy-link" type="button" data-url={postUrl}>Copy link</button>
+      </div>
+    </section>
+
+    {citations.length > 0 && (
+      <section aria-labelledby="hz-sources-h">
+        <h2 id="hz-sources-h">Sources<small class="hz-num">{citations.length}</small></h2>
+        <ol class="hz-sources">
+          {citations.map((citation) => (
+            <li>
+              <a href={citation.url} target="_blank" rel="noopener noreferrer">{citation.title}</a>
+              <span class="hz-src-site">{citation.publisher ?? hostOf(citation.url)}</span>
+            </li>
+          ))}
+        </ol>
+      </section>
+    )}
+
+    <p class="hz-viewall hz-more">
+      <a href="/posts">More from {publicationName} &rarr;</a>
+    </p>
+
+    {hasComments && (
+      <section class="hz-comments" aria-labelledby="hz-comments-h">
+        <h2 id="hz-comments-h">Comments</h2>
+        <div class="hz-comments-body">
+          <slot name="comments" />
+        </div>
+      </section>
+    )}
+  </footer>
+</main>
+
+<script>
+  let teardown: (() => void) | null = null;
+
+  function initCopyLink() {
+    const button = document.getElementById('hz-copy-link');
+    if (!button) return () => {};
+
+    const onClick = async () => {
+      const url = button.getAttribute('data-url');
+      if (!url) return;
+      try {
+        await navigator.clipboard.writeText(url);
+        const original = button.textContent;
+        button.textContent = 'Copied';
+        setTimeout(() => {
+          button.textContent = original;
+        }, 2000);
+      } catch {
+        // Clipboard API unavailable — leave the label alone.
+      }
+    };
+
+    button.addEventListener('click', onClick);
+    return () => button.removeEventListener('click', onClick);
+  }
+
+  /**
+   * The reading-progress hairline and the contents rail, on one rAF-throttled
+   * scroll listener. The current section is the LAST heading above the reading
+   * line — not an IntersectionObserver with a negative rootMargin, which sticks
+   * on the first heading of any section taller than the observation band.
+   */
+  function initArticle() {
+    teardown?.();
+
+    const stopCopy = initCopyLink();
+    const strip = document.querySelector<HTMLElement>('[data-hz-progress]');
+    const bar = strip?.querySelector<HTMLElement>('.hz-progress') ?? null;
+    const items = new Map<string, HTMLElement>();
+    for (const li of Array.from(document.querySelectorAll<HTMLElement>('[data-hz-toc] li'))) {
+      const id = li.getAttribute('data-for');
+      if (id) items.set(id, li);
+    }
+    const heads = Array.from(items.keys())
+      .map((id) => document.getElementById(id))
+      .filter((el): el is HTMLElement => el !== null);
+
+    if (!strip && heads.length === 0) {
+      teardown = () => stopCopy();
+      return;
+    }
+
+    const stripHeight =
+      Number.parseInt(
+        getComputedStyle(document.documentElement).getPropertyValue('--hz-strip-h'),
+        10,
+      ) || 72;
+
+    let tops: number[] = [];
+    let queued = false;
+    let lastProgress = -1;
+    let currentId: string | null = null;
+
+    function measure() {
+      tops = heads.map((head) => head.getBoundingClientRect().top + window.scrollY);
+    }
+
+    function update() {
+      queued = false;
+      const y = window.scrollY;
+
+      if (strip && bar) {
+        const max = document.documentElement.scrollHeight - window.innerHeight;
+        const progress = max > 0 ? Math.min(1, Math.max(0, y / max)) : 0;
+        if (progress !== lastProgress) {
+          lastProgress = progress;
+          strip.style.setProperty('--p', progress.toFixed(4));
+          strip.classList.toggle('at-top', progress === 0);
+          bar.setAttribute('aria-valuenow', String(Math.round(progress * 100)));
+        }
+      }
+
+      const line = y + stripHeight + Math.min(200, Math.round(window.innerHeight * 0.25));
+      let index = -1;
+      for (let i = 0; i < tops.length; i += 1) {
+        if (tops[i] <= line) index = i;
+        else break;
+      }
+      const id = index >= 0 ? heads[index].id : null;
+      if (id !== currentId) {
+        if (currentId) items.get(currentId)?.classList.remove('is-current');
+        currentId = id;
+        if (currentId) items.get(currentId)?.classList.add('is-current');
+      }
+    }
+
+    function schedule() {
+      if (queued) return;
+      queued = true;
+      window.requestAnimationFrame(update);
+    }
+
+    function remeasure() {
+      measure();
+      schedule();
+    }
+
+    window.addEventListener('scroll', schedule, { passive: true });
+    window.addEventListener('resize', remeasure);
+    window.addEventListener('load', remeasure);
+    document.fonts?.ready.then(remeasure);
+    measure();
+    update();
+
+    teardown = () => {
+      window.removeEventListener('scroll', schedule);
+      window.removeEventListener('resize', remeasure);
+      window.removeEventListener('load', remeasure);
+      stopCopy();
+    };
+  }
+
+  initArticle();
+  document.addEventListener('astro:after-swap', initArticle);
+</script>

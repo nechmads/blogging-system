@@ -1,0 +1,194 @@
+---
+/**
+ * The article: the evidence for the claim. One poster moment at the top — the
+ * title at claim scale, breaking out of the column to the pull-quote edge —
+ * and then the page goes calm: a 41rem Geist column centred between the left
+ * page edge and the rail, black links underlined in ink, and poster scale
+ * returning only where the piece itself pulls a quote out.
+ *
+ * The whole page resolves against the one column grid, apparatus included, so
+ * nothing jumps to full width halfway down. There is deliberately no contents
+ * rail: a numbered index is the move this design refuses.
+ */
+import type { Post } from '@hotmetal/content-core';
+import { getFirstTopic } from '../../../lib/post-utils';
+import { glue, titleTier, readingMinutes, sourceLabel } from '../lib/text';
+
+interface Props {
+  post: Post;
+  /** The switcher passes branding in; the two frontends resolve it differently. */
+  publicationName: string;
+  sanitizedContent: string;
+  date: string | null;
+  allLabels: string[];
+  postUrl: string;
+  twitterShareUrl: string;
+  linkedinShareUrl: string;
+}
+
+const {
+  post,
+  publicationName,
+  sanitizedContent,
+  date,
+  allLabels,
+  postUrl,
+  twitterShareUrl,
+  linkedinShareUrl,
+} = Astro.props;
+
+const topic = getFirstTopic(post);
+const minutes = readingMinutes(post.content);
+const citations = post.citations ?? [];
+const hasComments = Astro.slots.has('comments');
+
+const meta = [date, topic, minutes ? `${minutes} min read` : null, post.author].filter(
+  Boolean,
+) as string[];
+
+/**
+ * The one accent use on this screen: the opening sentence of the article is
+ * set in the marker tint. Only a leading run of plain text is ever wrapped —
+ * the sentence has to open a paragraph and end before that paragraph's first
+ * tag — so no element is ever split and nothing but a `<mark>` pair is
+ * inserted into the already-sanitized HTML. The first few paragraphs are
+ * tried in order (an article can open on a heading, or on a paragraph that
+ * starts mid-link), and if none of them yields a clean sentence the article
+ * simply carries no mark rather than a mangled one.
+ */
+function markOpeningSentence(html: string): string {
+  const PARAGRAPH = /<p\b[^>]*>/gi;
+
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    const open = PARAGRAPH.exec(html);
+    if (!open) return html;
+
+    const start = open.index + open[0].length;
+    const after = html.slice(start);
+    const tagAt = after.indexOf('<');
+    const plain = tagAt === -1 ? after : after.slice(0, tagAt);
+
+    const sentence = /^[\s\S]*?[.!?](?=\s|$)/.exec(plain);
+    /* Too short to be a claim, or long enough that a tinted block would take
+       over the page — try the next paragraph instead. */
+    if (sentence && sentence[0].trim().length >= 25 && sentence[0].length <= 220) {
+      const phrase = sentence[0];
+      return `${html.slice(0, start)}<mark>${phrase}</mark>${html.slice(start + phrase.length)}`;
+    }
+  }
+
+  return html;
+}
+
+const articleHtml = markOpeningSentence(sanitizedContent);
+---
+
+<main class="po-article po-frame" id="main">
+  <article class="po-col">
+    <header class="po-post-head">
+      {meta.length > 0 && (
+        <p class="po-meta po-break">
+          {/* The featured image, if there is one, is a single small square in
+              the metadata line. Never a hero: the claim carries the page. */}
+          {post.featuredImage && (
+            <img
+              class="po-post-fig"
+              src={post.featuredImage}
+              alt=""
+              width="56"
+              height="56"
+              loading="eager"
+            />
+          )}
+          {date && post.publishedAt ? (
+            <>
+              <time datetime={post.publishedAt}>{date}</time>
+              {meta.length > 1 && <> · {meta.slice(1).join(' · ')}</>}
+            </>
+          ) : (
+            meta.join(' · ')
+          )}
+        </p>
+      )}
+
+      <h1 class={`po-poster po-post-title po-break po-tier-${titleTier(post.title)}`}>
+        {glue(post.title)}
+      </h1>
+
+      {post.subtitle && <p class="po-post-sub">{post.subtitle}</p>}
+    </header>
+
+    <div class="po-prose" set:html={articleHtml} />
+
+    {allLabels.length > 0 && (
+      <ul class="po-tags po-post-tags" aria-label="Tags">
+        {allLabels.map((label) => <li>{label}</li>)}
+      </ul>
+    )}
+
+    <ul class="po-share po-meta" aria-label={`Share this piece from ${publicationName}`}>
+      <li>
+        <a href={twitterShareUrl} target="_blank" rel="noopener noreferrer">share on x</a>
+      </li>
+      <li>
+        <a href={linkedinShareUrl} target="_blank" rel="noopener noreferrer">share on linkedin</a>
+      </li>
+      <li>
+        <button id="po-copy-link" type="button" data-url={postUrl}>copy link</button>
+      </li>
+    </ul>
+
+    {citations.length > 0 && (
+      <section class="po-section" aria-labelledby="po-sources-h">
+        <h2 class="po-section-title" id="po-sources-h">Sources</h2>
+        <ol class="po-sources">
+          {citations.map((citation) => (
+            <li>
+              <div>
+                <a href={citation.url} target="_blank" rel="noopener noreferrer">
+                  {citation.title}
+                </a>
+                {sourceLabel(citation.url, citation.publisher) && (
+                  <span class="po-src-d">{sourceLabel(citation.url, citation.publisher)}</span>
+                )}
+              </div>
+            </li>
+          ))}
+        </ol>
+      </section>
+    )}
+
+    {/* The island prints its own "Comments" heading; theme.css sets it in the
+        small lowercase label tier rather than adding a second one here. */}
+    {hasComments && (
+      <section class="po-section po-comments" aria-label="Comments">
+        <slot name="comments" />
+      </section>
+    )}
+  </article>
+</main>
+
+<script>
+  function initCopyLink() {
+    const button = document.getElementById('po-copy-link');
+    if (!button) return;
+
+    button.addEventListener('click', async () => {
+      const url = button.getAttribute('data-url');
+      if (!url) return;
+      try {
+        await navigator.clipboard.writeText(url);
+        const original = button.textContent;
+        button.textContent = 'link copied';
+        setTimeout(() => {
+          button.textContent = original;
+        }, 2000);
+      } catch {
+        // Clipboard API unavailable — leave the label alone.
+      }
+    });
+  }
+
+  initCopyLink();
+  document.addEventListener('astro:after-swap', initCopyLink);
+</script>

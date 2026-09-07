@@ -1,0 +1,113 @@
+---
+/**
+ * One issue's cover — the object this whole template is built from.
+ *
+ * The grid is fixed for every post (series band / title zone / illustration
+ * zone / imprint foot) and sized in container-query units, so the same markup
+ * is a 440px face-out on the shelf, a shelved back issue, the article's
+ * opening, or the 250px facsimile pinned beside the reading column. Nothing
+ * about it depends on a featured image existing.
+ */
+import type { Post } from '@hotmetal/content-core';
+import { getFirstTopic, getPreviewText } from '../../../lib/post-utils';
+import { fitFor, issueMonth, plateFor, shortDate, type Plate } from '../lib/issue';
+
+interface Props {
+  post: Post;
+  /** Position in its row — rotates the plate so the shelf has rhythm. */
+  index?: number;
+  /** Force a plate instead of deriving one from `index`. */
+  plate?: Plate;
+  /** `null` renders a plain block (the article's own cover is not a link). */
+  href?: string | null;
+  /** The article's cover carries the page's h1. */
+  asHeading?: boolean;
+  publicationName: string;
+  /** Shown when the cover is cut by the shelf edge. Off for fixed covers. */
+  withSpine?: boolean;
+  class?: string;
+  style?: string;
+  loading?: 'eager' | 'lazy';
+}
+
+const {
+  post,
+  index = 0,
+  plate,
+  href = `/${post.slug}`,
+  asHeading = false,
+  publicationName,
+  withSpine = false,
+  class: className,
+  style,
+  loading = 'lazy',
+} = Astro.props;
+
+const variant = plate ?? plateFor(index);
+const kicker = getFirstTopic(post);
+/* The deck is what the illustration zone holds when there is no image; it is
+   the same preview text the catalogue turns over to show. */
+const deck = post.featuredImage ? null : getPreviewText(post, 200);
+const month = issueMonth(post.publishedAt);
+const dateLong = shortDate(post.publishedAt);
+/* Below ~330px of cover the long date would run under the author, so the foot
+   carries both registers and a container query picks one. */
+const dateShort = post.publishedAt
+  ? new Date(post.publishedAt).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })
+  : null;
+
+/* No image and no deck: the illustration row is dropped entirely rather than
+   left as an empty panel, and the title zone takes the space. */
+const hasIllustration = Boolean(post.featuredImage || deck);
+
+const classes = [
+  'cs-cover',
+  `cs-cover--${variant}`,
+  `cs-fit-${fitFor(post.title)}`,
+  hasIllustration ? null : 'cs-cover--noill',
+  className,
+];
+
+const Tag = href ? 'a' : 'div';
+const TitleTag = asHeading ? 'h1' : 'span';
+---
+
+<Tag class:list={classes} href={href ?? undefined} style={style}>
+  <span class="cs-cv">
+    <span class="cs-cv-band">
+      <span>{publicationName}</span>
+      {month && <span class="cs-cv-month">{month}</span>}
+    </span>
+
+    <span class="cs-cv-title">
+      {kicker && <span class="cs-cv-kicker">{kicker}</span>}
+      <TitleTag class="cs-cv-h">{post.title}</TitleTag>
+    </span>
+
+    {post.featuredImage ? (
+      <span class="cs-cv-ill cs-cv-ill--img">
+        <img src={post.featuredImage} alt="" width="1024" height="1024" loading={loading} />
+      </span>
+    ) : deck ? (
+      <span class="cs-cv-ill cs-cv-ill--deck">
+        <span class="cs-cv-deck">{deck}</span>
+      </span>
+    ) : null}
+
+    <span class="cs-cv-foot">
+      {post.author && <span class="cs-cv-author">{post.author}</span>}
+      {post.publishedAt && dateLong && (
+        <time datetime={post.publishedAt}>
+          <span class="cs-cv-date-long">{dateLong}</span>
+          <span class="cs-cv-date-short">{dateShort}</span>
+        </time>
+      )}
+    </span>
+  </span>
+
+  {withSpine && (
+    <span class="cs-cv-spine" aria-hidden="true">
+      {publicationName}{month ? ` · ${month}` : ''}
+    </span>
+  )}
+</Tag>
