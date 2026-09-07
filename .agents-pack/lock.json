@@ -3,8 +3,8 @@
   "rendererVersion": 1,
   "pack": {
     "id": "agents-pack-core",
-    "version": "0.31.0",
-    "sha256": "sha256:8506c8e330c48254f0efd8b0f947b90ca6a81031445cb5a1f3d28d99ac0164ae",
+    "version": "0.31.1",
+    "sha256": "sha256:188122381cd99a3d49b538bf499a5523de2af4d0df6ed85269634fe322a730d4",
     "source": {
       "kind": "official"
     }
@@ -48,37 +48,37 @@
     {
       "id": "ap-frontend-design",
       "kind": "skill",
-      "sha256": "sha256:debf1af907cf8268b54bdf7b07e1da164a176a6d0bf74eb5d24f834fdac10b2b"
+      "sha256": "sha256:3c4700036af2d6a9f6a6f985bcc20fa1b5ebaabef1bce4661a4e20fd773763cf"
     },
     {
       "id": "ap-design-studio",
       "kind": "skill",
-      "sha256": "sha256:6c12311c2f47bca0028039f1e9064767266daf23565096eba669330252316d09"
+      "sha256": "sha256:89230b79daadf21403a52688c55397ff1c243bbf3ece20ddc60ed8c794ed9b6c"
     },
     {
       "id": "ap-explore-design-directions",
       "kind": "skill",
-      "sha256": "sha256:c80d68ef775269679ff670639bf7e07b00d1356eaccf859b10f209778d584a17"
+      "sha256": "sha256:69738d8b80c277cde0393300f14f727004d20eb1eb3012b23c852b9193fbd5e2"
     },
     {
       "id": "ap-implement-new-design",
       "kind": "skill",
-      "sha256": "sha256:625c194ef3421b5c0e136b4c76ca0171851af87dadba6eca42860d22a4905f1c"
+      "sha256": "sha256:7abcece545b3664d9610b1857f83cda1ea62e62d026b30beeb5c0bb3c27b6f97"
     },
     {
       "id": "ap-design-polish",
       "kind": "skill",
-      "sha256": "sha256:c67bb301b9c4d579d6aa0b41dbfc936b7c34fe1f6bc1382fa191a80fbe916094"
+      "sha256": "sha256:26b49afb135b2c6c6feee51a3bb60693e3daada8022342edcde66b7aa7ff9ce1"
     },
     {
       "id": "ap-design-critic",
       "kind": "subagent",
-      "sha256": "sha256:e63c959562bd1e6500991172b197655965d4025d7aab93137cbcb49b7facfed3"
+      "sha256": "sha256:72564923b7f6afa21b57877f4ace9501fed2c5c446e1a8cdfc65d712e7c1bd99"
     },
     {
       "id": "ap-frontend-review",
       "kind": "skill",
-      "sha256": "sha256:80514784bf930154c378fa8cb99f89b3ea9a83d0b4c29e4677ef09246ad1547c"
+      "sha256": "sha256:0f5af24704ed81108489ee16837e20017f9f58971ce098278c3ad1030d4dd1cf"
     },
     {
       "id": "ap-react-best-practices",
@@ -358,21 +358,21 @@
       "componentId": "ap-design-polish",
       "adapter": "codex",
       "path": ".agents/skills/ap-design-polish/SKILL.md",
-      "sha256": "sha256:c30d7d858b1a594ea60bb584f3e47b9dc7b9a661a17016706a2d821a4de1f761"
+      "sha256": "sha256:a5783ddb9953a3e1d67a9585024d6f1d0a0921a96158fad6fae7c9f59d561d2e"
     },
     {
       "kind": "file",
       "componentId": "ap-design-polish",
       "adapter": "codex",
       "path": ".agents/skills/ap-design-polish/references/ai-design-tells.md",
-      "sha256": "sha256:0feebca8723b9a911db8c3916ed725d90d4905fc404865c6861d3c7997ea0ae6"
+      "sha256": "sha256:85b3e47de67fc1e4edfd60553a7ceada8fbb9f640a1137a696f0b9df398bc0f2"
     },
     {
       "kind": "file",
       "componentId": "ap-design-studio",
       "adapter": "codex",
       "path": ".agents/skills/ap-design-studio/SKILL.md",
-      "sha256": "sha256:74496d352ac1c6614ed77e65cd3f9e8e574f40daef526be60dbc0bd967a5f87c"
+      "sha256": "sha256:2edd039d8173c242dc60a9594a0f04ba8da2edb65bc1351b9fd3371b5380ade7"
     },
     {
       "kind": "file",
@@ -449,7 +449,14 @@
       "componentId": "ap-explore-design-directions",
       "adapter": "codex",
       "path": ".agents/skills/ap-explore-design-directions/SKILL.md",
-      "sha256": "sha256:d4f0ddf74199222a385b70f090af06c6ab3e095baa5199950cc7bf1ff6808d12"
+      "sha256": "sha256:dd14a7fd7557cc0c98b6a2261ef2356205be448a8c69919951953a43681f572a"
+    },
+    {
+      "kind": "file",
+      "componentId": "ap-explore-design-directions",
+      "adapter": "codex",
+      "path": ".agents/skills/ap-explore-design-directions/references/creative-packets.md",
+      "sha256": "sha256:eedf6b8373a6a53c8915bb736d7d9287f62e94b29be21cf587dc82a3d9ae71f0"
     },
     {
       "kind": "file",
@@ -463,7 +470,7 @@
       "componentId": "ap-frontend-design",
       "adapter": "codex",
       "path": ".agents/skills/ap-frontend-design/SKILL.md",
-      "sha256": "sha256:499ce5bbc53391237e853d32e7ab9d74d0a110a44e2cf4b9aaa983363bee56a8"
+      "sha256": "sha256:e79591340e90b7045a7f1c8991c0b2a1db3d94612e9eaf3a67b905e7685713cc"
     },
     {
       "kind": "file",
@@ -477,14 +484,14 @@
       "componentId": "ap-frontend-review",
       "adapter": "codex",
       "path": ".agents/skills/ap-frontend-review/SKILL.md",
-      "sha256": "sha256:76eba7f874737251e83337f4c9a69cd8bcfb3c41a4e399148a23c54e6904939c"
+      "sha256": "sha256:401174339ea8dd393410b037162b5070f7194522ddbeb85b20ba83f28e53daa7"
     },
     {
       "kind": "file",
       "componentId": "ap-frontend-review",
       "adapter": "codex",
       "path": ".agents/skills/ap-frontend-review/references/review-checklist.md",
-      "sha256": "sha256:8ad11312fd0f8f846e1fbcb3323be11343a3bb7a2f5598ed86c1fafb750ee98f"
+      "sha256": "sha256:bf62ecc93b4ed544f6d82c0449a95277d1d4ee5de8020b40391bbfaab12b3773"
     },
     {
       "kind": "file",
@@ -505,21 +512,21 @@
       "componentId": "ap-implement-new-design",
       "adapter": "codex",
       "path": ".agents/skills/ap-implement-new-design/SKILL.md",
-      "sha256": "sha256:575eef3c49128a8a9275e5f0845b1aa67f89c096325246d8d27a0db41d5cf310"
+      "sha256": "sha256:f0c58cf9ebd07502a39fb9bdf4c9ab4d632f691c8a4622239c7b11a6f1cd650b"
     },
     {
       "kind": "file",
       "componentId": "ap-implement-new-design",
       "adapter": "codex",
       "path": ".agents/skills/ap-implement-new-design/references/critic-prompt.md",
-      "sha256": "sha256:832b04bd2fdaf93a3e3f4e2fe6da6a900c1e6e43a4516ffa4ce38890d716054a"
+      "sha256": "sha256:12bdc8b0d2d01112fdee7b53d5d306c8a537e0447354d2cf7a4786fc9c4c86b8"
     },
     {
       "kind": "file",
       "componentId": "ap-implement-new-design",
       "adapter": "codex",
       "path": ".agents/skills/ap-implement-new-design/references/static-html.md",
-      "sha256": "sha256:49ffda5d7ddae3fa0b28583c7b0cbd0b04891004221df4e11055ddedf6c69324"
+      "sha256": "sha256:dd40ee6f5de711ed9415204b95a095bf75c75debd0be0929855a876d223cc7c1"
     },
     {
       "kind": "file",
@@ -1366,7 +1373,7 @@
       "componentId": "ap-design-critic",
       "adapter": "claude",
       "path": ".claude/agents/ap-design-critic.md",
-      "sha256": "sha256:8d7cf35fe67b4c682d7b119a8d5830e15118920a8c04aaa7b8fad28e11c70cb9"
+      "sha256": "sha256:3259d1328a4002242bdaf7ac4c80c82717b9be41e33783e5f8e5c53535d6883c"
     },
     {
       "kind": "file",
@@ -1527,21 +1534,21 @@
       "componentId": "ap-design-polish",
       "adapter": "claude",
       "path": ".claude/skills/ap-design-polish/SKILL.md",
-      "sha256": "sha256:c30d7d858b1a594ea60bb584f3e47b9dc7b9a661a17016706a2d821a4de1f761"
+      "sha256": "sha256:a5783ddb9953a3e1d67a9585024d6f1d0a0921a96158fad6fae7c9f59d561d2e"
     },
     {
       "kind": "file",
       "componentId": "ap-design-polish",
       "adapter": "claude",
       "path": ".claude/skills/ap-design-polish/references/ai-design-tells.md",
-      "sha256": "sha256:0feebca8723b9a911db8c3916ed725d90d4905fc404865c6861d3c7997ea0ae6"
+      "sha256": "sha256:85b3e47de67fc1e4edfd60553a7ceada8fbb9f640a1137a696f0b9df398bc0f2"
     },
     {
       "kind": "file",
       "componentId": "ap-design-studio",
       "adapter": "claude",
       "path": ".claude/skills/ap-design-studio/SKILL.md",
-      "sha256": "sha256:74496d352ac1c6614ed77e65cd3f9e8e574f40daef526be60dbc0bd967a5f87c"
+      "sha256": "sha256:2edd039d8173c242dc60a9594a0f04ba8da2edb65bc1351b9fd3371b5380ade7"
     },
     {
       "kind": "file",
@@ -1618,7 +1625,14 @@
       "componentId": "ap-explore-design-directions",
       "adapter": "claude",
       "path": ".claude/skills/ap-explore-design-directions/SKILL.md",
-      "sha256": "sha256:d4f0ddf74199222a385b70f090af06c6ab3e095baa5199950cc7bf1ff6808d12"
+      "sha256": "sha256:dd14a7fd7557cc0c98b6a2261ef2356205be448a8c69919951953a43681f572a"
+    },
+    {
+      "kind": "file",
+      "componentId": "ap-explore-design-directions",
+      "adapter": "claude",
+      "path": ".claude/skills/ap-explore-design-directions/references/creative-packets.md",
+      "sha256": "sha256:eedf6b8373a6a53c8915bb736d7d9287f62e94b29be21cf587dc82a3d9ae71f0"
     },
     {
       "kind": "file",
@@ -1632,7 +1646,7 @@
       "componentId": "ap-frontend-design",
       "adapter": "claude",
       "path": ".claude/skills/ap-frontend-design/SKILL.md",
-      "sha256": "sha256:499ce5bbc53391237e853d32e7ab9d74d0a110a44e2cf4b9aaa983363bee56a8"
+      "sha256": "sha256:e79591340e90b7045a7f1c8991c0b2a1db3d94612e9eaf3a67b905e7685713cc"
     },
     {
       "kind": "file",
@@ -1646,14 +1660,14 @@
       "componentId": "ap-frontend-review",
       "adapter": "claude",
       "path": ".claude/skills/ap-frontend-review/SKILL.md",
-      "sha256": "sha256:76eba7f874737251e83337f4c9a69cd8bcfb3c41a4e399148a23c54e6904939c"
+      "sha256": "sha256:401174339ea8dd393410b037162b5070f7194522ddbeb85b20ba83f28e53daa7"
     },
     {
       "kind": "file",
       "componentId": "ap-frontend-review",
       "adapter": "claude",
       "path": ".claude/skills/ap-frontend-review/references/review-checklist.md",
-      "sha256": "sha256:8ad11312fd0f8f846e1fbcb3323be11343a3bb7a2f5598ed86c1fafb750ee98f"
+      "sha256": "sha256:bf62ecc93b4ed544f6d82c0449a95277d1d4ee5de8020b40391bbfaab12b3773"
     },
     {
       "kind": "file",
@@ -1674,21 +1688,21 @@
       "componentId": "ap-implement-new-design",
       "adapter": "claude",
       "path": ".claude/skills/ap-implement-new-design/SKILL.md",
-      "sha256": "sha256:575eef3c49128a8a9275e5f0845b1aa67f89c096325246d8d27a0db41d5cf310"
+      "sha256": "sha256:f0c58cf9ebd07502a39fb9bdf4c9ab4d632f691c8a4622239c7b11a6f1cd650b"
     },
     {
       "kind": "file",
       "componentId": "ap-implement-new-design",
       "adapter": "claude",
       "path": ".claude/skills/ap-implement-new-design/references/critic-prompt.md",
-      "sha256": "sha256:832b04bd2fdaf93a3e3f4e2fe6da6a900c1e6e43a4516ffa4ce38890d716054a"
+      "sha256": "sha256:12bdc8b0d2d01112fdee7b53d5d306c8a537e0447354d2cf7a4786fc9c4c86b8"
     },
     {
       "kind": "file",
       "componentId": "ap-implement-new-design",
       "adapter": "claude",
       "path": ".claude/skills/ap-implement-new-design/references/static-html.md",
-      "sha256": "sha256:49ffda5d7ddae3fa0b28583c7b0cbd0b04891004221df4e11055ddedf6c69324"
+      "sha256": "sha256:dd40ee6f5de711ed9415204b95a095bf75c75debd0be0929855a876d223cc7c1"
     },
     {
       "kind": "file",
@@ -2535,7 +2549,7 @@
       "componentId": "ap-design-critic",
       "adapter": "codex",
       "path": ".codex/agents/ap-design-critic.toml",
-      "sha256": "sha256:8d807e556c1a3a0f13f0e5fbbddf7f30ea1a53f120d3f1858baf34ab233afe31"
+      "sha256": "sha256:726160bacc5766b5c8bc8056c0495c42d4be3414c496fa76cc52e58409c6f71c"
     },
     {
       "kind": "file",
@@ -2584,7 +2598,7 @@
       "componentId": "ap-design-critic",
       "adapter": "cursor",
       "path": ".cursor/agents/ap-design-critic.md",
-      "sha256": "sha256:e4dd513a8d0c74ff3197901e94be2b367aae67b5160c0c5da8f702bcfe45911b"
+      "sha256": "sha256:2c24ffbfeafb3c23b3946969216d8bc43bbe7ad9a0013134d8bba224810b3bd3"
     },
     {
       "kind": "file",
@@ -2620,7 +2634,7 @@
       "adapter": "codex",
       "path": "AGENTS.md",
       "blockId": "ap-core-instructions",
-      "sha256": "sha256:5124bf1be0c1f7b8404c95d866a19ad9c5483ffce26cd34414abf14251cfcc70"
+      "sha256": "sha256:56ba1dddc13c573c5c5237f422b7f4a1e4454624b3318a46bd70a6cf75ab4da3"
     }
   ]
 }
