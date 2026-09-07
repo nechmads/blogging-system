@@ -7,7 +7,9 @@ interface Props {
   socialLinks: SocialLinks | null;
 }
 
+/** One last baseline, with a tick at its origin. */
 const { publicationName, socialLinks } = Astro.props;
+
 const year = new Date().getFullYear();
 
 const links = [
@@ -20,14 +22,31 @@ const links = [
 ].filter((link): link is { href: string; label: string; external: boolean } => link !== null);
 ---
 
-<footer class="hz-footer mt-auto px-6 py-8 text-sm flex flex-wrap gap-6 justify-between">
-  <p>&copy; {year} {publicationName}</p>
-  <p class="flex gap-4">
-    {links.map(({ href, label, external }) => (
-      <a href={href} target={external ? '_blank' : undefined} rel={external ? 'noopener noreferrer' : undefined}>{label}</a>
-    ))}
-  </p>
-  <p>
-    Powered by <a href="https://hotmetalapp.com" target="_blank" rel="noopener noreferrer">Hot&nbsp;Metal</a>
-  </p>
+<footer class="hz-foot">
+  <div>
+    <p><a class="hz-fname" href="/">{publicationName}</a></p>
+    <p>&copy; {year} {publicationName}</p>
+  </div>
+
+  <div>
+    <p class="hz-label">Elsewhere</p>
+    <p class="hz-links">
+      {links.map(({ href, label, external }) => (
+        <a
+          href={href}
+          target={external ? '_blank' : undefined}
+          rel={external ? 'noopener noreferrer' : undefined}
+        >
+          {label}
+        </a>
+      ))}
+    </p>
+  </div>
+
+  <div>
+    <p class="hz-label">Published with</p>
+    <p class="hz-links">
+      <a href="https://hotmetalapp.com" target="_blank" rel="noopener noreferrer">Hot&nbsp;Metal</a>
+    </p>
+  </div>
 </footer>

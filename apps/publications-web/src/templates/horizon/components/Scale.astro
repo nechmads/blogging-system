@@ -1,0 +1,75 @@
+---
+import type { Axis } from '../lib/axis';
+
+interface Props {
+  axis: Axis;
+  /** Extra classes on the scale box (the strip narrows it to its own column). */
+  class?: string;
+  /** The accent pennant belongs to whichever scale is the page's own header. */
+  showNow?: boolean;
+  /** The hollow reader cursor rides the home/archive scale only. */
+  showCursor?: boolean;
+  label?: string;
+}
+
+/**
+ * The scale itself: baseline segments, break glyphs, month numerals, ticks and
+ * — where it belongs — "now" and the reader's cursor. Shared by the expanded
+ * home axis and the compact sticky strip, which differ only in size.
+ */
+const {
+  axis,
+  class: className = '',
+  showNow = true,
+  showCursor = false,
+  label = 'Posts by date',
+} = Astro.props;
+
+const fmt = (value: number) => value.toFixed(4);
+---
+
+<nav class:list={['hz-scale', className]} aria-label={label}>
+  {axis.segments.map((segment) => (
+    <span class="hz-seg" style={`--x0:${fmt(segment.x0)};--x1:${fmt(segment.x1)}`}></span>
+  ))}
+
+  {/* A silence too long to draw: a gap in the baseline, two slanted strokes,
+      and the number of days it stands for. Never faked as even spacing. */}
+  {axis.breaks.map((gap) => (
+    <span
+      class="hz-brk"
+      style={`--x0:${fmt(gap.x0)};--x1:${fmt(gap.x1)}`}
+      aria-hidden="true"
+    >
+      <i></i><i></i><small>{gap.days} days skipped</small>
+    </span>
+  ))}
+
+  {axis.months.map((month) => (
+    <div
+      class:list={['hz-month', month.key === axis.currentMonthKey && 'is-current']}
+      data-hz-month={month.key}
+      style={`--x:${fmt(month.x)}`}
+      aria-hidden="true"
+    >
+      <b>{month.numeral}</b><span>{month.caption}</span>
+    </div>
+  ))}
+
+  {axis.ticks.map((tick) => (
+    <a
+      class:list={['hz-tick', tick.isNewest && 'is-newest']}
+      href={tick.href}
+      style={`--x:${fmt(tick.x)}`}
+      aria-label={tick.ariaLabel}
+    >
+      <span aria-hidden="true">{tick.showLabel ? tick.label : ''}</span>
+    </a>
+  ))}
+
+  {showNow && (
+    <span class="hz-now" style="--x:1" aria-hidden="true"><span>{axis.nowLabel}</span></span>
+  )}
+
+  {showCursor && <span class="hz-cursor" aria-hidden="true"></span>}
+</nav>

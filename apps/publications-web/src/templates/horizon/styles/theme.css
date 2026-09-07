@@ -1,52 +1,2005 @@
 @import "tailwindcss";
 
 /* ============================================================================
-   Horizon — SCAFFOLD. Replace with the real theme when porting the prototype.
+   Horizon — a chart table, not a dashboard.
 
-   Every base rule is scoped under `html.horizon` and every class is prefixed
-   `hz-`. See press-machine/styles/theme.css for why: the switchers import
-   every template's BaseLayout, so tokens declared on bare :root would be
-   decided by bundle order.
+   Every element on the home page is placed by its real publication date on a
+   horizontal axis whose right end is "now". The axis is the header, the
+   navigation and the archive's order all at once; the largest type on the page
+   is a date. Ported from the reviewed prototype in
+   design-prototypes/emdash-2026-09-07/02-horizon/.
+
+   Everything is prefixed `hz-` and every base rule is scoped under
+   `html.horizon` on purpose. The four switchers import *every* template's
+   BaseLayout statically, so a bare `:root` or `body` rule from a sibling
+   template would win on source order alone. The class scope keeps this
+   template's ground, ink and accent stable no matter what else is bundled.
    ========================================================================== */
 
 @theme {
-  --color-paper: #fbfcfd;
-  --color-ink: #101418;
+  /* Cold white page, blue-black ink: a chart sheet, not paper. */
+  --color-ground: oklch(98.6% 0.004 240);
+  --color-ink: oklch(21% 0.03 262);
+  --color-ink-2: oklch(42% 0.022 258);
+  /* The baseline, ticks, leaders and hairlines. */
+  --color-axis: oklch(63% 0.012 255);
+  /* The resting underline on real links, and quiet labels. */
+  --color-axis-soft: oklch(84% 0.008 250);
+  /* The giant month numerals; the current month is drawn in --color-ink. */
+  --color-numeral: oklch(55% 0.014 255);
+
+  /* Raw publication accent, and the one contrast-floored token every
+     legibility-bearing use goes through. */
   --color-accent: #b4361f;
-  --color-accent-ink: #b4361f;
+  --color-accent-ink: #8f2b19;
+
   --font-display: 'Schibsted Grotesk', -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
-  --font-body: 'Literata', Georgia, serif;
+  --font-body: 'Literata', Georgia, 'Times New Roman', serif;
   --font-sans: 'Schibsted Grotesk', -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
 }
+
+/* ------------------------------------------------------------ tokens ----- */
 
 html.horizon {
-  --color-paper: #fbfcfd;
-  --color-ink: #101418;
+  --color-ground: oklch(98.6% 0.004 240);
+  --color-ink: oklch(21% 0.03 262);
+  --color-ink-2: oklch(42% 0.022 258);
+  --color-axis: oklch(63% 0.012 255);
+  --color-axis-soft: oklch(84% 0.008 250);
+  --color-numeral: oklch(55% 0.014 255);
   --color-accent: #b4361f;
-  --color-accent-ink: #b4361f;
+  --color-accent-ink: #8f2b19;
+
+  /* Re-declared for the same reason the colours are: `@theme` can only emit
+     these on `:root`, where they collide with every sibling template's
+     `:root` and the last stylesheet in the bundle wins. */
   --font-display: 'Schibsted Grotesk', -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
-  --font-body: 'Literata', Georgia, serif;
+  --font-body: 'Literata', Georgia, 'Times New Roman', serif;
   --font-sans: 'Schibsted Grotesk', -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+
+  --hz-gutter: clamp(20px, 4.4vw, 64px);
+  /* Expanded axis: about a quarter of a 900px viewport, never more. */
+  --hz-axis-h: 232px;
+  /* The sticky strip, and the compact axis it collapses to. */
+  --hz-strip-h: 72px;
+  /* Baseline height above the axis box's bottom edge. */
+  --hz-base: 44px;
+  /* 40px leaves ~19px of clear ground under the 12px tick labels: the strip is
+     sealed, nothing bleeds through it. */
+  --hz-base-compact: 40px;
+  --hz-annot: 88px;
+  /* Leader length from the axis slice down to the reading column, with and
+     without a thumbnail hanging at the tick. */
+  --hz-lead-img: 100px;
+  --hz-lead-bare: 40px;
+  /* Side columns of the sticky strip. The article's own marks are drawn by a
+     fixed overlay that reuses these, so the two line up exactly. */
+  --hz-strip-col: 200px;
+  --hz-strip-nav: 132px;
+  --hz-ease: cubic-bezier(.3, .7, .2, 1);
+
+  /* `clip`, never `hidden`: the pennant and the giant numerals reach into the
+     gutter by design, and `hidden` on an ancestor would kill position: sticky. */
+  overflow-x: clip;
+  -webkit-text-size-adjust: 100%;
 }
 
+/* The publication's own hex, injected as an inline style on <html> by
+   BaseLayout. Higher specificity than the block above so it always wins. */
 html.horizon[style*="--publication-accent"] {
   --color-accent: var(--publication-accent);
 }
 
-@supports (color: oklch(from red l c h)) {
+/* One derived token carries every legibility-bearing use of the accent: the
+   "now" mark, the reading-progress line, in-text link underlines and the focus
+   ring. Lightness is floored at .30 so a near-black accent still reads as a
+   colour, capped at .50 so a pale one is dark enough to carry a 3px stem;
+   chroma is floored so the result is never grey. Measured against this ground:
+   #b4361f 6.2:1, #ffd400 5.7:1, #0a0a2a 13.5:1. The static default above and
+   the color-mix step below are the fallbacks for engines without relative
+   colour — both are also contrast-floored, so no path serves a raw hex. */
+@supports (color: color-mix(in oklab, red, blue)) {
   html.horizon {
-    --color-accent-ink: oklch(from var(--color-accent) clamp(0.25, l, 0.5) c h);
+    --color-accent-ink: color-mix(in oklab, var(--color-accent) 46%, #0d1017);
   }
 }
 
+@supports (color: oklch(from red l c h)) {
+  html.horizon {
+    --color-accent-ink: oklch(from var(--color-accent) clamp(0.30, l, 0.50) max(c, 0.11) h);
+  }
+}
+
+/* ------------------------------------------------------------- base ------ */
+
 html.horizon body {
-  background-color: var(--color-paper);
+  background-color: var(--color-ground);
   color: var(--color-ink);
-  font-family: var(--font-body);
+  font-family: var(--font-sans);
+  font-size: 1rem;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+.horizon img {
+  max-width: 100%;
+  display: block;
+}
+
+/* Wrapped in `:where()` so this reset carries no specificity and never
+   outranks a single-class link colour below it. */
+:where(.horizon) a {
+  color: inherit;
+}
+
+.horizon time,
+.horizon .hz-num {
+  font-variant-numeric: tabular-nums;
 }
 
 .horizon a:focus-visible,
-.horizon button:focus-visible {
+.horizon button:focus-visible,
+.horizon summary:focus-visible {
   outline: 2px solid var(--color-accent-ink);
   outline-offset: 3px;
+}
+
+.hz-skip {
+  position: absolute;
+  left: -9999px;
+  top: 0;
+  z-index: 20;
+  background: var(--color-ground);
+  color: var(--color-ink);
+  padding: 10px 16px;
+  font-size: 0.875rem;
+  border: 1px solid var(--color-ink);
+}
+
+.hz-skip:focus {
+  left: var(--hz-gutter);
+}
+
+/* ======================================================== the axis ======== */
+
+.hz-axis {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  height: var(--hz-axis-h);
+  background: var(--color-ground);
+}
+
+/* The compaction snaps rather than eases: it is deterministic under capture,
+   and the cursor sliding along the baseline is the motion that matters. */
+.hz-axis.is-compact {
+  transform: translateY(calc(var(--hz-strip-h) - var(--hz-axis-h)));
+}
+
+.hz-axis--bare {
+  height: auto;
+  position: static;
+}
+
+.hz-axis-in {
+  position: relative;
+  height: 100%;
+  margin: 0 var(--hz-gutter);
+}
+
+.hz-axis--bare .hz-axis-in {
+  padding: 20px 0 8px;
+}
+
+/* The wordmark sits at the axis origin, small: the chart's title block. */
+.hz-mast {
+  position: absolute;
+  left: 0;
+  top: 18px;
+  display: flex;
+  gap: 14px;
+  align-items: baseline;
+  white-space: nowrap;
+  max-width: calc(100% - 200px);
+}
+
+.hz-axis--bare .hz-mast {
+  position: static;
+  max-width: none;
+  white-space: normal;
+}
+
+.hz-wordmark {
+  font-size: 1.0625rem;
+  font-weight: 400;
+  letter-spacing: 0.01em;
+  margin: 0;
+  min-width: 0;
+}
+
+.hz-wordmark a {
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.hz-wordmark a:hover {
+  text-decoration: underline;
+  text-decoration-color: var(--color-axis);
+  text-underline-offset: 4px;
+}
+
+.hz-wordmark img {
+  height: 22px;
+  width: auto;
+}
+
+.hz-tagline {
+  font-family: var(--font-body);
+  font-style: italic;
+  font-optical-sizing: auto;
+  font-size: 1rem;
+  color: var(--color-ink-2);
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.hz-nav {
+  position: absolute;
+  right: 0;
+  top: 18px;
+  display: flex;
+  gap: 22px;
+  font-size: 0.9375rem;
+  white-space: nowrap;
+}
+
+.hz-axis--bare .hz-nav {
+  position: static;
+  margin-top: 10px;
+}
+
+.hz-nav a {
+  text-decoration: none;
+  color: var(--color-ink-2);
+}
+
+.hz-nav a:hover,
+.hz-nav a[aria-current="page"] {
+  color: var(--color-ink);
+  text-decoration: underline;
+  text-decoration-color: var(--color-axis);
+  text-underline-offset: 4px;
+}
+
+.hz-axis.is-compact .hz-mast,
+.hz-axis.is-compact .hz-nav {
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* ---------------------------------------------------------- the scale ---- */
+
+.hz-scale {
+  position: absolute;
+  inset: 0;
+  --b: var(--hz-base);
+}
+
+.hz-axis.is-compact .hz-scale {
+  --b: var(--hz-base-compact);
+}
+
+.hz-seg {
+  position: absolute;
+  height: 1px;
+  background: var(--color-axis);
+  bottom: var(--b);
+  left: calc(var(--x0) * 100%);
+  width: calc((var(--x1) - var(--x0)) * 100%);
+}
+
+/* The break: a gap in the baseline crossed by two slanted strokes, labelled
+   with the days it stands for. Compressed silence, declared as such. */
+.hz-brk {
+  position: absolute;
+  bottom: var(--b);
+  left: calc(var(--x0) * 100%);
+  width: calc((var(--x1) - var(--x0)) * 100%);
+  height: 0;
+}
+
+.hz-brk i {
+  position: absolute;
+  top: -8px;
+  width: 1.5px;
+  height: 16px;
+  background: var(--color-ink-2);
+  transform: rotate(24deg);
+  left: calc(50% - 5px);
+}
+
+.hz-brk i + i {
+  left: calc(50% + 4px);
+}
+
+.hz-brk small {
+  position: absolute;
+  top: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  white-space: nowrap;
+  font-size: 0.6875rem;
+  color: var(--color-axis);
+}
+
+.hz-axis.is-compact .hz-brk small {
+  opacity: 0;
+}
+
+/* Month numerals: the display type of the page, and larger than any headline. */
+.hz-month {
+  position: absolute;
+  bottom: calc(var(--b) + 13px);
+  left: calc(var(--x) * 100%);
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.hz-month b {
+  display: block;
+  font-weight: 400;
+  font-size: 6.5rem;
+  letter-spacing: -0.045em;
+  color: var(--color-numeral);
+  line-height: 0.78;
+  font-variant-numeric: tabular-nums;
+}
+
+.hz-month span {
+  position: absolute;
+  left: 0.18em;
+  bottom: calc(100% + 10px);
+  font-size: 0.8125rem;
+  color: var(--color-axis);
+}
+
+/* The month holding the reader's cursor is the one in ink — not, as the
+   prototype had it, always the newest. Server-rendered on the newest month so
+   the page is correct before a single scroll event fires. */
+.hz-month.is-current b {
+  color: var(--color-ink);
+}
+
+.hz-axis.is-compact .hz-month {
+  bottom: calc(var(--b) + 6px);
+}
+
+.hz-axis.is-compact .hz-month b {
+  font-size: 1.125rem;
+  letter-spacing: -0.01em;
+  line-height: 0.9;
+}
+
+.hz-axis.is-compact .hz-month span {
+  opacity: 0;
+}
+
+/* Every post is a plain honest tick, and a focusable link to its entry. */
+.hz-tick {
+  position: absolute;
+  left: calc(var(--x) * 100%);
+  bottom: var(--b);
+  width: 1px;
+  height: 12px;
+  margin-left: -0.5px;
+  background: var(--color-axis);
+  transform: translateY(100%);
+  text-decoration: none;
+  transition: height 0.15s var(--hz-ease);
+}
+
+.hz-tick span {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 0.8125rem;
+  color: var(--color-ink-2);
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+/* A comfortable hit area around a 1px line. */
+.hz-tick::before {
+  content: "";
+  position: absolute;
+  left: -12px;
+  right: -12px;
+  top: -6px;
+  bottom: -18px;
+}
+
+.hz-axis.is-compact .hz-tick {
+  height: 8px;
+}
+
+.hz-axis.is-compact .hz-tick span {
+  font-size: 0.75rem;
+  top: calc(100% + 3px);
+}
+
+.hz-tick.is-current,
+.hz-tick.is-hot,
+.hz-tick:hover,
+.hz-tick:focus-visible {
+  background: var(--color-ink);
+  height: 18px;
+  width: 2px;
+  margin-left: -1px;
+}
+
+.hz-axis.is-compact .hz-tick.is-current,
+.hz-axis.is-compact .hz-tick.is-hot,
+.hz-axis.is-compact .hz-tick:hover,
+.hz-axis.is-compact .hz-tick:focus-visible {
+  height: 12px;
+}
+
+.hz-tick.is-current span,
+.hz-tick.is-hot span,
+.hz-tick:hover span {
+  color: var(--color-ink);
+}
+
+/* The newest tick runs down to the axis edge and meets the lead's leader: one
+   unbroken line from the baseline to the lead's meta. */
+.hz-axis:not(.is-compact) .hz-tick.is-newest,
+.hz-axis:not(.is-compact) .hz-tick.is-newest.is-current {
+  height: var(--hz-base);
+}
+
+.hz-axis:not(.is-compact) .hz-tick.is-newest span {
+  left: auto;
+  right: 8px;
+  transform: none;
+  top: 6px;
+}
+
+/* "Now": a 3px stem that breaks the baseline behind a ground halo and rises to
+   a pennant. Its own shape, so it stays distinct from every tick and from the
+   reader's cursor even when the accent is near-black. The only colour here. */
+.hz-now {
+  position: absolute;
+  left: calc(var(--x, 1) * 100%);
+  bottom: calc(var(--b) - 14px);
+  width: 3px;
+  height: 48px;
+  margin-left: -1.5px;
+  background: var(--color-accent-ink);
+  box-shadow: 0 0 0 3px var(--color-ground);
+}
+
+.hz-now::before {
+  content: "";
+  position: absolute;
+  left: 3px;
+  top: 0;
+  width: 0;
+  height: 0;
+  border-top: 8px solid transparent;
+  border-bottom: 8px solid transparent;
+  border-left: 16px solid var(--color-accent-ink);
+}
+
+.hz-now span {
+  position: absolute;
+  right: 10px;
+  top: 34px;
+  font-size: 0.8125rem;
+  white-space: nowrap;
+  color: var(--color-ink);
+  line-height: 1;
+}
+
+.hz-axis.is-compact .hz-now {
+  height: 34px;
+  bottom: calc(var(--b) - 10px);
+}
+
+.hz-axis.is-compact .hz-now::before {
+  border-top-width: 6px;
+  border-bottom-width: 6px;
+  border-left-width: 12px;
+}
+
+.hz-axis.is-compact .hz-now span {
+  font-size: 0.6875rem;
+  top: 24px;
+}
+
+/* The reader's cursor: a hollow ink square riding the baseline, never filled,
+   never the accent. */
+.hz-cursor {
+  position: absolute;
+  left: calc(var(--x, 1) * 100%);
+  bottom: calc(var(--b) - 4px);
+  width: 9px;
+  height: 9px;
+  margin-left: -4.5px;
+  border: 1.5px solid var(--color-ink);
+  background: var(--color-ground);
+  transition: left 0.16s var(--hz-ease);
+}
+
+/* ========================================================= home body ===== */
+
+.hz-page {
+  position: relative;
+  flex: 1;
+  margin: 0 var(--hz-gutter);
+}
+
+.hz-hero {
+  position: relative;
+  padding: 48px 0 8px;
+}
+
+/* Nothing is pinned to the right of it: the identity block returns to the flow
+   rather than sitting under the page's own text. */
+.hz-page--stacked .hz-hero {
+  padding-top: 24px;
+}
+
+.hz-page--stacked .hz-ident {
+  position: static;
+  width: auto;
+  max-width: 62ch;
+  margin: 48px 0 0;
+}
+
+/* The identity block: the publication's standing description and its links,
+   set small in the white left of the lead. */
+.hz-ident {
+  position: absolute;
+  left: 0;
+  top: 48px;
+  width: min(340px, 30%);
+}
+
+.hz-ident p {
+  margin: 0 0 14px;
+  font-family: var(--font-body);
+  font-optical-sizing: auto;
+  font-size: 1.0625rem;
+  line-height: 1.5;
+  color: var(--color-ink-2);
+}
+
+.hz-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 18px;
+  font-size: 0.875rem;
+  margin: 0;
+}
+
+.hz-links a {
+  text-decoration: underline;
+  text-decoration-color: var(--color-axis-soft);
+  text-underline-offset: 4px;
+  text-decoration-thickness: 1px;
+}
+
+.hz-links a:hover {
+  text-decoration-color: var(--color-accent-ink);
+}
+
+/* --------------------------------------------------------- entries ------- */
+
+/* Every archive entry is a slice of the axis: a full-width hairline with the
+   date notch, thumbnail and meta at the entry's true x, and a short leader
+   down to one left-aligned reading column. No entry flips its alignment. */
+.hz-entry {
+  position: relative;
+  padding-top: var(--gap, 40px);
+  scroll-margin-top: calc(var(--hz-strip-h) + 12px);
+  --lead: var(--hz-lead-bare);
+}
+
+.hz-entry.has-img {
+  --lead: var(--hz-lead-img);
+}
+
+.hz-entry::before {
+  content: "";
+  position: absolute;
+  top: var(--gap, 40px);
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: var(--color-axis-soft);
+}
+
+.hz-entry.is-current::before,
+.hz-entry.is-hot::before {
+  background: var(--color-axis);
+}
+
+.hz-mark {
+  position: absolute;
+  top: var(--gap, 40px);
+  left: calc(var(--x, 0) * 100%);
+  height: var(--lead);
+  border-left: 1px solid var(--color-axis);
+}
+
+.hz-mark::before {
+  content: "";
+  position: absolute;
+  top: -5px;
+  left: -1px;
+  width: 1px;
+  height: 11px;
+  background: var(--color-ink-2);
+}
+
+.hz-entry.is-current .hz-mark,
+.hz-entry.is-hot .hz-mark {
+  border-left-width: 2px;
+  border-left-color: var(--color-ink);
+}
+
+.hz-entry.is-current .hz-mark::before,
+.hz-entry.is-hot .hz-mark::before {
+  background: var(--color-ink);
+}
+
+.hz-kicker {
+  position: absolute;
+  top: 7px;
+  left: 12px;
+  margin: 0;
+  font-size: 0.875rem;
+  color: var(--color-ink-2);
+  white-space: nowrap;
+  line-height: 1.2;
+}
+
+/* A tick in the right half would push its kicker off the page, so those entries
+   hang it to the left of the mark — the way the lead always does — and their
+   thumbnail drops below it on the same side rather than crossing the tick.
+   Nothing is ever pushed past the right edge to make room. */
+.hz-entry.is-right .hz-kicker {
+  left: auto;
+  right: 12px;
+}
+
+.hz-entry.is-right .hz-annot {
+  top: 32px;
+}
+
+.hz-entry.is-right.has-img {
+  --lead: 130px;
+}
+
+.hz-entry--lead.is-pinned.has-img .hz-annot {
+  top: 56px;
+}
+
+.hz-kicker time,
+.hz-kicker .hz-when {
+  color: var(--color-ink);
+}
+
+/* Featured images are annotations, not heroes: a small square clipped to the
+   chart beside its tick. An entry without one simply has the short leader, so
+   the no-image lead is the cleanest entry on the page rather than the poorest
+   — and every row keeps the same full-width slice either way. */
+.hz-annot {
+  position: absolute;
+  top: 10px;
+  right: 14px;
+  width: var(--hz-annot);
+  height: var(--hz-annot);
+  display: block;
+}
+
+.hz-annot::before {
+  content: "";
+  position: absolute;
+  left: 100%;
+  top: 10px;
+  width: 14px;
+  height: 1px;
+  background: var(--color-axis);
+}
+
+.hz-annot img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  filter: saturate(0.85) contrast(1.02);
+}
+
+.hz-ebody {
+  padding-top: calc(var(--lead) + 8px);
+  max-width: 720px;
+}
+
+/* Weight lives in exactly one role: titles. */
+.hz-entry h2 {
+  margin: 0;
+  font-size: clamp(1.625rem, 2vw, 2.25rem);
+  line-height: 1.06;
+  font-weight: 800;
+  letter-spacing: -0.022em;
+  text-wrap: balance;
+}
+
+.hz-entry h2 a {
+  text-decoration: none;
+}
+
+.hz-entry h2 a:hover,
+.hz-entry h2 a:focus-visible,
+.hz-entry.is-hot h2 a {
+  text-decoration: underline;
+  text-decoration-color: var(--color-accent-ink);
+  text-decoration-thickness: 3px;
+  text-underline-offset: 5px;
+}
+
+.hz-dek {
+  margin: 8px 0 0;
+  font-family: var(--font-body);
+  font-style: italic;
+  font-optical-sizing: auto;
+  font-size: 1.125rem;
+  line-height: 1.45;
+  color: var(--color-ink-2);
+  text-wrap: pretty;
+  max-width: 640px;
+}
+
+/* The lead is the largest entry either way. */
+.hz-entry--lead h2 {
+  font-size: clamp(2.25rem, 4.9vw, 4.375rem);
+  line-height: 0.98;
+  letter-spacing: -0.03em;
+}
+
+.hz-entry--lead .hz-dek {
+  font-size: 1.5rem;
+  line-height: 1.4;
+  margin: 24px 0 0;
+  max-width: 600px;
+}
+
+/* Pinned: the lead hangs from its own tick — the leader continues the newest
+   tick down to the meta line and the headline grows leftward from it. Only when
+   that tick is in the right 40% of the axis. A newest post sitting mid-axis (a
+   publication with one post, or one that has been quiet for a while) would
+   otherwise grow its headline straight through the identity column, so it falls
+   back to the ordinary left-aligned slice and the identity moves into the flow
+   above it. */
+.hz-entry--lead.is-pinned {
+  padding-top: 0;
+}
+
+.hz-entry--lead.is-pinned::before {
+  display: none;
+}
+
+.hz-entry--lead.is-pinned .hz-mark {
+  top: -48px;
+  height: calc(var(--lead) + 48px);
+}
+
+.hz-entry--lead.is-pinned .hz-kicker {
+  left: auto;
+  right: 12px;
+  top: auto;
+  bottom: 4px;
+  font-size: 0.9375rem;
+}
+
+.hz-entry--lead.is-pinned .hz-ebody {
+  max-width: 720px;
+  margin-left: auto;
+  margin-right: calc((1 - var(--x, 1)) * 100%);
+  padding-right: 14px;
+  padding-top: calc(var(--lead) + 10px);
+  text-align: right;
+}
+
+.hz-entry--lead.is-pinned .hz-dek {
+  margin: 24px 0 0 auto;
+}
+
+.hz-readlink {
+  display: inline-block;
+  margin-top: 18px;
+  font-size: 0.9375rem;
+  text-decoration: underline;
+  text-decoration-color: var(--color-accent-ink);
+  text-decoration-thickness: 2px;
+  text-underline-offset: 4px;
+}
+
+/* An undated post keeps its place in the list but makes no claim on the axis:
+   no notch, no leader, and the kicker says so. */
+.hz-entry--undated .hz-mark {
+  position: relative;
+  top: auto;
+  left: auto;
+  height: auto;
+  border: 0;
+  margin-bottom: 10px;
+}
+
+.hz-entry--undated .hz-mark::before {
+  display: none;
+}
+
+.hz-entry--undated .hz-kicker {
+  position: static;
+  white-space: normal;
+}
+
+.hz-entry--undated .hz-annot {
+  position: static;
+  margin: 10px 0;
+}
+
+.hz-entry--undated .hz-annot::before {
+  display: none;
+}
+
+.hz-entry--undated .hz-ebody {
+  padding-top: 0;
+}
+
+.hz-rest {
+  padding-top: 24px;
+}
+
+.hz-viewall {
+  margin: 56px 0 0;
+  font-size: 0.9375rem;
+}
+
+.hz-viewall a {
+  text-decoration: underline;
+  text-decoration-color: var(--color-accent-ink);
+  text-decoration-thickness: 2px;
+  text-underline-offset: 4px;
+}
+
+.hz-empty {
+  margin: 72px 0 96px;
+  max-width: 46ch;
+}
+
+.hz-empty p {
+  margin: 0;
+  font-family: var(--font-body);
+  font-optical-sizing: auto;
+  font-size: 1.25rem;
+  line-height: 1.5;
+  color: var(--color-ink-2);
+}
+
+/* Mobile rail pieces; hidden until the axis rotates. */
+.hz-rail-month,
+.hz-rail-break,
+.hz-rail-now {
+  display: none;
+}
+
+/* ------------------------------------------------------ archive page ----- */
+
+.hz-page--list {
+  padding-top: 40px;
+}
+
+.hz-listhead {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px 24px;
+  flex-wrap: wrap;
+  margin-bottom: 8px;
+}
+
+.hz-listtitle {
+  margin: 0;
+  font-size: clamp(1.75rem, 3.2vw, 2.5rem);
+  font-weight: 800;
+  letter-spacing: -0.025em;
+  line-height: 1;
+}
+
+/* ------------------------------------------------------------ topics ----- */
+
+.hz-topics {
+  margin-top: 140px;
+  max-width: 760px;
+}
+
+.hz-label {
+  font-size: 0.8125rem;
+  color: var(--color-axis);
+  margin: 0 0 8px;
+}
+
+.hz-tag-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 18px;
+  font-size: 0.9375rem;
+  color: var(--color-ink-2);
+}
+
+/* ------------------------------------------------------------ footer ----- */
+
+/* The footer is one last baseline with a tick at its origin. */
+.hz-foot {
+  margin: 120px var(--hz-gutter) 0;
+  padding: 26px 0 56px;
+  position: relative;
+  display: flex;
+  justify-content: space-between;
+  gap: 24px 32px;
+  flex-wrap: wrap;
+  font-size: 0.875rem;
+  color: var(--color-ink-2);
+}
+
+.hz-foot::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 1px;
+  background: var(--color-axis);
+}
+
+.hz-foot::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 1px;
+  height: 12px;
+  background: var(--color-axis);
+}
+
+.hz-foot p {
+  margin: 0 0 6px;
+}
+
+.hz-foot .hz-fname {
+  color: var(--color-ink);
+  text-decoration: none;
+}
+
+.hz-foot .hz-fname:hover {
+  text-decoration: underline;
+  text-decoration-color: var(--color-axis);
+  text-underline-offset: 4px;
+}
+
+/* ==================================================== the sticky strip ==== */
+
+/* The article, /posts and 404 pages keep the axis as a thin sticky strip. It
+   stays one line high at every width — a stacking header would put the reader
+   further from the text on the screen with the least of it. */
+.hz-strip {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  height: var(--hz-strip-h);
+  background: var(--color-ground);
+}
+
+.hz-strip-in {
+  position: relative;
+  height: 100%;
+  margin: 0 var(--hz-gutter);
+}
+
+.hz-strip .hz-wordmark,
+.hz-strip .hz-nav {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.hz-strip .hz-wordmark {
+  left: 0;
+  max-width: calc(var(--hz-strip-col) - 16px);
+  overflow: hidden;
+}
+
+/* A long publication name is trimmed rather than allowed to run into the scale. */
+.hz-strip .hz-wordmark a {
+  max-width: 100%;
+  overflow: hidden;
+}
+
+.hz-strip .hz-wordmark span {
+  display: block;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.hz-strip .hz-nav {
+  right: 0;
+}
+
+/* The scale keeps the same geometry in the strip and in the fixed overlay the
+   article draws its own marks into, so the two are always registered. */
+.hz-strip-scale {
+  position: absolute;
+  inset: 0 var(--hz-strip-nav) 0 var(--hz-strip-col);
+  --b: var(--hz-base-compact);
+}
+
+.hz-strip-scale .hz-month b {
+  font-size: 1.125rem;
+  letter-spacing: -0.01em;
+  line-height: 0.9;
+}
+
+.hz-strip-scale .hz-month {
+  bottom: calc(var(--b) + 6px);
+}
+
+.hz-strip-scale .hz-month span,
+.hz-strip-scale .hz-brk small {
+  display: none;
+}
+
+.hz-strip-scale .hz-tick {
+  height: 8px;
+}
+
+.hz-strip-scale .hz-tick span {
+  font-size: 0.75rem;
+  top: calc(100% + 3px);
+}
+
+.hz-strip-scale .hz-now {
+  height: 34px;
+  bottom: calc(var(--b) - 10px);
+}
+
+.hz-strip-scale .hz-now::before {
+  border-top-width: 6px;
+  border-bottom-width: 6px;
+  border-left-width: 12px;
+}
+
+.hz-strip-scale .hz-now span {
+  font-size: 0.6875rem;
+  top: 24px;
+}
+
+/* A short rule anchoring the pennant, so "now" is never a mark floating in
+   space on a page that does not draw the rest of the scale (404). Pages that
+   know their own dates draw segments over it, in the same colour. */
+.hz-now-rule {
+  position: absolute;
+  right: 0;
+  bottom: var(--b);
+  width: 56px;
+  height: 1px;
+  background: var(--color-axis);
+}
+
+/* The article page's own marks: its date tick, and the reading progress. Drawn
+   in a fixed overlay because the strip is rendered by the shared Header, which
+   is never handed the post. */
+.hz-strip-marks {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: var(--hz-strip-h);
+  z-index: 11;
+  pointer-events: none;
+}
+
+.hz-strip-marks .hz-tick.is-post {
+  background: var(--color-ink);
+  height: 11px;
+  width: 2px;
+  margin-left: -1px;
+}
+
+.hz-strip-marks .hz-tick.is-post span {
+  color: var(--color-ink);
+  left: 0;
+  transform: none;
+}
+
+/* The overlay itself is inert; its ticks are still links. */
+.hz-strip-marks a {
+  pointer-events: auto;
+}
+
+/* Reading progress runs along the strip's bottom edge, starting under the
+   wordmark — never along the date axis, where it would read as travel in time.
+   Hidden at zero scroll so it is never a stub. */
+.hz-progress {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  height: 2px;
+  width: calc(var(--p, 0) * 100%);
+  background: var(--color-accent-ink);
+  transition: width 0.25s var(--hz-ease);
+}
+
+.hz-strip-marks.at-top .hz-progress {
+  width: 0;
+  visibility: hidden;
+  transition: none;
+}
+
+/* =========================================================== article ===== */
+
+.hz-post {
+  flex: 1;
+  margin: 0 var(--hz-gutter);
+  display: grid;
+  grid-template-columns: minmax(0, 66ch) minmax(220px, 1fr);
+  column-gap: clamp(48px, 7vw, 120px);
+  padding-top: 72px;
+}
+
+.hz-post > * {
+  grid-column: 1;
+  min-width: 0;
+}
+
+.hz-aside {
+  grid-column: 2;
+  grid-row: 1 / span 3;
+  align-self: start;
+  position: sticky;
+  top: calc(var(--hz-strip-h) + 28px);
+  padding-top: 14px;
+}
+
+.hz-post-head {
+  margin-bottom: 40px;
+}
+
+.hz-post-head .hz-kicker {
+  position: static;
+  font-size: 0.9375rem;
+  white-space: normal;
+  margin-bottom: 14px;
+}
+
+.hz-post-head h1 {
+  margin: 0;
+  font-size: clamp(2.25rem, 4.2vw, 3.75rem);
+  line-height: 0.98;
+  letter-spacing: -0.03em;
+  font-weight: 800;
+  text-wrap: balance;
+}
+
+.hz-sub {
+  margin: 22px 0 0;
+  font-family: var(--font-body);
+  font-style: italic;
+  font-optical-sizing: auto;
+  font-size: 1.5rem;
+  line-height: 1.38;
+  color: var(--color-ink-2);
+  text-wrap: pretty;
+}
+
+.hz-meta {
+  margin: 26px 0 0;
+  font-size: 0.9375rem;
+  color: var(--color-ink-2);
+}
+
+/* Tabular figures put a visible gap between a single-digit day and its comma. */
+.hz-meta time {
+  font-variant-numeric: normal;
+}
+
+.hz-meta span {
+  white-space: nowrap;
+}
+
+.hz-meta span + span::before {
+  content: " · ";
+  color: var(--color-axis);
+  white-space: normal;
+}
+
+.hz-post-annot {
+  width: var(--hz-annot);
+  height: var(--hz-annot);
+  object-fit: cover;
+  margin-top: 22px;
+  filter: saturate(0.85) contrast(1.02);
+}
+
+/* The margin figure: how long this claim has been standing. */
+.hz-elapsed {
+  margin: 0 0 40px;
+  line-height: 1;
+}
+
+.hz-elapsed b {
+  display: block;
+  font-weight: 400;
+  font-size: 6rem;
+  letter-spacing: -0.045em;
+  color: var(--color-numeral);
+  line-height: 0.8;
+  font-variant-numeric: tabular-nums;
+}
+
+.hz-elapsed span {
+  display: block;
+  font-size: 0.875rem;
+  color: var(--color-ink-2);
+  margin-top: 12px;
+  max-width: 24ch;
+  line-height: 1.4;
+}
+
+.hz-toc-label {
+  font-size: 0.8125rem;
+  color: var(--color-axis);
+  margin: 0 0 12px;
+}
+
+.hz-toc {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: 0.9375rem;
+}
+
+.hz-toc li {
+  position: relative;
+  padding-left: 20px;
+  margin: 0 0 10px;
+}
+
+.hz-toc li::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0.62em;
+  width: 10px;
+  height: 1px;
+  background: var(--color-axis);
+}
+
+.hz-toc li.is-current::before {
+  background: var(--color-ink);
+  width: 14px;
+  height: 2px;
+  top: 0.58em;
+}
+
+.hz-toc a {
+  text-decoration: none;
+  color: var(--color-ink-2);
+}
+
+.hz-toc li.is-current a,
+.hz-toc a:hover {
+  color: var(--color-ink);
+}
+
+/* ------------------------------------------------------------- prose ----- */
+
+/* `.hz-prose`, not `.prose`: the sibling templates style a global `.prose`. */
+.hz-prose {
+  font-family: var(--font-body);
+  font-optical-sizing: auto;
+  font-size: 1.125rem;
+  line-height: 1.6;
+  max-width: 66ch;
+}
+
+.hz-prose p {
+  margin: 0 0 1.35em;
+  text-wrap: pretty;
+}
+
+.hz-prose a {
+  text-decoration: underline;
+  text-decoration-color: var(--color-accent-ink);
+  text-decoration-thickness: 2px;
+  text-underline-offset: 3px;
+}
+
+.hz-prose a:hover {
+  text-decoration-thickness: 3px;
+}
+
+.hz-prose strong {
+  font-weight: 700;
+}
+
+.hz-prose em {
+  font-style: italic;
+}
+
+/* A corner bracket, the mark a chart puts against a reading. */
+.hz-prose h2 {
+  position: relative;
+  font-family: var(--font-sans);
+  font-weight: 700;
+  font-size: 1.625rem;
+  line-height: 1.15;
+  letter-spacing: -0.015em;
+  margin: 2.2em 0 0.7em;
+  scroll-margin-top: calc(var(--hz-strip-h) + 20px);
+  text-wrap: balance;
+}
+
+.hz-prose h2::before,
+.hz-prose h2::after {
+  content: "";
+  position: absolute;
+  left: -26px;
+  top: 0.18em;
+  background: var(--color-ink);
+}
+
+.hz-prose h2::before {
+  width: 1px;
+  height: 0.85em;
+}
+
+.hz-prose h2::after {
+  width: 14px;
+  height: 1px;
+}
+
+.hz-prose h3 {
+  font-family: var(--font-sans);
+  font-weight: 700;
+  font-size: 1.25rem;
+  line-height: 1.25;
+  margin: 1.9em 0 0.6em;
+}
+
+.hz-prose ul,
+.hz-prose ol {
+  margin: 0 0 1.35em;
+  padding-left: 1.3em;
+}
+
+.hz-prose ul {
+  list-style: none;
+}
+
+/* A tick, not a bullet. */
+.hz-prose ul > li {
+  position: relative;
+}
+
+.hz-prose ul > li::before {
+  content: "";
+  position: absolute;
+  left: -1.05em;
+  top: 0.72em;
+  width: 10px;
+  height: 1px;
+  background: var(--color-axis);
+}
+
+.hz-prose ol {
+  list-style: decimal;
+}
+
+.hz-prose li {
+  margin-bottom: 0.45em;
+}
+
+.hz-prose blockquote {
+  margin: 2em 0;
+  padding-left: 22px;
+  border-left: 1px solid var(--color-axis);
+  color: var(--color-ink-2);
+}
+
+.hz-prose blockquote p:last-child {
+  margin-bottom: 0;
+}
+
+.hz-prose code {
+  font-family: var(--font-sans);
+  font-size: 0.97em;
+  letter-spacing: -0.005em;
+}
+
+.hz-prose pre {
+  font-family: var(--font-sans);
+  font-size: 0.875rem;
+  line-height: 1.55;
+  overflow-x: auto;
+  margin: 1.6em 0;
+  padding: 16px 18px;
+  border-top: 1px solid var(--color-axis);
+  border-bottom: 1px solid var(--color-axis-soft);
+}
+
+.hz-prose pre code {
+  white-space: pre;
+}
+
+.hz-prose img {
+  margin: 2em 0;
+}
+
+.hz-prose figure {
+  margin: 2em 0;
+}
+
+.hz-prose figcaption {
+  margin-top: 8px;
+  font-family: var(--font-sans);
+  font-size: 0.8125rem;
+  color: var(--color-ink-2);
+}
+
+.hz-prose hr {
+  border: 0;
+  border-top: 1px solid var(--color-axis-soft);
+  margin: 2.4em 0;
+}
+
+.hz-prose table {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: var(--font-sans);
+  font-size: 0.9375rem;
+  margin: 1.6em 0;
+}
+
+.hz-prose th,
+.hz-prose td {
+  text-align: left;
+  padding: 8px 12px 8px 0;
+  border-bottom: 1px solid var(--color-axis-soft);
+}
+
+.hz-prose th {
+  font-weight: 400;
+  color: var(--color-ink-2);
+}
+
+/* --------------------------------------------------------- apparatus ----- */
+
+.hz-tail {
+  margin-top: 56px;
+}
+
+.hz-tail > section {
+  margin-top: 64px;
+}
+
+.hz-tail > section:first-child {
+  margin-top: 0;
+}
+
+.hz-tail h2 {
+  font-size: 1.125rem;
+  font-weight: 400;
+  margin: 0 0 20px;
+  color: var(--color-ink);
+}
+
+.hz-tail h2 small {
+  color: var(--color-axis);
+  font-size: 0.875rem;
+  margin-left: 8px;
+  font-variant-numeric: tabular-nums;
+}
+
+.hz-sources {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  counter-reset: hzsrc;
+}
+
+.hz-sources li {
+  display: grid;
+  grid-template-columns: 2.5rem minmax(0, 1fr) 11rem;
+  column-gap: 16px;
+  align-items: baseline;
+  padding: 7px 0;
+  font-size: 0.9375rem;
+}
+
+.hz-sources li::before {
+  counter-increment: hzsrc;
+  content: counter(hzsrc, decimal-leading-zero);
+  color: var(--color-axis);
+  font-variant-numeric: tabular-nums;
+}
+
+.hz-sources a {
+  text-decoration: underline;
+  text-decoration-color: var(--color-axis-soft);
+  text-underline-offset: 4px;
+  text-decoration-thickness: 1px;
+}
+
+.hz-sources a:hover {
+  text-decoration-color: var(--color-accent-ink);
+}
+
+.hz-src-site {
+  color: var(--color-ink-2);
+  font-size: 0.875rem;
+  overflow-wrap: anywhere;
+}
+
+.hz-share {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 8px 18px;
+  font-size: 0.9375rem;
+}
+
+.hz-share a,
+.hz-share button {
+  font: inherit;
+  color: inherit;
+  background: none;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+  text-decoration: underline;
+  text-decoration-color: var(--color-axis-soft);
+  text-underline-offset: 4px;
+  text-decoration-thickness: 1px;
+}
+
+.hz-share a:hover,
+.hz-share button:hover {
+  text-decoration-color: var(--color-accent-ink);
+}
+
+.hz-comments-body {
+  margin-top: 8px;
+}
+
+/* The way back to the rest of the archive, at the end of the read. */
+.hz-more {
+  margin-top: 64px;
+}
+
+/* The switcher passes the comment island only when the publication has comments
+   on, but the slot itself always exists — so drop the whole section when the
+   slot rendered nothing rather than leave a heading over empty ground. */
+.hz-comments:not(:has(.hz-comments-body > *)) {
+  display: none;
+}
+
+/* ========================================================== not found ==== */
+
+.hz-notfound {
+  flex: 1;
+  margin: 0 var(--hz-gutter);
+  padding: clamp(64px, 12vh, 140px) 0 120px;
+  max-width: 40ch;
+}
+
+.hz-notfound b {
+  display: block;
+  font-weight: 400;
+  font-size: clamp(5rem, 14vw, 9rem);
+  letter-spacing: -0.045em;
+  color: var(--color-numeral);
+  line-height: 0.8;
+  font-variant-numeric: tabular-nums;
+}
+
+.hz-notfound h1 {
+  margin: 28px 0 0;
+  font-size: clamp(1.75rem, 3.4vw, 2.5rem);
+  font-weight: 800;
+  letter-spacing: -0.025em;
+  line-height: 1.04;
+}
+
+.hz-notfound p {
+  margin: 18px 0 0;
+  font-family: var(--font-body);
+  font-optical-sizing: auto;
+  font-size: 1.0625rem;
+  line-height: 1.5;
+  color: var(--color-ink-2);
+}
+
+/* ===================================================== reduced motion ==== */
+
+@media (prefers-reduced-motion: reduce) {
+  .horizon *,
+  .horizon *::before,
+  .horizon *::after {
+    transition: none !important;
+    animation: none !important;
+  }
+  html.horizon {
+    scroll-behavior: auto;
+  }
+}
+
+/* ========================================================= responsive ==== */
+
+/* No room left of the earliest ticks for a thumbnail: it moves to the right of
+   the leader and the leader lengthens to clear it. */
+@media (max-width: 1100px) {
+  .hz-annot {
+    right: auto;
+    left: 14px;
+    top: 26px;
+  }
+  .hz-annot::before {
+    left: auto;
+    right: 100%;
+  }
+  .hz-entry.has-img {
+    --lead: calc(var(--hz-annot) + 40px);
+  }
+  .hz-entry--lead.is-pinned .hz-annot {
+    left: auto;
+    right: 14px;
+  }
+  .hz-entry--lead.is-pinned .hz-annot::before {
+    right: auto;
+    left: 100%;
+  }
+  .hz-entry.is-right .hz-annot {
+    left: auto;
+    right: 14px;
+    top: 26px;
+  }
+  .hz-entry.is-right .hz-annot::before {
+    right: auto;
+    left: 100%;
+  }
+  .hz-entry.is-right.has-img {
+    --lead: calc(var(--hz-annot) + 40px);
+  }
+  .hz-post {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .hz-aside {
+    grid-column: 1;
+    grid-row: auto;
+    position: static;
+    padding: 0;
+    margin-bottom: 40px;
+  }
+  .hz-elapsed {
+    display: none;
+  }
+}
+
+/* The axis rotates to a vertical rail: position still means date, the numerals
+   are still the largest type on the page, and the rail draws a continuous line
+   down the archive. */
+@media (max-width: 720px) {
+  html.horizon {
+    --hz-annot: 88px;
+    --hz-rail: 40px;
+    --hz-strip-h: 60px;
+    --hz-strip-col: 118px;
+    --hz-strip-nav: 104px;
+  }
+
+  .hz-axis,
+  .hz-axis.is-compact {
+    position: static;
+    height: auto;
+    transform: none;
+  }
+  .hz-axis-in {
+    height: auto;
+    padding: 16px 0 0;
+  }
+  .hz-mast,
+  .hz-axis.is-compact .hz-mast {
+    position: static;
+    flex-direction: column;
+    gap: 2px;
+    white-space: normal;
+    max-width: none;
+    opacity: 1;
+  }
+  .hz-nav,
+  .hz-axis.is-compact .hz-nav {
+    position: static;
+    margin-top: 8px;
+    gap: 18px;
+    opacity: 1;
+    pointer-events: auto;
+  }
+  .hz-axis .hz-scale {
+    display: none;
+  }
+
+  .hz-hero {
+    padding: 20px 0 0;
+  }
+  .hz-ident {
+    position: static;
+    width: auto;
+    margin: 0 0 28px;
+  }
+  .hz-ident p {
+    font-size: 1rem;
+    margin-bottom: 10px;
+  }
+
+  /* The rail itself: one continuous line down the whole archive, drawn by the
+     container rather than by each entry, so no join can be missed. */
+  .hz-archive {
+    position: relative;
+    padding-left: var(--hz-rail);
+  }
+  .hz-archive::before {
+    content: "";
+    position: absolute;
+    left: 8px;
+    top: 34px;
+    bottom: 0;
+    width: 1px;
+    background: var(--color-axis);
+  }
+
+  .hz-rail-now {
+    display: block;
+    position: relative;
+    height: 40px;
+  }
+  .hz-rail-now::before {
+    content: "";
+    position: absolute;
+    left: 7px;
+    top: 0;
+    bottom: 0;
+    width: 3px;
+    background: var(--color-accent-ink);
+  }
+  .hz-rail-now::after {
+    content: "";
+    position: absolute;
+    left: 10px;
+    top: 0;
+    width: 0;
+    height: 0;
+    border-top: 7px solid transparent;
+    border-bottom: 7px solid transparent;
+    border-left: 14px solid var(--color-accent-ink);
+  }
+  .hz-rail-now span {
+    position: absolute;
+    left: 32px;
+    top: -1px;
+    font-size: 0.8125rem;
+  }
+
+  .hz-rail-month {
+    display: block;
+    position: relative;
+    height: 84px;
+  }
+  .hz-rail-month b {
+    position: absolute;
+    left: -4px;
+    top: 6px;
+    font-weight: 400;
+    font-size: 4.5rem;
+    letter-spacing: -0.045em;
+    color: var(--color-numeral);
+    line-height: 1;
+    background: var(--color-ground);
+    padding: 4px 6px 4px 4px;
+    font-variant-numeric: tabular-nums;
+  }
+  .hz-rail-month.is-current b {
+    color: var(--color-ink);
+  }
+  .hz-rail-month span {
+    position: absolute;
+    left: 100px;
+    top: 52px;
+    font-size: 0.8125rem;
+    color: var(--color-axis);
+  }
+
+  .hz-rail-break {
+    display: block;
+    position: relative;
+    height: 44px;
+  }
+  .hz-rail-break i {
+    position: absolute;
+    left: 1px;
+    top: 14px;
+    width: 15px;
+    height: 1.5px;
+    background: var(--color-ink-2);
+    transform: rotate(-28deg);
+  }
+  .hz-rail-break i + i {
+    top: 24px;
+  }
+  .hz-rail-break small {
+    position: absolute;
+    left: 32px;
+    top: 12px;
+    font-size: 0.75rem;
+    color: var(--color-axis);
+  }
+
+  .hz-entry,
+  .hz-entry--lead.is-pinned {
+    padding: var(--gap, 28px) 0 8px;
+    scroll-margin-top: 12px;
+    --lead: 0px;
+  }
+  .hz-entry.has-img {
+    --lead: 0px;
+  }
+  .hz-entry::before {
+    display: none;
+  }
+  .hz-mark,
+  .hz-entry--lead.is-pinned .hz-mark {
+    position: relative;
+    top: auto;
+    left: auto;
+    height: auto;
+    border: 0;
+    margin: 0 0 10px;
+  }
+  /* Each entry keeps its notch on the rail, pointing right at its own line. */
+  .hz-mark::before {
+    left: calc(-1 * var(--hz-rail) + 8px);
+    top: 0.6em;
+    width: 12px;
+    height: 1px;
+  }
+  .hz-entry--undated .hz-mark::before {
+    display: none;
+  }
+  .hz-entry.is-current .hz-mark::before,
+  .hz-entry.is-hot .hz-mark::before {
+    height: 2px;
+    background: var(--color-ink);
+  }
+  .hz-kicker,
+  .hz-entry--lead.is-pinned .hz-kicker {
+    position: static;
+    white-space: normal;
+    font-size: 0.875rem;
+  }
+  .hz-annot,
+  .hz-entry--lead.is-pinned .hz-annot {
+    position: static;
+    margin: 10px 0 0;
+    width: var(--hz-annot);
+    height: var(--hz-annot);
+  }
+  .hz-annot::before {
+    display: none;
+  }
+  .hz-ebody,
+  .hz-entry--lead.is-pinned .hz-ebody {
+    padding: 0;
+    margin: 0;
+    max-width: none;
+    text-align: left;
+  }
+  .hz-entry h2 {
+    font-size: 1.75rem;
+  }
+  .hz-entry--lead h2 {
+    font-size: 2.375rem;
+    text-align: left;
+  }
+  .hz-entry--lead .hz-dek {
+    font-size: 1.25rem;
+  }
+  .hz-entry--lead.is-pinned .hz-dek {
+    margin-left: 0;
+  }
+  .hz-dek {
+    font-size: 1.125rem;
+  }
+  .hz-rest {
+    padding-top: 0;
+  }
+  .hz-topics,
+  .hz-foot {
+    margin-top: 64px;
+  }
+
+  .hz-strip .hz-wordmark {
+    font-size: 0.9375rem;
+    max-width: calc(100% - 130px);
+  }
+  .hz-strip-scale {
+    display: none;
+  }
+
+  .hz-post {
+    padding-top: 40px;
+  }
+  .hz-post-head h1 {
+    font-size: 2.25rem;
+  }
+  .hz-sub {
+    font-size: 1.25rem;
+  }
+  .hz-prose {
+    font-size: 1.0625rem;
+  }
+  .hz-prose h2 {
+    padding-top: 14px;
+  }
+  .hz-prose h2::before,
+  .hz-prose h2::after {
+    left: 0;
+    top: 0;
+  }
+  .hz-prose h2::before {
+    height: 10px;
+  }
+  .hz-sources li {
+    grid-template-columns: 2rem minmax(0, 1fr);
+    row-gap: 2px;
+  }
+  .hz-src-site {
+    grid-column: 2;
+  }
+}
+
+/* ------------------------------------------------------------- print ----- */
+
+@media print {
+  .hz-axis,
+  .hz-strip,
+  .hz-strip-marks,
+  .hz-share,
+  .hz-aside {
+    display: none;
+  }
+  .hz-post {
+    grid-template-columns: minmax(0, 1fr);
+    padding-top: 0;
+  }
 }

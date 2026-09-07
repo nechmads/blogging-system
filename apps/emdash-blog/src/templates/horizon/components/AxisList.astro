@@ -1,0 +1,94 @@
+---
+import type { Axis } from '../lib/axis';
+import { BREAK_MIN_DAYS } from '../lib/axis';
+import AxisEntry from './AxisEntry.astro';
+
+interface Props {
+  axis: Axis;
+  /** The home page sets its newest entry at lead size; /posts lists evenly. */
+  withLead?: boolean;
+  /** Whether that lead may hang from its tick (see Home.astro). */
+  pinLead?: boolean;
+  id?: string;
+}
+
+/**
+ * The archive: every entry a slice of the axis, in date order, newest first.
+ *
+ * The rail markers (`hz-rail-*`) are the same information for the narrow
+ * layout, where the axis rotates to a vertical rail: "now" at the top, a month
+ * numeral wherever the month changes, and the break glyph wherever a silence
+ * is too long to draw. They are `display: none` above 720px.
+ */
+const { axis, withLead = false, pinLead = false, id } = Astro.props;
+
+const entries = axis.entries;
+const leadEntry = withLead && entries.length > 0 ? entries[0] : null;
+const restEntries = leadEntry ? entries.slice(1) : entries;
+
+/** Rail markers that belong above a given entry, walking newest → oldest. */
+function markersFor(index: number) {
+  const entry = entries[index];
+  const previous = index > 0 ? entries[index - 1] : null;
+  return {
+    /* Only after the first entry: the newest post has no silence above it. */
+    breakDays:
+      previous && entry.silenceDays > BREAK_MIN_DAYS ? entry.silenceDays : null,
+    month:
+      entry.monthNumeral && entry.monthKey !== (previous?.monthKey ?? null)
+        ? { key: entry.monthKey, numeral: entry.monthNumeral, caption: entry.monthCaption }
+        : null,
+  };
+}
+
+const leadMarkers = leadEntry ? markersFor(0) : null;
+const restMarkers = restEntries.map((_, i) => markersFor(leadEntry ? i + 1 : i));
+---
+
+<div class="hz-archive" id={id}>
+  {axis.hasAxis && (
+    <div class="hz-rail-now" aria-hidden="true"><span>{axis.nowLabel}</span></div>
+  )}
+
+  {leadEntry && (
+    <section class="hz-hero" aria-label="Latest">
+      {leadMarkers?.month && (
+        <div
+          class:list={['hz-rail-month', leadMarkers.month.key === axis.currentMonthKey && 'is-current']}
+          data-hz-month={leadMarkers.month.key}
+          aria-hidden="true"
+        >
+          <b>{leadMarkers.month.numeral}</b><span>{leadMarkers.month.caption}</span>
+        </div>
+      )}
+      <AxisEntry entry={leadEntry} isLead pinned={pinLead} />
+    </section>
+  )}
+
+  {restEntries.length > 0 && (
+    <section class="hz-rest" aria-label={leadEntry ? 'Earlier' : 'Posts'}>
+      {restEntries.map((entry, i) => (
+        <>
+          {restMarkers[i].breakDays !== null && (
+            <div class="hz-rail-break" aria-hidden="true">
+              <i></i><i></i><small>{restMarkers[i].breakDays} days skipped</small>
+            </div>
+          )}
+          {restMarkers[i].month && (
+            <div
+              class:list={[
+                'hz-rail-month',
+                restMarkers[i].month!.key === axis.currentMonthKey && 'is-current',
+              ]}
+              data-hz-month={restMarkers[i].month!.key}
+              aria-hidden="true"
+            >
+              <b>{restMarkers[i].month!.numeral}</b><span>{restMarkers[i].month!.caption}</span>
+            </div>
+          )}
+          <AxisEntry entry={entry} />
+        </>
+      ))}
+    </section>
+  )}
+</div>

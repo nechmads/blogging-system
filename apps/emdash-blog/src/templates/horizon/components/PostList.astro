@@ -1,7 +1,9 @@
 ---
 import type { Post } from '@hotmetal/content-core';
-import { formatDate } from '../../../lib/format';
-import { getPreviewText, getFirstTopic } from '../../../lib/post-utils';
+import { buildAxis } from '../lib/axis';
+import AxisList from './AxisList.astro';
+import AxisSpy from './AxisSpy.astro';
+import Scale from './Scale.astro';
 
 interface Props {
   posts: Post[];
@@ -9,28 +11,50 @@ interface Props {
   showViewAll?: boolean;
 }
 
-const { posts, heading = 'Archive', showViewAll = false } = Astro.props;
+/**
+ * The full archive (/posts). The sticky strip above it is rendered by
+ * `Header.astro`, which is never given the posts, so this page draws the rest
+ * of the scale — segments, breaks, month numerals, every tick and the reader's
+ * cursor — into a fixed overlay registered to the strip's own columns.
+ *
+ * No entry is promoted to a lead here: on the archive every piece is one slice
+ * of the same axis.
+ */
+const { posts, heading = 'All posts', showViewAll = false } = Astro.props;
+
+const axis = buildAxis(posts, new Date());
+const dated = axis.entries.filter((entry) => entry.x !== null).length;
+const undated = axis.entries.length - dated;
 ---
 
-<section class="hz-list" aria-labelledby="hz-list-h">
-  <h2 id="hz-list-h" class="text-sm uppercase tracking-wide mb-4">{heading}</h2>
+{axis.hasAxis && (
+  <div class="hz-strip-marks" data-hz-axis="strip">
+    <div class="hz-strip-in">
+      <Scale axis={axis} class="hz-strip-scale" showNow={false} showCursor label="Posts by date" />
+    </div>
+  </div>
+)}
+
+<main class="hz-page hz-page--list">
+  <div class="hz-listhead">
+    <h1 class="hz-listtitle">{heading}</h1>
+    <p class="hz-label hz-num">
+      {axis.entries.length} {axis.entries.length === 1 ? 'piece' : 'pieces'}
+      {undated > 0 && <> &middot; {undated} undated</>}
+    </p>
+  </div>
+
   {posts.length > 0 ? (
-    <ul class="grid gap-6">
-      {posts.map((post) => (
-        <li>
-          <article>
-            <a href={`/${post.slug}`}><h3 class="font-[var(--font-display)] text-2xl">{post.title}</h3></a>
-            {getPreviewText(post, 160) && <p class="mt-1">{getPreviewText(post, 160)}</p>}
-            <p class="text-sm mt-1">
-              {post.publishedAt && <time datetime={post.publishedAt}>{formatDate(post.publishedAt)}</time>}
-              {getFirstTopic(post) && <span> · {getFirstTopic(post)}</span>}
-            </p>
-          </article>
-        </li>
-      ))}
-    </ul>
+    <AxisList axis={axis} id="hz-archive" />
   ) : (
-    <p>Nothing published yet.</p>
+    <div class="hz-empty" id="hz-archive">
+      <p>Nothing has been published yet. The first piece will appear here, dated.</p>
+    </div>
   )}
-  {showViewAll && <p class="mt-6"><a href="/posts">View all &rarr;</a></p>}
-</section>
+
+  {showViewAll && (
+    <p class="hz-viewall"><a href="/posts">View all posts &rarr;</a></p>
+  )}
+</main>
+
+<AxisSpy />
