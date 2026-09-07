@@ -1,0 +1,36 @@
+---
+import type { Post } from '@hotmetal/content-core';
+import { formatDate } from '../../../lib/format';
+import { getPreviewText, getFirstTopic } from '../../../lib/post-utils';
+
+interface Props {
+  posts: Post[];
+  heading?: string;
+  showViewAll?: boolean;
+}
+
+const { posts, heading = 'Archive', showViewAll = false } = Astro.props;
+---
+
+<section class="po-list" aria-labelledby="po-list-h">
+  <h2 id="po-list-h" class="text-sm uppercase tracking-wide mb-4">{heading}</h2>
+  {posts.length > 0 ? (
+    <ul class="grid gap-6">
+      {posts.map((post) => (
+        <li>
+          <article>
+            <a href={`/${post.slug}`}><h3 class="font-[var(--font-display)] text-2xl">{post.title}</h3></a>
+            {getPreviewText(post, 160) && <p class="mt-1">{getPreviewText(post, 160)}</p>}
+            <p class="text-sm mt-1">
+              {post.publishedAt && <time datetime={post.publishedAt}>{formatDate(post.publishedAt)}</time>}
+              {getFirstTopic(post) && <span> · {getFirstTopic(post)}</span>}
+            </p>
+          </article>
+        </li>
+      ))}
+    </ul>
+  ) : (
+    <p>Nothing published yet.</p>
+  )}
+  {showViewAll && <p class="mt-6"><a href="/posts">View all &rarr;</a></p>}
+</section>

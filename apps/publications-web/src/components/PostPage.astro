@@ -32,6 +32,23 @@ import SignalHeader from '../templates/one-signal/components/Header.astro';
 import SignalFooter from '../templates/one-signal/components/Footer.astro';
 import SignalPostContent from '../templates/one-signal/components/PostContent.astro';
 
+// CoverStock template
+import CoverStockBaseLayout from '../templates/cover-stock/layouts/BaseLayout.astro';
+import CoverStockHeader from '../templates/cover-stock/components/Header.astro';
+import CoverStockPostContent from '../templates/cover-stock/components/PostContent.astro';
+import CoverStockFooter from '../templates/cover-stock/components/Footer.astro';
+
+// Horizon template
+import HorizonBaseLayout from '../templates/horizon/layouts/BaseLayout.astro';
+import HorizonHeader from '../templates/horizon/components/Header.astro';
+import HorizonPostContent from '../templates/horizon/components/PostContent.astro';
+import HorizonFooter from '../templates/horizon/components/Footer.astro';
+
+// Poster template
+import PosterBaseLayout from '../templates/poster/layouts/BaseLayout.astro';
+import PosterHeader from '../templates/poster/components/Header.astro';
+import PosterPostContent from '../templates/poster/components/PostContent.astro';
+import PosterFooter from '../templates/poster/components/Footer.astro';
 // Bold template
 import BoldBaseLayout from '../templates/bold/layouts/BaseLayout.astro';
 import BoldHeader from '../templates/bold/components/Header.astro';
@@ -123,7 +140,70 @@ const contentProps = {
 };
 ---
 
-{templateId === 'press-machine' ? (
+{templateId === 'cover-stock' ? (
+  <CoverStockBaseLayout {...layoutProps}>
+    <CoverStockHeader publicationName={branding.name} logoUrl={branding.logoUrl} />
+    <CoverStockPostContent {...contentProps}>
+      {commentsEnabled && (
+        <CommentSection
+          slot="comments"
+          client:load
+          publicationSlug={publicationSlug}
+          postSlug={post.slug}
+          turnstileSiteKey={turnstileSiteKey}
+          commentsEnabled={commentsEnabled}
+        />
+      )}
+    </CoverStockPostContent>
+    <CoverStockFooter
+      publicationName={branding.name}
+      publicationSlug={branding.slug}
+      socialLinks={branding.socialLinks}
+    />
+  </CoverStockBaseLayout>
+) : templateId === 'horizon' ? (
+  <HorizonBaseLayout {...layoutProps}>
+    <HorizonHeader publicationName={branding.name} logoUrl={branding.logoUrl} />
+    <HorizonPostContent {...contentProps}>
+      {commentsEnabled && (
+        <CommentSection
+          slot="comments"
+          client:load
+          publicationSlug={publicationSlug}
+          postSlug={post.slug}
+          turnstileSiteKey={turnstileSiteKey}
+          commentsEnabled={commentsEnabled}
+        />
+      )}
+    </HorizonPostContent>
+    <HorizonFooter
+      publicationName={branding.name}
+      publicationSlug={branding.slug}
+      socialLinks={branding.socialLinks}
+    />
+  </HorizonBaseLayout>
+) : templateId === 'poster' ? (
+  <PosterBaseLayout {...layoutProps}>
+    <PosterHeader publicationName={branding.name} logoUrl={branding.logoUrl} />
+    <PosterPostContent {...contentProps}>
+      {commentsEnabled && (
+        <CommentSection
+          slot="comments"
+          client:load
+          publicationSlug={publicationSlug}
+          postSlug={post.slug}
+          turnstileSiteKey={turnstileSiteKey}
+          commentsEnabled={commentsEnabled}
+        />
+      )}
+    </PosterPostContent>
+    <PosterFooter
+      publicationName={branding.name}
+      publicationSlug={branding.slug}
+      socialLinks={branding.socialLinks}
+    />
+  </PosterBaseLayout>
+) : templateId === 'press-machine' ? (
   <PressBaseLayout {...layoutProps}>
     <PressHeader publicationName={branding.name} logoUrl={branding.logoUrl} />
     <PressPostContent {...contentProps}>

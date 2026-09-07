@@ -1,0 +1,56 @@
+---
+import type { Post } from '@hotmetal/content-core';
+import { getFirstTopic } from '../../../lib/post-utils';
+
+interface Props {
+  post: Post;
+  sanitizedContent: string;
+  date: string | null;
+  allLabels: string[];
+  postUrl: string;
+  twitterShareUrl: string;
+  linkedinShareUrl: string;
+}
+
+const { post, sanitizedContent, date, allLabels, twitterShareUrl, linkedinShareUrl } = Astro.props;
+const citations = post.citations ?? [];
+const hasComments = Astro.slots.has('comments');
+---
+
+<main class="po-article flex-1 px-6 py-10 mx-auto w-full max-w-[44rem]">
+  <article>
+    {getFirstTopic(post) && <p class="text-sm uppercase tracking-wide">{getFirstTopic(post)}</p>}
+    <h1 class="font-[var(--font-display)] text-4xl mb-2">{post.title}</h1>
+    {post.subtitle && <p class="text-xl mb-4">{post.subtitle}</p>}
+    <p class="text-sm mb-8">
+      {post.author}{date && post.publishedAt && <> · <time datetime={post.publishedAt}>{date}</time></>}
+    </p>
+    <div class="po-prose" set:html={sanitizedContent} />
+
+    {citations.length > 0 && (
+      <section class="mt-10" aria-labelledby="po-sources-h">
+        <h2 id="po-sources-h" class="text-sm uppercase tracking-wide mb-3">Sources</h2>
+        <ol class="list-decimal pl-5 grid gap-1">
+          {citations.map((c) => (
+            <li><a href={c.url} target="_blank" rel="noopener noreferrer">{c.title}</a>{c.publisher && <span> — {c.publisher}</span>}</li>
+          ))}
+        </ol>
+      </section>
+    )}
+
+    {allLabels.length > 0 && (
+      <p class="mt-8 text-sm">{allLabels.map((l) => <span class="mr-3">{l}</span>)}</p>
+    )}
+
+    <p class="mt-8 text-sm flex gap-4">
+      <a href={twitterShareUrl} target="_blank" rel="noopener noreferrer">Share on X</a>
+      <a href={linkedinShareUrl} target="_blank" rel="noopener noreferrer">Share on LinkedIn</a>
+    </p>
+  </article>
+
+  {hasComments && (
+    <section class="po-comments mt-12" aria-label="Comments">
+      <slot name="comments" />
+    </section>
+  )}
+</main>

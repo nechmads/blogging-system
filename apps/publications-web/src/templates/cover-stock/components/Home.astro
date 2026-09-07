@@ -1,0 +1,26 @@
+---
+/**
+ * Cover Stock home page body: everything between the header and the footer —
+ * publication identity, the lead, the archive, and the "View all" link when
+ * more posts exist than the home page shows.
+ */
+import type { Post } from '@hotmetal/content-core';
+import type { PublicationBranding } from '../../../dl/publication';
+import PostList from './PostList.astro';
+
+interface Props {
+  branding: PublicationBranding;
+  /** At most HOME_POST_LIMIT posts, newest first. */
+  posts: Post[];
+  /** True when /posts has more than the home page shows. */
+  hasMorePosts: boolean;
+}
+
+const { branding, posts, hasMorePosts } = Astro.props;
+const standing = branding.tagline ?? branding.description;
+---
+
+<main class="cs-home flex-1 px-6 py-10">
+  {standing && <p class="cs-standing max-w-[60ch] mb-8">{standing}</p>}
+  <PostList posts={posts} heading="Latest" showViewAll={hasMorePosts} />
+</main>
