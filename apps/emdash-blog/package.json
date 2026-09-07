@@ -15,7 +15,7 @@
     "typecheck": "astro check"
   },
   "dependencies": {
-    "@astrojs/cloudflare": "^14.3.0",
+    "@astrojs/cloudflare": "14.1.0",
     "@astrojs/react": "^6.0.0",
     "@emdash-cms/cloudflare": "0.22.0",
     "@emdash-cms/plugin-forms": "0.2.4",
@@ -24,7 +24,7 @@
     "@hotmetal/data-layer": "workspace:*",
     "@hotmetal/shared": "workspace:*",
     "@portabletext/to-html": "^2.0.13",
-    "astro": "^7.3.1",
+    "astro": "7.0.2",
     "emdash": "0.22.0",
     "react": "19.2.7",
     "react-dom": "19.2.7",

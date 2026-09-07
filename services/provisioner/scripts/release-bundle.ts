@@ -43,6 +43,11 @@ function walk(dir: string): string[] {
 	return out
 }
 
+/**
+ * Content type for a **Worker module** in the multipart script upload.
+ * `application/javascript+module` is what Cloudflare expects there, and it is
+ * NOT a browser MIME type — see `assetContentType` for the client side.
+ */
 function contentType(path: string): string {
 	if (path.endsWith('.mjs') || path.endsWith('.js')) return 'application/javascript+module'
 	if (path.endsWith('.wasm')) return 'application/wasm'
@@ -54,6 +59,21 @@ function contentType(path: string): string {
 	if (path.endsWith('.webp')) return 'image/webp'
 	if (path.endsWith('.html')) return 'text/html'
 	return 'application/octet-stream'
+}
+
+/**
+ * Content type for a **static asset served to a browser**.
+ *
+ * Identical to `contentType` except for JavaScript: a browser refuses a
+ * `<script type="module">` served as `application/javascript+module` ("Strict
+ * MIME type checking is enforced for module scripts"), so every client island
+ * fails to hydrate — on EmDash tenants that meant the comment form never
+ * mounted. Modules in the Worker upload still need the `+module` form, hence
+ * two functions rather than one.
+ */
+function assetContentType(path: string): string {
+	if (path.endsWith('.mjs') || path.endsWith('.js')) return 'text/javascript'
+	return contentType(path)
 }
 
 async function put(key: string, file: string, type: string): Promise<void> {
@@ -112,7 +132,7 @@ const modules = walk(serverDir)
 
 const assets = walk(clientDir).map((p) => {
 	const rel = relative(clientDir, p)
-	return { path: `/${rel}`, key: `releases/${version}/client/${safeKey(rel)}`, contentType: contentType(p), file: p }
+	return { path: `/${rel}`, key: `releases/${version}/client/${safeKey(rel)}`, contentType: assetContentType(p), file: p }
 })
 
 const files = [...modules, ...assets]
