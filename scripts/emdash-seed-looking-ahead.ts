@@ -13,6 +13,7 @@
  * Usage:
  *   BASE_URL=http://localhost:4321 PAT=ec_pat_... pnpm tsx scripts/emdash-seed-looking-ahead.ts
  *   DRY=1 pnpm tsx scripts/emdash-seed-looking-ahead.ts   # print the bodies, write nothing
+ *   FORCE=1 …                                            # rewrite posts that already exist
  */
 import { readFileSync } from 'node:fs'
 import { EmdashCmsClient } from '../packages/shared/src/emdash-cms-client'
@@ -23,6 +24,8 @@ const PUB = process.env.PUB_SLUG ?? 'demo'
 
 /** `DRY=1` prints the converted markdown and exits — checks the conversion with no instance. */
 const DRY = process.env.DRY === '1'
+/** `FORCE=1` rewrites posts that already exist, instead of skipping them. */
+const FORCE = process.env.FORCE === '1'
 
 if (!PAT && !DRY) {
   console.error('✗ Set PAT=ec_pat_... (and optionally BASE_URL), or DRY=1. See the script header.')
@@ -225,15 +228,15 @@ async function main() {
 
   const client = new EmdashCmsClient(BASE_URL, PAT!)
   const existing = await client.listPosts({ publicationId: PUB, limit: 100 })
-  const have = new Set(existing.data.map((p) => p.slug))
 
   for (const seed of POSTS) {
-    if (have.has(seed.slug)) {
-      console.log(`  = ${seed.slug} (already present)`)
+    const existingPost = existing.data.find((p) => p.slug === seed.slug)
+    if (existingPost && !FORCE) {
+      console.log(`  = ${seed.slug} (already present; FORCE=1 to rewrite)`)
       continue
     }
     const content = seed.content ?? shortBody(seed.hook, seed.title)
-    const post = await client.createPost({
+    const fields = {
       publicationId: PUB,
       title: seed.title,
       subtitle: seed.subtitle,
@@ -249,8 +252,12 @@ async function main() {
       featuredImage: seed.featuredImage,
       citations: seed.citations,
       publishedAt: seed.publishedAt,
-    } as Parameters<EmdashCmsClient['createPost']>[0])
-    console.log(`  + ${post.slug}  (${post.publishedAt ?? 'no date'})`)
+    } as Parameters<EmdashCmsClient['createPost']>[0]
+
+    const post = existingPost
+      ? await client.updatePost(existingPost.id, fields)
+      : await client.createPost(fields)
+    console.log(`  ${existingPost ? '~' : '+'} ${post.slug}  (${post.publishedAt ?? 'no date'})`)
   }
   console.log(`\nDone. Home: ${BASE_URL}/  Lead: ${BASE_URL}/${POSTS[0].slug}`)
 }
