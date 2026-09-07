@@ -1,0 +1,28 @@
+---
+/**
+ * Poster header. `showDate` marks the home page (kept for parity with the
+ * other templates' switcher calls); this template may render a different
+ * masthead there.
+ */
+interface Props {
+  publicationName: string;
+  logoUrl: string | null;
+  showDate?: boolean;
+}
+
+const { publicationName, logoUrl } = Astro.props;
+const currentPath = Astro.url.pathname;
+---
+
+<header class="po-header px-6 py-4 flex items-baseline justify-between">
+  <p class="po-wordmark font-[var(--font-display)] text-xl">
+    <a href="/">
+      {logoUrl ? <img src={logoUrl} alt={publicationName} class="h-8 w-auto" loading="eager" /> : publicationName}
+    </a>
+  </p>
+  <nav aria-label="Primary" class="po-nav flex gap-4 text-sm">
+    <a href="/" aria-current={currentPath === '/' ? 'page' : undefined}>Home</a>
+    <a href="/posts" aria-current={currentPath === '/posts' ? 'page' : undefined}>Archive</a>
+    <a href="/rss">RSS</a>
+  </nav>
+</header>

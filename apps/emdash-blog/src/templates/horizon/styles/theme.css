@@ -1,0 +1,52 @@
+@import "tailwindcss";
+
+/* ============================================================================
+   Horizon — SCAFFOLD. Replace with the real theme when porting the prototype.
+
+   Every base rule is scoped under `html.horizon` and every class is prefixed
+   `hz-`. See press-machine/styles/theme.css for why: the switchers import
+   every template's BaseLayout, so tokens declared on bare :root would be
+   decided by bundle order.
+   ========================================================================== */
+
+@theme {
+  --color-paper: #fbfcfd;
+  --color-ink: #101418;
+  --color-accent: #b4361f;
+  --color-accent-ink: #b4361f;
+  --font-display: 'Schibsted Grotesk', -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+  --font-body: 'Literata', Georgia, serif;
+  --font-sans: 'Schibsted Grotesk', -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+}
+
+html.horizon {
+  --color-paper: #fbfcfd;
+  --color-ink: #101418;
+  --color-accent: #b4361f;
+  --color-accent-ink: #b4361f;
+  --font-display: 'Schibsted Grotesk', -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+  --font-body: 'Literata', Georgia, serif;
+  --font-sans: 'Schibsted Grotesk', -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+}
+
+html.horizon[style*="--publication-accent"] {
+  --color-accent: var(--publication-accent);
+}
+
+@supports (color: oklch(from red l c h)) {
+  html.horizon {
+    --color-accent-ink: oklch(from var(--color-accent) clamp(0.25, l, 0.5) c h);
+  }
+}
+
+html.horizon body {
+  background-color: var(--color-paper);
+  color: var(--color-ink);
+  font-family: var(--font-body);
+}
+
+.horizon a:focus-visible,
+.horizon button:focus-visible {
+  outline: 2px solid var(--color-accent-ink);
+  outline-offset: 3px;
+}
