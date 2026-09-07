@@ -124,6 +124,14 @@ curl -X POST "$PROVISIONER_URL/api/fleet/upgrade" \
   -d '{ "all": true }'
 ```
 
+> **You need `API_KEY`, and it is write-only.** It exists as a `wrangler secret`
+> on the provisioner and as `PROVISIONER_API_KEY` on `apps/web`; neither can be
+> read back, and it is in no local file. Whoever runs a rollout must already
+> hold it (or rotate it on *both* workers together — rotating only one breaks
+> publication creation). Everything upstream of the call — build, `release-bundle`
+> — needs only `CF_API_TOKEN` from `services/provisioner/.dev.vars`, so a release
+> can be staged by someone who cannot perform the rollout.
+
 > **Scale note.** The batch is sequential and synchronous (matches `/api/teardown`).
 > That is fine up to a few dozen tenants; the per-request CPU/subrequest budget — each
 > tenant is one multi-part dispatch-script upload — becomes the limit past ~100. Until
