@@ -12,6 +12,7 @@
  *
  * Usage:
  *   BASE_URL=http://localhost:4321 PAT=ec_pat_... pnpm tsx scripts/emdash-seed-looking-ahead.ts
+ *   DRY=1 pnpm tsx scripts/emdash-seed-looking-ahead.ts   # print the bodies, write nothing
  */
 import { readFileSync } from 'node:fs'
 import { EmdashCmsClient } from '../packages/shared/src/emdash-cms-client'
@@ -20,19 +21,78 @@ const BASE_URL = process.env.BASE_URL ?? 'http://localhost:4321'
 const PAT = process.env.PAT
 const PUB = process.env.PUB_SLUG ?? 'demo'
 
-if (!PAT) {
-  console.error('✗ Set PAT=ec_pat_... (and optionally BASE_URL). See the script header.')
+/** `DRY=1` prints the converted markdown and exits — checks the conversion with no instance. */
+const DRY = process.env.DRY === '1'
+
+if (!PAT && !DRY) {
+  console.error('✗ Set PAT=ec_pat_... (and optionally BASE_URL), or DRY=1. See the script header.')
   process.exit(2)
 }
 
 const AUTHOR = 'Shahar Nechmad'
 const IMG = 'https://images.hotmetalapp.com/sessions'
 
-/** The full 1,740-word lead article, scraped from the live publication for round one. */
-const LEAD_BODY = readFileSync(
-  new URL('../design-prototypes/emdash-2026-09-07/_build/article-body.html', import.meta.url),
-  'utf8',
-).trim()
+/**
+ * The full 1,740-word lead article, scraped from the live publication for round
+ * one. It is stored as HTML, but `createPost` feeds `content` through
+ * `markdownToPortableText` — so HTML handed over as-is is treated as literal
+ * text and the blog renders visible `<p>` tags. Convert it first.
+ */
+const LEAD_BODY = htmlToMarkdown(
+  readFileSync(
+    new URL('../design-prototypes/emdash-2026-09-07/_build/article-body.html', import.meta.url),
+    'utf8',
+  ).trim(),
+)
+
+/**
+ * A deliberately small HTML → markdown converter, covering exactly the tags the
+ * sample bodies use (p, h2, h3, a, strong, em, code, ul/li, blockquote). Not a
+ * general-purpose converter: this is prototype seed content, not a content
+ * migration path.
+ */
+function htmlToMarkdown(html: string): string {
+  const blocks: string[] = []
+  const blockRe = /<(h2|h3|p|blockquote|ul|ol)\b[^>]*>([\s\S]*?)<\/\1>/gi
+  let match: RegExpExecArray | null
+  while ((match = blockRe.exec(html)) !== null) {
+    const [, tag, body] = match
+    if (tag.toLowerCase() === 'ul' || tag.toLowerCase() === 'ol') {
+      const ordered = tag.toLowerCase() === 'ol'
+      const items = [...body.matchAll(/<li\b[^>]*>([\s\S]*?)<\/li>/gi)].map(
+        (li, i) => `${ordered ? `${i + 1}.` : '-'} ${inline(li[1])}`,
+      )
+      blocks.push(items.join('\n'))
+      continue
+    }
+    const text = inline(body)
+    if (!text) continue
+    if (tag.toLowerCase() === 'h2') blocks.push(`## ${text}`)
+    else if (tag.toLowerCase() === 'h3') blocks.push(`### ${text}`)
+    else if (tag.toLowerCase() === 'blockquote') blocks.push(`> ${text}`)
+    else blocks.push(text)
+  }
+  return blocks.join('\n\n')
+}
+
+/** Inline marks inside one block, then unescape the entities markdown carries literally. */
+function inline(html: string): string {
+  return html
+    .replace(/<a\b[^>]*href=["']([^"']+)["'][^>]*>([\s\S]*?)<\/a>/gi, (_m, href, text) => `[${inline(text)}](${href})`)
+    .replace(/<(strong|b)\b[^>]*>([\s\S]*?)<\/\1>/gi, (_m, _t, text) => `**${inline(text)}**`)
+    .replace(/<(em|i)\b[^>]*>([\s\S]*?)<\/\1>/gi, (_m, _t, text) => `*${inline(text)}*`)
+    .replace(/<code\b[^>]*>([\s\S]*?)<\/code>/gi, (_m, text) => `\`${text}\``)
+    .replace(/<br\s*\/?>/gi, '\n')
+    .replace(/<[^>]+>/g, '')
+    .replace(/&nbsp;/g, ' ')
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/\s+/g, ' ')
+    .trim()
+}
 
 const LEAD_CITATIONS = [
   { title: 'Bots have officially overtaken humans on the internet', publisher: 'techspot.com', url: 'https://www.techspot.com/news/112657-bots-have-officially-overtaken-humans-internet-cloudflare.html' },
@@ -50,15 +110,17 @@ const LEAD_CITATIONS = [
   { title: 'The agent-first approach to building products', publisher: 'dev.to', url: 'https://dev.to/adamklein/the-agent-first-approach-to-building-products-51oj' },
 ]
 
-/** A short body for the archive posts: the hook, then a few paragraphs and a sub-heading. */
+/** A short markdown body for the archive posts: the hook, a sub-heading, a list and a quote. */
 function shortBody(hook: string, title: string): string {
   return [
-    `<p>${hook}</p>`,
-    `<p>This is a shorter piece. It exists so that the archive has real titles, real dates and a real mix of lengths, which is what a template actually has to lay out.</p>`,
-    `<h2>What this is about</h2>`,
-    `<p>${title} is the kind of claim this publication makes: opinionated, dated, and meant to be judged later. The point of seeding it here is to see how each template treats a post that is neither the lead nor a long read.</p>`,
-    `<p>If you are looking at this in a template preview, compare it with the lead article, which has the full text, thirteen citations and no featured image.</p>`,
-  ].join('\n')
+    hook,
+    'This is a shorter piece. It exists so that the archive has real titles, real dates and a real mix of lengths, which is what a template actually has to lay out.',
+    '## What this is about',
+    `${title} is the kind of claim this publication makes: opinionated, dated, and meant to be judged later. The point of seeding it here is to see how each template treats a post that is neither the lead nor a long read.`,
+    ['- A [link](https://example.com) to check link styling', '- **Bold** and *italic* runs, and `inline code`'].join('\n'),
+    '> A pull quote, so a template that styles blockquotes has one to style.',
+    'If you are looking at this in a template preview, compare it with the lead article, which has the full text, thirteen citations and no featured image.',
+  ].join('\n\n')
 }
 
 interface Seed {
@@ -152,6 +214,15 @@ const POSTS: Seed[] = [
 ]
 
 async function main() {
+  if (DRY) {
+    for (const seed of POSTS) {
+      const md = seed.content ?? shortBody(seed.hook, seed.title)
+      console.log(`\n──── ${seed.slug} (${md.length} chars) ────\n`)
+      console.log(md.length > 1200 ? `${md.slice(0, 1200)}\n… (${md.split('\n\n').length} blocks)` : md)
+    }
+    return
+  }
+
   const client = new EmdashCmsClient(BASE_URL, PAT!)
   const existing = await client.listPosts({ publicationId: PUB, limit: 100 })
   const have = new Set(existing.data.map((p) => p.slug))
@@ -170,6 +241,7 @@ async function main() {
       hook: seed.hook,
       excerpt: seed.hook,
       content,
+      markdown: content,
       status: 'published',
       author: AUTHOR,
       tags: seed.tags,
